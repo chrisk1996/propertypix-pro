@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Replicate from 'replicate';
+import { createClient } from '@/utils/supabase/server';
 
 const replicate = new Replicate({
   auth: process.env.REPLICATE_API_TOKEN!,
@@ -27,14 +28,52 @@ function checkRateLimit(ip: string): boolean {
 export async function POST(request: NextRequest) {
   try {
     // Get client IP for rate limiting
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-               request.headers.get('x-real-ip') ||
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+               request.headers.get('x-real-ip') || 
                'unknown';
-
+    
     if (!checkRateLimit(ip)) {
       return NextResponse.json(
         { error: 'Rate limit exceeded. Please try again later.' },
         { status: 429 }
+      );
+    }
+
+    // Authenticate user
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check user credits
+    const { data: userData, error: userError } = await supabase
+      .from('propertypix_users')
+      .select('credits_remaining, credits_used, plan')
+      .eq('id', user.id)
+      .single();
+
+    if (userError) {
+      console.error('Error fetching user:', userError);
+      // User might not exist in propertypix_users yet, create record
+      const { error: insertError } = await supabase
+        .from('propertypix_users')
+        .insert({ 
+          id: user.id, 
+          email: user.email || '',
+          credits_remaining: 5, // Free tier default
+          credits_used: 0,
+          plan: 'free'
+        });
+      
+      if (insertError) {
+        return NextResponse.json({ error: 'Failed to create user record' }, { status: 500 });
+      }
+    } else if (userData && userData.credits_remaining <= 0) {
+      return NextResponse.json(
+        { error: 'No credits remaining. Please upgrade your plan.' },
+        { status: 402 }
       );
     }
 
@@ -45,9 +84,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Image is required' }, { status: 400 });
     }
 
-    let prompt: string;
+    // Create job record
+    const { data: job, error: jobError } = await supabase
+      .from('propertypix_jobs')
+      .insert({
+        user_id: user.id,
+        original_image: image.substring(0, 500), // Store truncated reference
+        enhancement_type: enhancementType || 'auto',
+        status: 'processing',
+      })
+      .select()
+      .single();
 
-    // Set prompt based on enhancement type
+    if (jobError) {
+      console.error('Error creating job:', jobError);
+      return NextResponse.json({ error: 'Failed to create job' }, { status: 500 });
+    }
+
+    let prompt: string;
     switch (enhancementType) {
       case 'staging':
         prompt = "furnished room, modern furniture, professional interior design, real estate photography, clean and bright, high quality";
@@ -62,40 +116,74 @@ export async function POST(request: NextRequest) {
         prompt = "professional real estate photography, enhanced, high quality, vibrant colors, sharp details, well-lit";
     }
 
-    // Use Replicate's SDXL model for image-to-image enhancement
-    // Model: stability-ai/sdxl (version: 39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b)
-    const result = await replicate.run(
-      "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
-      {
-        input: {
-          image: image,
-          prompt: prompt,
-          negative_prompt: "blurry, low quality, distorted, overexposed, underexposed, noisy, pixelated",
-          num_inference_steps: 30,
-          prompt_strength: 0.6,
-          guidance_scale: 7.5,
-          refine: "expert_ensemble_refiner",
+    try {
+      // Use Replicate's SDXL model for image-to-image enhancement
+      const result = await replicate.run(
+        "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
+        {
+          input: {
+            image: image,
+            prompt: prompt,
+            negative_prompt: "blurry, low quality, distorted, overexposed, underexposed, noisy, pixelated",
+            num_inference_steps: 30,
+            prompt_strength: 0.6,
+            guidance_scale: 7.5,
+            refine: "expert_ensemble_refiner",
+          },
         }
+      );
+
+      // Handle different output formats from Replicate
+      let resultUrl: string;
+      if (typeof result === 'string') {
+        resultUrl = result;
+      } else if (Array.isArray(result) && result.length > 0) {
+        resultUrl = String(result[0]);
+      } else if (result && typeof result === 'object') {
+        const out = result as Record<string, unknown>;
+        resultUrl = String(out.url || out.output || JSON.stringify(result));
+      } else {
+        resultUrl = String(result);
       }
-    );
 
-    // Handle different output formats from Replicate
-    let resultUrl: string;
-    if (typeof result === 'string') {
-      resultUrl = result;
-    } else if (Array.isArray(result) && result.length > 0) {
-      resultUrl = String(result[0]);
-    } else if (result && typeof result === 'object') {
-      const out = result as Record<string, unknown>;
-      resultUrl = String(out.url || out.output || JSON.stringify(result));
-    } else {
-      resultUrl = String(result);
+      // Update job with result
+      await supabase
+        .from('propertypix_jobs')
+        .update({
+          enhanced_image: resultUrl,
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+        })
+        .eq('id', job.id);
+
+      // Deduct credit
+      if (userData) {
+        await supabase
+          .from('propertypix_users')
+          .update({
+            credits_remaining: Math.max(0, userData.credits_remaining - 1),
+            credits_used: userData.credits_used + 1,
+          })
+          .eq('id', user.id);
+      }
+
+      return NextResponse.json({
+        success: true,
+        output: resultUrl,
+        jobId: job.id,
+      });
+
+    } catch (enhanceError) {
+      console.error('Enhancement error:', enhanceError);
+      
+      // Update job as failed
+      await supabase
+        .from('propertypix_jobs')
+        .update({ status: 'failed' })
+        .eq('id', job.id);
+
+      throw enhanceError;
     }
-
-    return NextResponse.json({
-      success: true,
-      output: resultUrl,
-    });
 
   } catch (error) {
     console.error('Enhancement error:', error);

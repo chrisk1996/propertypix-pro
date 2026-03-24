@@ -1,11 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import { Header } from '@/components/Header';
-import { Check, Sparkles, Building2, Zap, Crown, ArrowRight } from 'lucide-react';
+import { Check, Sparkles, Zap, Crown, ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { createClient } from '@/utils/supabase/client';
 
 const plans = [
   {
+    id: 'free',
     name: 'Free',
     price: '€0',
     period: 'forever',
@@ -28,8 +31,9 @@ const plans = [
     popular: false,
   },
   {
+    id: 'pro',
     name: 'Pro',
-    price: '€19',
+    price: '€9',
     period: 'per month',
     description: 'For serious real estate professionals',
     icon: <Sparkles className="w-6 h-6" />,
@@ -49,6 +53,7 @@ const plans = [
     popular: true,
   },
   {
+    id: 'enterprise',
     name: 'Enterprise',
     price: '€99',
     period: 'per month',
@@ -68,16 +73,66 @@ const plans = [
     ],
     limitations: [],
     cta: 'Contact Sales',
-    ctaLink: '/auth',
+    ctaLink: 'mailto:sales@propertypix.pro',
     popular: false,
   },
 ];
 
 export default function PricingPage() {
+  const [loading, setLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const supabase = createClient();
+
+  const handleCheckout = async (planId: string) => {
+    if (planId === 'free') {
+      window.location.href = '/auth';
+      return;
+    }
+
+    if (planId === 'enterprise') {
+      window.location.href = 'mailto:sales@propertypix.pro?subject=Enterprise Plan Inquiry';
+      return;
+    }
+
+    setLoading(planId);
+    setError(null);
+
+    try {
+      // Check if user is logged in
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        // Redirect to auth with return URL
+        window.location.href = `/auth?redirect=/pricing&plan=${planId}`;
+        return;
+      }
+
+      // Create checkout session
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: planId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout');
+      }
+
+      // Redirect to Stripe Checkout
+      window.location.href = data.url;
+    } catch (err) {
+      console.error('Checkout error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to start checkout');
+    } finally {
+      setLoading(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* Header */}
         <div className="text-center mb-16">
@@ -88,6 +143,13 @@ export default function PricingPage() {
             Choose the plan that fits your needs. All plans include our core AI enhancement features.
           </p>
         </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="max-w-md mx-auto mb-8 bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-center">
+            {error}
+          </div>
+        )}
 
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
@@ -109,9 +171,13 @@ export default function PricingPage() {
               )}
 
               <div className="flex items-center gap-3 mb-4">
-                <div className={`p-2 rounded-lg ${
-                  plan.popular ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-600'
-                }`}>
+                <div
+                  className={`p-2 rounded-lg ${
+                    plan.popular
+                      ? 'bg-indigo-100 text-indigo-600'
+                      : 'bg-gray-100 text-gray-600'
+                  }`}
+                >
                   {plan.icon}
                 </div>
                 <h2 className="text-xl font-semibold text-gray-900">{plan.name}</h2>
@@ -141,106 +207,47 @@ export default function PricingPage() {
               </ul>
 
               {/* CTA Button */}
-              <Link
-                href={plan.ctaLink}
+              <button
+                onClick={() => handleCheckout(plan.id)}
+                disabled={loading !== null}
                 className={`w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all ${
                   plan.popular
                     ? 'bg-indigo-600 text-white hover:bg-indigo-700'
                     : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                }`}
+                } ${loading === plan.id ? 'opacity-75 cursor-wait' : ''}`}
               >
-                {plan.cta}
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+                {loading === plan.id ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    {plan.cta}
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
             </div>
           ))}
         </div>
 
-        {/* Comparison Table */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="px-8 py-6 border-b border-gray-200">
-            <h2 className="text-2xl font-bold text-gray-900">Feature Comparison</h2>
-          </div>
-          
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-8 py-4 text-left text-sm font-medium text-gray-500">Feature</th>
-                  <th className="px-6 py-4 text-center text-sm font-medium text-gray-500">Free</th>
-                  <th className="px-6 py-4 text-center text-sm font-medium text-indigo-600">Pro</th>
-                  <th className="px-6 py-4 text-center text-sm font-medium text-gray-500">Enterprise</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                <tr>
-                  <td className="px-8 py-4 text-gray-900">Enhancements/month</td>
-                  <td className="px-6 py-4 text-center text-gray-600">5</td>
-                  <td className="px-6 py-4 text-center font-medium text-indigo-600">100</td>
-                  <td className="px-6 py-4 text-center text-gray-600">Unlimited</td>
-                </tr>
-                <tr className="bg-gray-50">
-                  <td className="px-8 py-4 text-gray-900">Auto Enhance</td>
-                  <td className="px-6 py-4 text-center"><Check className="w-5 h-5 text-green-500 mx-auto" /></td>
-                  <td className="px-6 py-4 text-center"><Check className="w-5 h-5 text-green-500 mx-auto" /></td>
-                  <td className="px-6 py-4 text-center"><Check className="w-5 h-5 text-green-500 mx-auto" /></td>
-                </tr>
-                <tr>
-                  <td className="px-8 py-4 text-gray-900">Sky Replacement</td>
-                  <td className="px-6 py-4 text-center"><Check className="w-5 h-5 text-green-500 mx-auto" /></td>
-                  <td className="px-6 py-4 text-center"><Check className="w-5 h-5 text-green-500 mx-auto" /></td>
-                  <td className="px-6 py-4 text-center"><Check className="w-5 h-5 text-green-500 mx-auto" /></td>
-                </tr>
-                <tr className="bg-gray-50">
-                  <td className="px-8 py-4 text-gray-900">Virtual Staging</td>
-                  <td className="px-6 py-4 text-center text-gray-400">—</td>
-                  <td className="px-6 py-4 text-center"><Check className="w-5 h-5 text-green-500 mx-auto" /></td>
-                  <td className="px-6 py-4 text-center"><Check className="w-5 h-5 text-green-500 mx-auto" /></td>
-                </tr>
-                <tr>
-                  <td className="px-8 py-4 text-gray-900">Object Removal</td>
-                  <td className="px-6 py-4 text-center text-gray-400">—</td>
-                  <td className="px-6 py-4 text-center"><Check className="w-5 h-5 text-green-500 mx-auto" /></td>
-                  <td className="px-6 py-4 text-center"><Check className="w-5 h-5 text-green-500 mx-auto" /></td>
-                </tr>
-                <tr className="bg-gray-50">
-                  <td className="px-8 py-4 text-gray-900">HD Quality Output</td>
-                  <td className="px-6 py-4 text-center text-gray-400">—</td>
-                  <td className="px-6 py-4 text-center"><Check className="w-5 h-5 text-green-500 mx-auto" /></td>
-                  <td className="px-6 py-4 text-center"><Check className="w-5 h-5 text-green-500 mx-auto" /></td>
-                </tr>
-                <tr>
-                  <td className="px-8 py-4 text-gray-900">Priority Processing</td>
-                  <td className="px-6 py-4 text-center text-gray-400">—</td>
-                  <td className="px-6 py-4 text-center"><Check className="w-5 h-5 text-green-500 mx-auto" /></td>
-                  <td className="px-6 py-4 text-center"><Check className="w-5 h-5 text-green-500 mx-auto" /></td>
-                </tr>
-                <tr className="bg-gray-50">
-                  <td className="px-8 py-4 text-gray-900">API Access</td>
-                  <td className="px-6 py-4 text-center text-gray-400">—</td>
-                  <td className="px-6 py-4 text-center text-gray-400">—</td>
-                  <td className="px-6 py-4 text-center"><Check className="w-5 h-5 text-green-500 mx-auto" /></td>
-                </tr>
-                <tr>
-                  <td className="px-8 py-4 text-gray-900">Team Collaboration</td>
-                  <td className="px-6 py-4 text-center text-gray-400">—</td>
-                  <td className="px-6 py-4 text-center text-gray-400">—</td>
-                  <td className="px-6 py-4 text-center"><Check className="w-5 h-5 text-green-500 mx-auto" /></td>
-                </tr>
-                <tr className="bg-gray-50">
-                  <td className="px-8 py-4 text-gray-900">Custom Branding</td>
-                  <td className="px-6 py-4 text-center text-gray-400">—</td>
-                  <td className="px-6 py-4 text-center text-gray-400">—</td>
-                  <td className="px-6 py-4 text-center"><Check className="w-5 h-5 text-green-500 mx-auto" /></td>
-                </tr>
-                <tr>
-                  <td className="px-8 py-4 text-gray-900">Watermark-free</td>
-                  <td className="px-6 py-4 text-center text-gray-400">—</td>
-                  <td className="px-6 py-4 text-center"><Check className="w-5 h-5 text-green-500 mx-auto" /></td>
-                  <td className="px-6 py-4 text-center"><Check className="w-5 h-5 text-green-500 mx-auto" /></td>
-                </tr>
-              </tbody>
-            </table>
+        {/* Trust Badges */}
+        <div className="text-center mb-12">
+          <p className="text-gray-500 text-sm mb-4">Trusted by real estate professionals</p>
+          <div className="flex items-center justify-center gap-8 text-gray-400">
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-green-500" />
+              <span>Secure payments via Stripe</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-green-500" />
+              <span>Cancel anytime</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-green-500" />
+              <span>No hidden fees</span>
+            </div>
           </div>
         </div>
 
@@ -249,7 +256,10 @@ export default function PricingPage() {
           <h3 className="text-2xl font-bold text-gray-900 mb-4">Have Questions?</h3>
           <p className="text-gray-600 mb-6">
             Contact us at{' '}
-            <a href="mailto:support@propertypix.pro" className="text-indigo-600 hover:underline">
+            <a
+              href="mailto:support@propertypix.pro"
+              className="text-indigo-600 hover:underline"
+            >
               support@propertypix.pro
             </a>
           </p>
