@@ -237,7 +237,7 @@ export default function LandingPage() {
             </div>
             <div className="flex items-center gap-6 text-gray-400 text-sm">
               <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
-              <Link href="/enhance" className="hover:text-white transition-colors">Enhance</Link>
+              <Link href="/help" class="hover:text-white transition-colors">Help</Link> <Link href="/terms" class="hover:text-white transition-colors">Terms</Link> <Link href="/privacy" class="hover:text-white transition-colors">Privacy</Link> <Link href="/enhance" className="hover:text-white transition-colors">Enhance</Link>
               <a href="mailto:support@propertypix.pro" className="hover:text-white transition-colors">Contact</a>
             </div>
           </div>

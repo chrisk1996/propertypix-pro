@@ -1,6 +1,6 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
   "/api/checkout/route": "app/api/checkout/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
   "/api/credits/route": "app/api/credits/route.js",
   "/api/enhance/route": "app/api/enhance/route.js",
   "/api/floorplan/route": "app/api/floorplan/route.js",
@@ -9,9 +9,8 @@
   "/api/video/route": "app/api/video/route.js",
   "/api/webhooks/stripe/route": "app/api/webhooks/stripe/route.js",
   "/auth/callback/route": "app/auth/callback/route.js",
-  "/auth/login/page": "app/auth/login/page.js",
-  "/dashboard/page": "app/dashboard/page.js",
   "/auth/page": "app/auth/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
   "/enhance/page": "app/enhance/page.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
   "/floorplan/3d/page": "app/floorplan/3d/page.js",
@@ -19,7 +18,11 @@
   "/history/page": "app/history/page.js",
   "/page": "app/page.js",
   "/pricing/page": "app/pricing/page.js",
+  "/auth/login/page": "app/auth/login/page.js",
   "/settings/page": "app/settings/page.js",
   "/staging/page": "app/staging/page.js",
-  "/video/page": "app/video/page.js"
+  "/video/page": "app/video/page.js",
+  "/privacy/page": "app/privacy/page.js",
+  "/help/page": "app/help/page.js",
+  "/terms/page": "app/terms/page.js"
 }
