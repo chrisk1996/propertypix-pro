@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import { Header } from '@/components/Header';
-import { Upload, FileImage, Box, ArrowRight, Loader2 } from 'lucide-react';
+import { Upload, FileImage, Box, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function FloorPlanPage() {

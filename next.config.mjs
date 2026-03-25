@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  // Removed 'output: export' - app needs API routes which require server
   distDir: 'dist',
   images: {
     unoptimized: true,

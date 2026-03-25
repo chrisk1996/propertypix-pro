@@ -101,19 +101,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create job' }, { status: 500 });
     }
 
-    let prompt: string;
-    switch (enhancementType) {
-      case 'staging':
-        prompt = "furnished room, modern furniture, professional interior design, real estate photography, clean and bright, high quality";
-        break;
-      case 'sky':
-        prompt = "beautiful blue sky, sunny day, real estate exterior photography, clear weather, professional photo, high quality";
-        break;
-      case 'object_removal':
-        prompt = "clean room, professional real estate photography, empty space, organized, clean, high quality";
-        break;
-      default:
-        prompt = "professional real estate photography, enhanced, high quality, vibrant colors, sharp details, well-lit";
+    // Use custom prompt if provided (for virtual staging customization)
+    let prompt: string = body.customPrompt;
+    
+    if (!prompt) {
+      switch (enhancementType) {
+        case 'staging':
+          prompt = "furnished room, modern furniture, professional interior design, real estate photography, clean and bright, high quality";
+          break;
+        case 'sky':
+          prompt = "beautiful blue sky, sunny day, real estate exterior photography, clear weather, professional photo, high quality";
+          break;
+        case 'object_removal':
+          prompt = "clean room, professional real estate photography, empty space, organized, clean, high quality";
+          break;
+        default:
+          prompt = "professional real estate photography, enhanced, high quality, vibrant colors, sharp details, well-lit";
+      }
     }
 
     try {

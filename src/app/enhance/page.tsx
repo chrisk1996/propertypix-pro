@@ -1,8 +1,8 @@
-'use client';
+'use client'; import toast from 'react-hot-toast';
 
 import { useState, useRef, useCallback } from 'react';
 import { Header } from '@/components/Header';
-import { Upload, Sparkles, Download, RotateCcw, Sun, Contrast, Home, Check, Eraser, AlertCircle } from 'lucide-react';
+import { Upload, Sparkles, Download, RotateCcw, Sun, Home, Check, Eraser, AlertCircle } from 'lucide-react';
 
 type EnhancementType = 'auto' | 'sky' | 'staging' | 'object_removal';
 
@@ -113,10 +113,10 @@ export default function EnhancePage() {
       }
 
       setProgress(100);
-      setEnhancedImage(data.output);
+      setEnhancedImage(data.output); toast.success('Image enhanced successfully!');
     } catch (err) {
       clearInterval(progressInterval);
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : 'An error occurred'); toast.error(err instanceof Error ? err.message : 'An error occurred');
       setProgress(0);
     } finally {
       setIsProcessing(false);
@@ -369,7 +369,7 @@ export default function EnhancePage() {
                 {enhancedImage && (
                   <div className="mt-4 bg-indigo-50 rounded-lg p-4">
                     <p className="text-sm text-indigo-700">
-                      <strong>Tip:</strong> Drag the slider left and right to compare the before and after. Click "Download Result" to save the enhanced image.
+                      <strong>Tip:</strong> Drag the slider left and right to compare the before and after. Click &quot;Download Result&quot; to save the enhanced image.
                     </p>
                   </div>
                 )}

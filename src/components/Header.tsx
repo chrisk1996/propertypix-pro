@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Sparkles, Box, Menu, X } from 'lucide-react';
+import { Home, Sparkles, Box, Menu, X, Sofa } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -29,26 +29,27 @@ export function Header() {
               Enhance
             </Link>
             <Link
+              href="/staging"
+              className="flex items-center gap-1.5 text-gray-600 hover:text-purple-600 transition-colors"
+            >
+              <Sofa className="w-4 h-4" />
+              Virtual Staging
+            </Link>
+            <Link
               href="/floorplan"
               className="flex items-center gap-1.5 text-gray-600 hover:text-indigo-600 transition-colors"
             >
               <Box className="w-4 h-4" />
               Floor Plan 3D
             </Link>
-            <Link
-              href="/pricing"
-              className="text-gray-600 hover:text-indigo-600 transition-colors"
-            >
+            <Link href="/pricing" className="text-gray-600 hover:text-indigo-600 transition-colors">
               Pricing
             </Link>
           </nav>
 
           {/* Auth - Desktop */}
           <div className="hidden md:flex items-center gap-3">
-            <Link
-              href="/auth"
-              className="text-gray-600 hover:text-gray-900 transition-colors"
-            >
+            <Link href="/auth" className="text-gray-600 hover:text-gray-900 transition-colors">
               Sign in
             </Link>
             <Link
@@ -80,6 +81,14 @@ export function Header() {
             >
               <Sparkles className="w-4 h-4" />
               Enhance
+            </Link>
+            <Link
+              href="/staging"
+              className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <Sofa className="w-4 h-4" />
+              Virtual Staging
             </Link>
             <Link
               href="/floorplan"

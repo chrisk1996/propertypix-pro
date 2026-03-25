@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
-import { CreditCard, Download, Loader2, Check, AlertCircle } from 'lucide-react';
+import { CreditCard, Loader2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 

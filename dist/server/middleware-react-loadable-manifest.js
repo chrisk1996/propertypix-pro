@@ -1,1 +1,1 @@
-self.__REACT_LOADABLE_MANIFEST="{}"
+self.__REACT_LOADABLE_MANIFEST='{"../node_modules/@react-three/drei/core/VideoTexture.js -> hls.js":{"id":null,"files":[]},"../node_modules/@react-three/drei/web/FaceLandmarker.js -> @mediapipe/tasks-vision":{"id":null,"files":[]},"app/floorplan/3d/page.tsx -> @/components/FloorPlan3DViewer":{"id":5535,"files":["static/chunks/b536a0f1.292edb58760984f8.js","static/chunks/bd904a5c.013898b2d42012f6.js","static/chunks/0f8af13e.b4c09928e71d1a2e.js","static/chunks/513.e3fce445b7c2cac8.js","static/chunks/120.94bfe0f16e9729c4.js"]}}';

@@ -1,5 +1,25 @@
 {
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/checkout/route": "app/api/checkout/route.js",
+  "/api/credits/route": "app/api/credits/route.js",
+  "/api/enhance/route": "app/api/enhance/route.js",
+  "/api/floorplan/route": "app/api/floorplan/route.js",
+  "/api/portal/route": "app/api/portal/route.js",
+  "/api/staging/route": "app/api/staging/route.js",
+  "/api/video/route": "app/api/video/route.js",
+  "/api/webhooks/stripe/route": "app/api/webhooks/stripe/route.js",
+  "/auth/login/page": "app/auth/login/page.js",
+  "/auth/page": "app/auth/page.js",
+  "/auth/callback/route": "app/auth/callback/route.js",
   "/enhance/page": "app/enhance/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/floorplan/3d/page": "app/floorplan/3d/page.js",
+  "/floorplan/page": "app/floorplan/page.js",
+  "/history/page": "app/history/page.js",
   "/page": "app/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js"
+  "/pricing/page": "app/pricing/page.js",
+  "/settings/page": "app/settings/page.js",
+  "/staging/page": "app/staging/page.js",
+  "/video/page": "app/video/page.js"
 }
