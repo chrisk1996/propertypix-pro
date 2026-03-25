@@ -5,7 +5,7 @@ import Stripe from 'stripe';
 // Lazy-load Stripe to avoid build-time errors
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2023-10-16',
+    apiVersion: '2026-02-25.clover',
   });
 }
 
