@@ -1,10 +1,20 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
 export const createClient = (request: NextRequest) => {
+  // Get env vars with fallbacks
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  // If env vars are missing, return a basic response (auth won't work but site will load)
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing Supabase env vars in middleware');
+    return {
+      supabase: null,
+      response: NextResponse.next({ request: { headers: request.headers } })
+    };
+  }
+
   let supabaseResponse = NextResponse.next({
     request: {
       headers: request.headers,
