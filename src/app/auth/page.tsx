@@ -5,9 +5,11 @@ import { Header } from '@/components/Header';
 import { Mail, Lock, ArrowRight, Chrome, Home } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
 
 export default function AuthPage() {
   const router = useRouter();
+  const supabase = createClient();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,12 +38,24 @@ export default function AuthPage() {
 
     setIsLoading(true);
 
-    // TODO: Implement actual Supabase auth
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (isLogin) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (signInError) throw signInError;
+      } else {
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        if (signUpError) throw signUpError;
+      }
       router.push('/dashboard');
-    } catch {
-      setError('Authentication failed. Please try again.');
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Authentication failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -51,13 +65,17 @@ export default function AuthPage() {
     setError(null);
     setIsLoading(true);
 
-    // TODO: Implement actual Supabase Google OAuth
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      router.push('/dashboard');
-    } catch {
-      setError('Google authentication failed. Please try again.');
-    } finally {
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (oauthError) throw oauthError;
+      // OAuth will redirect, so we don't need to router.push here
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google authentication failed. Please try again.');
       setIsLoading(false);
     }
   };
@@ -65,7 +83,6 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
       <main className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
@@ -77,9 +94,7 @@ export default function AuthPage() {
             {isLogin ? 'Welcome back' : 'Create your account'}
           </h1>
           <p className="text-gray-600">
-            {isLogin
-              ? 'Sign in to access your PropertyPix Pro account'
-              : 'Start enhancing your property photos today'}
+            {isLogin ? 'Sign in to access your PropertyPix Pro account' : 'Start enhancing your property photos today'}
           </p>
         </div>
 
