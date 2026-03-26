@@ -132,7 +132,7 @@ export async function POST(request: NextRequest) {
             prompt: prompt,
             negative_prompt: "blurry, low quality, distorted, overexposed, underexposed, noisy, pixelated",
             num_inference_steps: 30,
-            prompt_strength: promptStrength,
+            prompt_strength: 0.35,
             guidance_scale: 7.5,
             refine: "expert_ensemble_refiner",
           },
