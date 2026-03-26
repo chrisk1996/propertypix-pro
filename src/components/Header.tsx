@@ -12,8 +12,8 @@ export function Header() {
 
   useEffect(() => {
     // Get initial user
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setUser({ email: user.email || '' });
+    supabase.auth.getUser().then(({ data }: { data: { user: { email: string } | null } }) => {
+      if (data.user) setUser({ email: data.user.email || '' });
     });
 
     // Listen for auth changes
