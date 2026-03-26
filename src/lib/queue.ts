@@ -64,7 +64,6 @@ export const videoQueue = new Queue<VideoJob>(QUEUES.VIDEO, {
       type: 'exponential',
       delay: 10000,
     },
-    timeout: 300000, // 5 minutes for video
     removeOnComplete: 50,
     removeOnFail: 25,
   },
