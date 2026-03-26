@@ -97,8 +97,8 @@ export async function POST(request: NextRequest) {
       .from('propertypix_jobs')
       .insert({
         user_id: user.id,
-        original_image: image.substring(0, 500), // Store truncated reference
-        enhancement_type: 'video',
+        input_url: image.substring(0, 500), // Store truncated reference
+        job_type: 'video',
         status: 'processing',
       })
       .select()
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
       await supabase
         .from('propertypix_jobs')
         .update({
-          enhanced_image: videoUrl,
+          output_url: videoUrl,
           status: 'completed',
           completed_at: new Date().toISOString(),
         })
