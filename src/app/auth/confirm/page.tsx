@@ -15,7 +15,7 @@ export default function AuthCallbackPage() {
 
     if (code) {
       const supabase = createClient();
-      supabase.auth.exchangeCodeForSession(code).then(({ error: exchangeError }) => {
+      supabase.auth.exchangeCodeForSession(code).then(({ error: exchangeError }: { error: { message: string } | null }) => {
         if (exchangeError) {
           setError(exchangeError.message);
         } else {
