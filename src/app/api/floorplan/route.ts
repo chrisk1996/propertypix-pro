@@ -221,7 +221,7 @@ Use coordinates where each unit = 1 meter. Start rooms from origin (0,0) and arr
     
     // Use LLaVA-13B for vision analysis
     const result = await replicate.run(
-      "yorickvp/llava-13b:80537f2ee1233e5c8be9d01d2e6a8f4a3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9",
+      "yorickvp/llava-13b:2facb4a474a0462c15041b78b1ad70952ea46b5ec6ad29583c0b29dbd4249591",
       {
         input: {
           image: image,
