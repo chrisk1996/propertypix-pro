@@ -3,6 +3,7 @@ import Replicate from 'replicate';
 
 // Force dynamic rendering - uses cookies/auth
 export const dynamic = 'force-dynamic';
+
 import { createClient } from '@/utils/supabase/server';
 
 const replicate = new Replicate({
@@ -26,7 +27,7 @@ function checkRateLimit(ip: string): boolean {
   }
   record.count++;
   return true;
-// }
+}
 
 interface Room {
   name: string;
@@ -35,25 +36,25 @@ interface Room {
   width: number;
   height: number;
   type: string;
-// }
+}
 
 interface Wall {
   start: [number, number];
   end: [number, number];
   type: 'exterior' | 'interior';
-// }
+}
 
 interface Door {
   position: [number, number];
   rotation: number;
   room: string;
-// }
+}
 
 interface Window {
   position: [number, number];
   width: number;
   wall: 'exterior';
-// }
+}
 
 interface FloorPlanData {
   rooms: Room[];
@@ -63,7 +64,7 @@ interface FloorPlanData {
   totalArea: number;
   bedroomCount: number;
   bathroomCount: number;
-// }
+}
 
 // Parse the vision model's text response into structured data
 function parseFloorPlanAnalysis(analysisText: string): FloorPlanData {
@@ -109,20 +110,20 @@ function parseFloorPlanAnalysis(analysisText: string): FloorPlanData {
   try {
     const bedroomMatch = analysisText.match(/(\d+)\s*(?:bedroom|bed)/i);
     const bathroomMatch = analysisText.match(/(\d+)\s*(?:bathroom|bath)/i);
-    
+
     if (bedroomMatch || bathroomMatch) {
       const bedroomCount = bedroomMatch ? parseInt(bedroomMatch[1]) : 1;
       const bathroomCount = bathroomMatch ? parseInt(bathroomMatch[1]) : 1;
-      
+
       // Generate rooms based on counts
       const rooms: Room[] = [];
       let currentY = 0;
-      
+
       // Add living room
       rooms.push({ name: 'Living Room', x: 0, y: 0, width: 5, height: 4, type: 'living' });
       rooms.push({ name: 'Kitchen', x: 5, y: 0, width: 3, height: 4, type: 'kitchen' });
       currentY = 4;
-      
+
       // Add bedrooms
       for (let i = 1; i <= bedroomCount; i++) {
         rooms.push({
@@ -135,7 +136,7 @@ function parseFloorPlanAnalysis(analysisText: string): FloorPlanData {
         });
       }
       currentY += 3.5;
-      
+
       // Add bathrooms
       for (let i = 1; i <= bathroomCount; i++) {
         rooms.push({
@@ -163,14 +164,12 @@ function parseFloorPlanAnalysis(analysisText: string): FloorPlanData {
   }
 
   return defaultData;
-// }
+}
 
 export async function POST(request: NextRequest) {
   try {
     // Get client IP for rate limiting
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-               request.headers.get('x-real-ip') ||
-               'unknown';
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown';
 
     if (!checkRateLimit(ip)) {
       return NextResponse.json(
@@ -184,9 +183,9 @@ export async function POST(request: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     // Auth is optional for floor plan analysis - allow anonymous demo usage
-  // if (authError || !user) {
-      // return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    // if (authError || !user) {
+    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // }
 
     const body = await request.json();
     const { image } = body;
@@ -214,13 +213,12 @@ Respond with a JSON object in this exact format:
   "totalArea": 50,
   "bedroomCount": 2,
   "bathroomCount": 1
-// }
-
+}
 Use coordinates where each unit = 1 meter. Start rooms from origin (0,0) and arrange logically.`;
 
     console.log('Analyzing floor plan with vision model...');
-    
-    // Use LLaVA-13B for vision analysis
+
+    // Use LLaVA-13B for vision analysis (latest version)
     const result = await replicate.run(
       "yorickvp/llava-13b:80537f9eead1a5bfa72d5ac6ea6414379be41d4d4f6679fd776e9535d1eb58bb",
       {
@@ -252,7 +250,7 @@ Use coordinates where each unit = 1 meter. Start rooms from origin (0,0) and arr
     // Generate 3D model metadata
     const modelMetadata = {
       analyzedAt: new Date().toISOString(),
-      userId: user.id,
+      userId: user?.id || 'anonymous',
       modelUsed: 'llava-13b',
       rawAnalysis: analysisText.substring(0, 1000),
     };
@@ -266,14 +264,13 @@ Use coordinates where each unit = 1 meter. Start rooms from origin (0,0) and arr
       },
       message: 'Floor plan analyzed successfully. 3D model data ready for rendering.',
     });
-
   } catch (error) {
     console.error('Floor plan processing error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to process floor plan';
-    
+
     // Log full error for debugging
     console.error('Full error details:', JSON.stringify(error, null, 2));
-    
+
     // If vision model fails, return fallback data so UI still works
     if (errorMessage.includes('model') || errorMessage.includes('replicate') || errorMessage.includes('404') || errorMessage.includes('version')) {
       console.warn('Vision model failed, returning fallback data. Error:', errorMessage);
@@ -308,4 +305,4 @@ Use coordinates where each unit = 1 meter. Start rooms from origin (0,0) and arr
       { status: 500 }
     );
   }
-// }
+}
