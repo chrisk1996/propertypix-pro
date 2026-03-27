@@ -9,8 +9,11 @@ export async function GET() {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
+    console.log('Credits API - Auth check:', { userId: user?.id, authError: authError?.message });
+
     if (authError || !user) {
-      return NextResponse.json({ 
+      console.log('Credits API - No user, returning defaults');
+      return NextResponse.json({
         credits: 0,
         plan: 'free',
         used: 0,
@@ -23,24 +26,32 @@ export async function GET() {
       .eq('id', user.id)
       .single();
 
+    console.log('Credits API - Query result:', { userData, error: error?.message, code: error?.code });
+
     if (error || !userData) {
-      return NextResponse.json({ 
+      console.log('Credits API - Query failed, returning fallback');
+      return NextResponse.json({
         credits: 5,
         plan: 'free',
         used: 0,
       });
     }
 
-    return NextResponse.json({ 
+    console.log('Credits API - Returning:', {
+      credits: userData.credits_remaining,
+      used: userData.credits_used,
+      plan: userData.plan
+    });
+
+    return NextResponse.json({
       credits: userData.plan === 'enterprise' ? 999999 : userData.credits_remaining,
       plan: userData.plan,
       used: userData.credits_used,
       status: userData.plan_status,
     });
-
   } catch (error) {
     console.error('Credits error:', error);
-    return NextResponse.json({ 
+    return NextResponse.json({
       credits: 5,
       plan: 'free',
       used: 0,
