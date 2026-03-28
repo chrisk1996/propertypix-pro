@@ -22,13 +22,19 @@ interface PlacedFurnitureProps {
 
 // GLTF Model Component
 function GLTFModel({ path, scale }: { path: string; scale: number }) {
-  const { scene } = useGLTF(path);
-  const clonedScene = scene.clone();
-  
-  // Apply scale
-  clonedScene.scale.setScalar(scale * 0.5); // Kenney models are ~2m, scale down
-  
-  return <primitive object={clonedScene} />;
+  try {
+    const { scene } = useGLTF(path);
+    const clonedScene = scene.clone();
+    
+    // Apply scale - Kenney models are ~2m, scale down
+    clonedScene.scale.setScalar(scale * 0.5);
+    clonedScene.position.set(0, 0, 0);
+    
+    return <primitive object={clonedScene} />;
+  } catch (e) {
+    console.error('Error loading GLTF model:', path, e);
+    return null;
+  }
 }
 
 // Fallback box geometry when GLTF fails or not available
