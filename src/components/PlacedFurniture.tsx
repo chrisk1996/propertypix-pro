@@ -103,6 +103,14 @@ function FurnitureMesh({ piece }: { piece: PlacedFurniturePiece }) {
   const { width, height, depth } = furniture.dimensions;
   const scaledHeight = height * scale;
 
+  // Debug logging
+  console.log('FurnitureMesh:', {
+    id: furniture.id,
+    useGLTF: furniture.useGLTF,
+    modelPath: furniture.modelPath,
+    willUseGLTF: furniture.useGLTF && furniture.modelPath
+  });
+
   if (furniture.useGLTF && furniture.modelPath) {
     return (
       <Suspense fallback={
