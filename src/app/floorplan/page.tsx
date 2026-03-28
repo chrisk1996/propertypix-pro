@@ -189,13 +189,29 @@ export default function FloorPlanPage() {
  onSelectFurniture={setSelectedFurnitureItem} 
  />
  {selectedPieceId && (
+ <div className="mt-2 space-y-2">
+ <div className="flex gap-2">
+ <button 
+ onClick={() => handleFurnitureUpdate(selectedPieceId, { rotation: (placedFurniture.find(p => p.id === selectedPieceId)?.rotation || 0) - Math.PI / 4 })}
+ className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+ >
+ ↺ Left
+ </button>
+ <button 
+ onClick={() => handleFurnitureUpdate(selectedPieceId, { rotation: (placedFurniture.find(p => p.id === selectedPieceId)?.rotation || 0) + Math.PI / 4 })}
+ className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+ >
+ ↻ Right
+ </button>
+ </div>
  <button 
  onClick={handleDeleteSelected}
- className="mt-2 w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+ className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
  >
  <Trash2 className="w-4 h-4" />
- Delete Selected
+ Delete
  </button>
+ </div>
  )}
  </div>
  )}
