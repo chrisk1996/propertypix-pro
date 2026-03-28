@@ -79,27 +79,36 @@ export default function FurnitureLibrary({ selectedFurniture, onSelectFurniture,
   if (compact) {
     return (
       <div className="flex gap-2 items-center overflow-x-auto pb-2">
-        {FURNITURE_LIBRARY.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => onSelectFurniture(selectedFurniture?.id === item.id ? null : item)}
-            className={`flex-shrink-0 w-20 p-2 rounded-lg border-2 transition-all ${
-              selectedFurniture?.id === item.id
-                ? 'border-blue-600 bg-blue-50'
-                : 'border-transparent bg-slate-100 hover:border-slate-300'
-            }`}
-          >
-            <div
-              className="w-12 h-12 mx-auto rounded-lg mb-1 flex items-center justify-center"
-              style={{ backgroundColor: item.color }}
+        {FURNITURE_LIBRARY.map((item) => {
+          const iconMap: Record<string, string> = {
+            'living': 'weekend',
+            'bedroom': 'bed',
+            'kitchen': 'table_restaurant',
+            'bathroom': 'bathtub',
+            'office': 'desk',
+          };
+          const icon = iconMap[item.category] || 'chair';
+          
+          return (
+            <button
+              key={item.id}
+              onClick={() => onSelectFurniture(selectedFurniture?.id === item.id ? null : item)}
+              className={`flex-shrink-0 w-20 p-2 rounded-lg border-2 transition-all ${
+                selectedFurniture?.id === item.id
+                  ? 'border-blue-600 bg-blue-50'
+                  : 'border-transparent bg-slate-100 hover:border-slate-300'
+              }`}
             >
-              <span className="text-white text-xs font-bold">
-                {item.name.slice(0, 2).toUpperCase()}
-              </span>
-            </div>
-            <p className="text-xs font-medium text-center truncate">{item.name}</p>
-          </button>
-        ))}
+              <div
+                className="w-12 h-12 mx-auto rounded-lg mb-1 flex items-center justify-center"
+                style={{ backgroundColor: item.color }}
+              >
+                <span className="material-symbols-outlined text-white text-xl">{icon}</span>
+              </div>
+              <p className="text-xs font-medium text-center truncate">{item.name}</p>
+            </button>
+          );
+        })}
       </div>
     );
   }
