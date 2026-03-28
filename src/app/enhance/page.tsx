@@ -1,383 +1,225 @@
-'use client'; import toast from 'react-hot-toast';
+'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { Header } from '@/components/Header';
-import { Upload, Sparkles, Download, RotateCcw, Sun, Home, Check, Eraser, AlertCircle } from 'lucide-react';
+import { AppLayout } from '@/components/layout';
 
-type EnhancementType = 'auto' | 'sky' | 'staging' | 'object_removal';
+type EnhancementTool = 'auto-lighting' | 'denoise' | 'sky-replacement' | null;
+type StagingRoom = 'living-room' | 'bedroom' | 'dining' | 'home-office' | null;
 
-interface Enhancement {
-  id: string;
-  name: string;
-  label: string;
-  icon: React.ReactNode;
-  description: string;
-}
+const enhancementTools = [
+  { id: 'auto-lighting' as const, icon: 'light_mode', label: 'Auto-Lighting', description: 'Perfect exposure balance' },
+  { id: 'denoise' as const, icon: 'grain', label: 'Denoise & Sharp', description: 'Crystal clear detail' },
+  { id: 'sky-replacement' as const, icon: 'wb_twilight', label: 'Sky Replacement', description: 'Dramatic sky transforms' },
+];
 
-const enhancements: Enhancement[] = [
-  { id: 'auto', name: 'auto', label: 'Auto Enhance', icon: <Sparkles className="w-5 h-5" />, description: 'AI-powered one-click enhancement' },
-  { id: 'sky', name: 'sky', label: 'Sky Replace', icon: <Sun className="w-5 h-5" />, description: 'Replace dull skies with beautiful ones' },
-  { id: 'staging', name: 'staging', label: 'Virtual Staging', icon: <Home className="w-5 h-5" />, description: 'Add virtual furniture to empty rooms' },
-  { id: 'object_removal', name: 'object_removal', label: 'Object Removal', icon: <Eraser className="w-5 h-5" />, description: 'Remove unwanted objects from photos' },
+const stagingRooms = [
+  { id: 'living-room' as const, icon: 'weekend', label: 'Living Room' },
+  { id: 'bedroom' as const, icon: 'bed', label: 'Bedroom' },
+  { id: 'dining' as const, icon: 'table_restaurant', label: 'Dining' },
+  { id: 'home-office' as const, icon: 'desk', label: 'Home Office' },
+];
+
+const mockFurniture = [
+  { id: '1', name: 'Modern Sofa', category: 'Seating' },
+  { id: '2', name: 'Accent Chair', category: 'Seating' },
+  { id: '3', name: 'Coffee Table', category: 'Tables' },
+  { id: '4', name: 'Floor Lamp', category: 'Lighting' },
+  { id: '5', name: 'Plant Stand', category: 'Decor' },
+  { id: '6', name: 'Bookshelf', category: 'Storage' },
 ];
 
 export default function EnhancePage() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [enhancedImage, setEnhancedImage] = useState<string | null>(null);
-  const [selectedEnhancement, setSelectedEnhancement] = useState<EnhancementType>('auto');
+  const [selectedTool, setSelectedTool] = useState<EnhancementTool>(null);
+  const [selectedRoom, setSelectedRoom] = useState<StagingRoom>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const [sliderPosition, setSliderPosition] = useState(50);
-  const [isSliderDragging, setIsSliderDragging] = useState(false);
-  
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const sliderRef = useRef<HTMLDivElement>(null);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
-      processFile(file);
-    }
-  }, []);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      processFile(file);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setUploadedImage(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  const processFile = (file: File) => {
-    if (file.size > 10 * 1024 * 1024) {
-      setError('File size must be less than 10MB');
-      return;
-    }
-
-    setError(null);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setUploadedImage(event.target?.result as string);
-      setEnhancedImage(null);
-      setProgress(0);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleEnhance = async () => {
-    if (!uploadedImage) return;
-
+  const handleEnhance = () => {
+    if (!uploadedImage || !selectedTool) return;
     setIsProcessing(true);
-    setProgress(0);
-    setError(null);
-
-    // Simulate progress for UX
-    const progressInterval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 90) {
-          clearInterval(progressInterval);
-          return 90;
-        }
-        return prev + Math.random() * 15;
-      });
-    }, 500);
-
-    try {
-      const response = await fetch('/api/enhance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          image: uploadedImage,
-          enhancementType: selectedEnhancement,
-        }),
-      });
-
-      const data = await response.json();
-      clearInterval(progressInterval);
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to enhance image');
-      }
-
-      setProgress(100);
-      setEnhancedImage(data.output); toast.success('Image enhanced successfully!');
-    } catch (err) {
-      clearInterval(progressInterval);
-      setError(err instanceof Error ? err.message : 'An error occurred'); toast.error(err instanceof Error ? err.message : 'An error occurred');
-      setProgress(0);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleDownload = async () => {
-    if (!enhancedImage) return;
-
-    try {
-      const response = await fetch(enhancedImage);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `enhanced-${Date.now()}.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-    } catch {
-      // Fallback: open in new tab
-      window.open(enhancedImage, '_blank');
-    }
-  };
-
-  const handleSliderMove = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
-    if (!sliderRef.current || !isSliderDragging) return;
-    
-    const rect = sliderRef.current.getBoundingClientRect();
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const x = clientX - rect.left;
-    const percentage = (x / rect.width) * 100;
-    setSliderPosition(Math.max(0, Math.min(100, percentage)));
-  };
-
-  const startSliderDrag = () => setIsSliderDragging(true);
-  const stopSliderDrag = () => setIsSliderDragging(false);
-
-  const resetUpload = () => {
-    setUploadedImage(null);
-    setEnhancedImage(null);
-    setProgress(0);
-    setError(null);
-    setSliderPosition(50);
+    setTimeout(() => setIsProcessing(false), 2000);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Photo Enhancement</h1>
-          <p className="text-gray-600">Upload your property photos and enhance them with AI</p>
+    <AppLayout title="Image Enhancer">
+      <div className="flex h-[calc(100vh-5rem)]">
+        {/* Left Sidebar - AI Enhancement Tools */}
+        <div className="w-72 shrink-0 border-r border-slate-200 bg-white overflow-y-auto">
+          <div className="p-6">
+            <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-slate-900 text-sm mb-1">AI Enhancement</h3>
+            <p className="text-slate-500 text-xs mb-4">Studio-grade image processing</p>
+            
+            <div className="space-y-2">
+              {enhancementTools.map((tool) => (
+                <button
+                  key={tool.id}
+                  onClick={() => setSelectedTool(tool.id)}
+                  disabled={!uploadedImage || isProcessing}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                    selectedTool === tool.id
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                      : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  <span className="material-symbols-outlined">{tool.icon}</span>
+                  <div className="text-left">
+                    <div className="font-semibold text-sm">{tool.label}</div>
+                    <div className="text-xs opacity-75">{tool.description}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {selectedTool && uploadedImage && (
+              <button
+                onClick={handleEnhance}
+                disabled={isProcessing}
+                className="w-full mt-4 py-3 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 transition-colors disabled:opacity-50"
+              >
+                {isProcessing ? 'Processing...' : 'Apply Enhancement'}
+              </button>
+            )}
+          </div>
+
+          {/* Virtual Staging Section */}
+          <div className="p-6 border-t border-slate-200">
+            <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-slate-900 text-sm mb-1">Virtual Staging</h3>
+            <p className="text-slate-500 text-xs mb-4">AI furniture placement</p>
+            
+            <div className="grid grid-cols-2 gap-2">
+              {stagingRooms.map((room) => (
+                <button
+                  key={room.id}
+                  onClick={() => setSelectedRoom(room.id)}
+                  disabled={!uploadedImage}
+                  className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-all ${
+                    selectedRoom === room.id
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  <span className="material-symbols-outlined">{room.icon}</span>
+                  <span className="text-xs font-semibold">{room.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Error Display */}
-        {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-red-800 font-medium">Error</p>
-              <p className="text-red-700 text-sm">{error}</p>
+        {/* Center - Photo Canvas */}
+        <div className="flex-1 bg-slate-100 flex items-center justify-center p-8">
+          {!uploadedImage ? (
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full max-w-2xl aspect-video bg-white rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-blue-500 hover:bg-blue-50/50 transition-all"
+            >
+              <span className="material-symbols-outlined text-5xl text-slate-400">add_photo_alternate</span>
+              <div className="text-center">
+                <p className="font-semibold text-slate-700">Drop your image here</p>
+                <p className="text-sm text-slate-500">or click to browse</p>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
             </div>
-          </div>
-        )}
-
-        {/* Upload Area */}
-        {!uploadedImage && (
-          <div
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all duration-200 ${
-              isDragging
-                ? 'border-indigo-500 bg-indigo-50 scale-[1.02]'
-                : 'border-gray-300 hover:border-indigo-400 hover:bg-indigo-50/50'
-            }`}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <div className="w-16 h-16 bg-indigo-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-              <Upload className="w-8 h-8 text-indigo-600" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Upload your photo</h3>
-            <p className="text-gray-500 mb-4">Drag and drop or click to browse</p>
-            <p className="text-sm text-gray-400">Supports JPG, PNG, WebP up to 10MB</p>
-          </div>
-        )}
-
-        {/* Enhancement Interface */}
-        {uploadedImage && (
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Enhancement Options Sidebar */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-4">
-                <h3 className="font-semibold text-gray-900 mb-4">Enhancement Type</h3>
-                <div className="space-y-2">
-                  {enhancements.map((enhancement) => (
-                    <button
-                      key={enhancement.id}
-                      onClick={() => setSelectedEnhancement(enhancement.id as EnhancementType)}
-                      disabled={isProcessing}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${
-                        selectedEnhancement === enhancement.id
-                          ? 'bg-indigo-50 border-2 border-indigo-500 text-indigo-700'
-                          : 'bg-gray-50 border-2 border-transparent text-gray-700 hover:bg-gray-100'
-                      } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                      <div className={selectedEnhancement === enhancement.id ? 'text-indigo-600' : 'text-gray-400'}>
-                        {enhancement.icon}
-                      </div>
-                      <div className="text-left">
-                        <div className="font-medium">{enhancement.label}</div>
-                        <div className="text-xs text-gray-500">{enhancement.description}</div>
-                      </div>
-                      {selectedEnhancement === enhancement.id && <Check className="w-5 h-5 text-indigo-600 ml-auto" />}
-                    </button>
-                  ))}
+          ) : (
+            <div className="relative w-full max-w-4xl">
+              <img
+                src={uploadedImage}
+                alt="Uploaded"
+                className="w-full rounded-2xl shadow-2xl"
+              />
+              {isProcessing && (
+                <div className="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center">
+                  <div className="bg-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3">
+                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                    <span className="font-semibold text-slate-700">Processing...</span>
+                  </div>
                 </div>
+              )}
+              <button
+                onClick={() => setUploadedImage(null)}
+                className="absolute top-4 right-4 bg-white/90 backdrop-blur p-2 rounded-full shadow-lg hover:bg-white transition-colors"
+              >
+                <span className="material-symbols-outlined text-slate-600">close</span>
+              </button>
+            </div>
+          )}
+        </div>
 
-                {/* Enhance Button */}
-                <button
-                  onClick={handleEnhance}
-                  disabled={isProcessing}
-                  className={`w-full mt-6 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all ${
-                    isProcessing
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                  }`}
-                >
-                  {isProcessing ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Enhancing...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-5 h-5" />
-                      Enhance Photo
-                    </>
-                  )}
-                </button>
-
-                {/* Progress Bar */}
-                {isProcessing && (
-                  <div className="mt-4">
-                    <div className="flex justify-between text-sm text-gray-600 mb-1">
-                      <span>Processing</span>
-                      <span>{Math.round(progress)}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Action Buttons */}
-                {enhancedImage && !isProcessing && (
-                  <div className="mt-4 space-y-2">
-                    <button
-                      onClick={handleDownload}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      <Download className="w-4 h-4" />
-                      Download Result
-                    </button>
-                    <button
-                      onClick={resetUpload}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                      Upload New Photo
-                    </button>
-                  </div>
-                )}
-              </div>
+        {/* Right Panel - Catalog */}
+        <div className="w-80 shrink-0 border-l border-slate-200 bg-white overflow-y-auto">
+          <div className="p-6">
+            <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-slate-900 text-sm mb-4">Furniture Catalog</h3>
+            
+            <div className="relative mb-4">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+              <input
+                type="text"
+                placeholder="Search furniture..."
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-lg text-sm focus:ring-2 focus:ring-blue-200"
+              />
             </div>
 
-            {/* Image Comparison Area */}
-            <div className="lg:col-span-3">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                {!enhancedImage ? (
-                  /* Single Image Display */
-                  <div className="relative">
-                    <img src={uploadedImage} alt="Uploaded property" className="w-full h-auto rounded-lg" />
-                    <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-sm font-medium">
-                      Original
-                    </div>
-                  </div>
-                ) : (
-                  /* Before/After Comparison Slider */
-                  <div
-                    ref={sliderRef}
-                    className="relative overflow-hidden rounded-lg cursor-ew-resize select-none"
-                    onMouseDown={startSliderDrag}
-                    onMouseUp={stopSliderDrag}
-                    onMouseLeave={stopSliderDrag}
-                    onMouseMove={handleSliderMove}
-                    onTouchStart={startSliderDrag}
-                    onTouchEnd={stopSliderDrag}
-                    onTouchMove={handleSliderMove}
-                  >
-                    {/* After Image (Bottom Layer) */}
-                    <div className="relative">
-                      <img src={enhancedImage} alt="Enhanced property" className="w-full h-auto" />
-                      <div className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5">
-                        <Sparkles className="w-4 h-4" />
-                        Enhanced
-                      </div>
-                    </div>
-
-                    {/* Before Image (Top Layer with clip) */}
-                    <div
-                      className="absolute inset-0 overflow-hidden"
-                      style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
-                    >
-                      <img src={uploadedImage} alt="Original property" className="w-full h-auto" />
-                      <div className="absolute top-4 left-4 bg-black/50 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-sm font-medium">
-                        Original
-                      </div>
-                    </div>
-
-                    {/* Slider Handle */}
-                    <div
-                      className="absolute top-0 bottom-0 w-1 bg-white shadow-lg"
-                      style={{ left: `${sliderPosition}%`, transform: 'translateX(-50%)' }}
-                    >
-                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center">
-                        <div className="flex gap-0.5">
-                          <div className="w-0.5 h-4 bg-gray-400 rounded-full" />
-                          <div className="w-0.5 h-4 bg-gray-400 rounded-full" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Tips */}
-                {enhancedImage && (
-                  <div className="mt-4 bg-indigo-50 rounded-lg p-4">
-                    <p className="text-sm text-indigo-700">
-                      <strong>Tip:</strong> Drag the slider left and right to compare the before and after. Click &quot;Download Result&quot; to save the enhanced image.
-                    </p>
-                  </div>
-                )}
-              </div>
+            <div className="grid grid-cols-2 gap-3">
+              {mockFurniture.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-slate-50 rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer hover:bg-blue-50 hover:ring-2 hover:ring-blue-200 transition-all"
+                >
+                  <span className="material-symbols-outlined text-2xl text-slate-600">chair</span>
+                  <span className="text-xs font-semibold text-slate-700 text-center">{item.name}</span>
+                  <span className="text-[10px] text-slate-500">{item.category}</span>
+                </div>
+              ))}
             </div>
           </div>
-        )}
-      </main>
-    </div>
+
+          {/* Scene Layers */}
+          <div className="p-6 border-t border-slate-200">
+            <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-slate-900 text-sm mb-4">Scene Objects</h3>
+            
+            <div className="space-y-2">
+              <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                <span className="material-symbols-outlined text-sm text-blue-600">visibility</span>
+                <span className="text-sm font-medium flex-1">Original Photo</span>
+                <span className="material-symbols-outlined text-sm text-slate-400">lock</span>
+              </div>
+              {uploadedImage && (
+                <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                  <span className="material-symbols-outlined text-sm text-blue-600">visibility</span>
+                  <span className="text-sm font-medium flex-1">Enhancement Layer</span>
+                  <span className="material-symbols-outlined text-sm text-slate-400">more_vert</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Smart Layout Generator */}
+          <div className="p-6 border-t border-slate-200">
+            <button className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-black transition-colors flex items-center justify-center gap-2">
+              <span className="material-symbols-outlined">auto_awesome_motion</span>
+              Smart Layout Generator
+            </button>
+          </div>
+        </div>
+      </div>
+    </AppLayout>
   );
 }
