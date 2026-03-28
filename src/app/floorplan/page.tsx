@@ -65,7 +65,7 @@ export default function FloorPlanPage() {
   const [selectedModel, setSelectedModel] = useState<'llava' | 'llama32'>('llama32');
   const [cameraPreset, setCameraPreset] = useState<'perspective' | 'top' | 'front' | 'side' | 'walkthrough'>('perspective');
   const [lightingMode, setLightingMode] = useState<'day' | 'night'>('day');
-  const [isFirstPerson, setIsFirstPerson] = useState(false); const [placedFurniture, setPlacedFurniture] = useState<PlacedFurniturePiece[]>([]); const [selectedFurnitureItem, setSelectedFurnitureItem] = useState<FurnitureItem | null>(null); const [selectedPieceId, setSelectedPieceId] = useState<string | null>(null);
+  const [isFirstPerson, setIsFirstPerson] = useState(false); const [viewMode, setViewMode] = useState<'3d' | '2d'>('3d'); const [placedFurniture, setPlacedFurniture] = useState<PlacedFurniturePiece[]>([]); const [selectedFurnitureItem, setSelectedFurnitureItem] = useState<FurnitureItem | null>(null); const [selectedPieceId, setSelectedPieceId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -354,6 +354,14 @@ export default function FloorPlanPage() {
               <h2 className="text-lg font-semibold text-gray-900">3D Model</h2>
  {floorPlanData && (
  <div className="flex gap-2">
+ <div className="flex gap-1">
+ <button
+ onClick={() => setViewMode(viewMode === '3d' ? '2d' : '3d')}
+ className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${viewMode === '2d' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+ >
+ {viewMode === '3d' ? '2D View' : '3D View'}
+ </button>
+ </div>
  <div className="flex gap-1">
  {[
  { key: 'perspective', label: '3D' },
