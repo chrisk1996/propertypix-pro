@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import { Header } from '@/components/Header';
-import { Upload, FileImage, Box, Loader2, Download, RotateCcw, Camera, Sun, Moon, Eye } from 'lucide-react';
+import { Upload, FileImage, Box, Loader2, Download, RotateCcw, Camera, Sun, Moon, Eye, Trash2 } from 'lucide-react'; import FurnitureLibrary, { type FurnitureItem } from '@/components/FurnitureLibrary'; import type { PlacedFurniturePiece } from '@/components/PlacedFurniture';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 
@@ -65,7 +65,7 @@ export default function FloorPlanPage() {
   const [selectedModel, setSelectedModel] = useState<'llava' | 'llama32'>('llama32');
   const [cameraPreset, setCameraPreset] = useState<'perspective' | 'top' | 'front' | 'side' | 'walkthrough'>('perspective');
   const [lightingMode, setLightingMode] = useState<'day' | 'night'>('day');
-  const [isFirstPerson, setIsFirstPerson] = useState(false);
+  const [isFirstPerson, setIsFirstPerson] = useState(false); const [placedFurniture, setPlacedFurniture] = useState<PlacedFurniturePiece[]>([]); const [selectedFurnitureItem, setSelectedFurnitureItem] = useState<FurnitureItem | null>(null); const [selectedPieceId, setSelectedPieceId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -158,7 +158,7 @@ export default function FloorPlanPage() {
     setError(null);
   };
 
-  const handleExportGLB = () => {
+  const handleFurniturePlace = useCallback((position: [number, number, number]) => { if (!selectedFurnitureItem) return; const newPiece: PlacedFurniturePiece = { id: `${selectedFurnitureItem.id}-${Date.now()}`, furniture: selectedFurnitureItem, position, rotation: 0, scale: 1 }; setPlacedFurniture(prev => [...prev, newPiece]); }, [selectedFurnitureItem]); const handleFurnitureSelect = useCallback((id: string) => { setSelectedPieceId(id); }, []); const handleFurnitureUpdate = useCallback((id: string, updates: Partial<PlacedFurniturePiece>) => { setPlacedFurniture(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p)); }, []); const handleDeleteSelected = useCallback(() => { if (selectedPieceId) { setPlacedFurniture(prev => prev.filter(p => p.id !== selectedPieceId)); setSelectedPieceId(null); } }, [selectedPieceId]); const handleExportGLB = () => {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('export-glb'));
     }
@@ -182,7 +182,24 @@ export default function FloorPlanPage() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        {floorPlanData && (
+ <div className="w-72 shrink-0">
+ <FurnitureLibrary 
+ selectedFurniture={selectedFurnitureItem} 
+ onSelectFurniture={setSelectedFurnitureItem} 
+ />
+ {selectedPieceId && (
+ <button 
+ onClick={handleDeleteSelected}
+ className="mt-2 w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+ >
+ <Trash2 className="w-4 h-4" />
+ Delete Selected
+ </button>
+ )}
+ </div>
+ )}
+ <div className="grid lg:grid-cols-2 gap-8">
           {/* Upload Section */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Upload Floor Plan</h2>
@@ -337,7 +354,7 @@ export default function FloorPlanPage() {
  
  <div className="h-[400px] bg-gray-100 rounded-xl overflow-hidden">
               {floorPlanData ? (
-                <FloorPlan3DViewer floorPlanData={floorPlanData} cameraPreset={cameraPreset} lightingMode={lightingMode} firstPerson={isFirstPerson} />
+                <FloorPlan3DViewer floorPlanData={floorPlanData} cameraPreset={cameraPreset} lightingMode={lightingMode} firstPerson={isFirstPerson} furniture={placedFurniture} selectedFurnitureItem={selectedFurnitureItem} selectedPieceId={selectedPieceId} onFurniturePlace={handleFurniturePlace} onFurnitureSelect={handleFurnitureSelect} onFurnitureUpdate={handleFurnitureUpdate} />
               ) : (
                 <div className="h-full flex items-center justify-center text-gray-400">
                   <div className="text-center">
