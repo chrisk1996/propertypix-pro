@@ -325,13 +325,18 @@ export default function FloorPlanPage() {
  {floorPlanData && (
  <div className="flex gap-2">
  <div className="flex gap-1">
- {['perspective', 'top', 'front', 'side'].map((p) => (
+ {[
+ { key: 'perspective', label: '3D' },
+ { key: 'top', label: 'Top' },
+ { key: 'front', label: 'Front' },
+ { key: 'side', label: 'Side' },
+ ].map(({ key, label }) => (
  <button
- key={p}
- onClick={() => setCameraPreset(p as 'perspective' | 'top' | 'front' | 'side' | 'walkthrough')}
- className={`p-2 rounded-lg ${cameraPreset === p ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+ key={key}
+ onClick={() => setCameraPreset(key as 'perspective' | 'top' | 'front' | 'side' | 'walkthrough')}
+ className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${cameraPreset === key ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
  >
- <Camera className="w-4 h-4" />
+ {label}
  </button>
  ))}
  </div>
