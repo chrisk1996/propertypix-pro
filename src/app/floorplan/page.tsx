@@ -371,12 +371,33 @@ export default function FloorPlanPage() {
             </div>
           )}
 
-          {/* Furniture Library */}
-          <div className="flex-1 overflow-y-auto">
-            <FurnitureLibrary
-              selectedFurniture={selectedFurnitureItem}
-              onSelectFurniture={setSelectedFurnitureItem}
-            />
+          {/* Placed Furniture List */}
+          {placedFurniture.length > 0 && (
+            <div className="p-4 border-b border-slate-200">
+              <h4 className="font-bold text-xs text-slate-500 uppercase tracking-wider mb-3">Placed Furniture ({placedFurniture.length})</h4>
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {placedFurniture.map((piece) => (
+                  <div
+                    key={piece.id}
+                    onClick={() => handleFurnitureSelect(piece.id)}
+                    className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all ${
+                      selectedPieceId === piece.id
+                        ? 'bg-blue-100 border border-blue-300'
+                        : 'bg-slate-50 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-slate-600">chair</span>
+                    <span className="text-sm font-medium flex-1">{piece.furniture.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Instructions */}
+          <div className="p-4 text-center text-sm text-slate-500">
+            <p>Select furniture from the bottom panel</p>
+            <p className="text-xs mt-1">Click on the floor to place</p>
           </div>
         </div>
       </div>
@@ -433,8 +454,12 @@ export default function FloorPlanPage() {
           ))}
 
           {activeTab === 'furniture' && (
-            <div className="text-sm text-slate-500 flex items-center justify-center w-full">
-              Use the furniture panel on the right to browse and place furniture
+            <div className="flex items-center gap-4 w-full overflow-x-auto">
+              <FurnitureLibrary
+                selectedFurniture={selectedFurnitureItem}
+                onSelectFurniture={setSelectedFurnitureItem}
+                compact
+              />
             </div>
           )}
 
