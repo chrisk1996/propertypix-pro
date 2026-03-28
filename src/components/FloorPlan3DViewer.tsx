@@ -187,7 +187,7 @@ function ExportHandler({ scene }: { scene: THREE.Scene }) {
 
       scene.traverse((child) => {
         if (child.type === 'Mesh' || child.type === 'Group') {
-          if ((child as any).userData?.noExport) return;
+          if ('userData' in child && (child as THREE.Object3D).userData?.noExport) return;
           const cloned = child.clone();
           exportScene.add(cloned);
         }
@@ -261,26 +261,26 @@ function Scene({
 }: FloorPlan3DViewerProps) {
   const { scene } = useThree();
   const rooms = floorPlanData?.rooms || [];
-
-  // Camera positions for presets
-  const cameraPositions: Record<string, { pos: [number, number, number]; target: [number, number, number] }> = {
-    perspective: { pos: [bounds.maxX * 1.5, 8, bounds.maxZ * 1.5], target: [0, 0, 0] },
-    top: { pos: [0, 15, 0.01], target: [0, 0, 0] },
-    front: { pos: [0, 5, 12], target: [0, 0, 0] },
-    side: { pos: [12, 5, 0], target: [0, 0, 0] },
-    walkthrough: { pos: [0, 1.7, 0], target: [3, 1.7, 0] },
-  };
-
+  
+  // Calculate bounds for dynamic camera
   const bounds = useMemo(() => {
     if (rooms.length === 0) return { maxX: 10, maxZ: 10 };
-    let maxX = 0,
-      maxZ = 0;
+    let maxX = 0, maxZ = 0;
     rooms.forEach((room) => {
       maxX = Math.max(maxX, room.x + room.width);
       maxZ = Math.max(maxZ, room.y + room.height);
     });
     return { maxX, maxZ };
   }, [rooms]);
+
+  // Camera positions for presets
+  const cameraPositions: Record<string, { pos: [number, number, number]; target: [number, number, number] }> = {
+    perspective: { pos: [8, 8, 8], target: [0, 0, 0] },
+    top: { pos: [0, 15, 0.01], target: [0, 0, 0] },
+    front: { pos: [0, 5, 12], target: [0, 0, 0] },
+    side: { pos: [12, 5, 0], target: [0, 0, 0] },
+    walkthrough: { pos: [0, 1.7, 0], target: [3, 1.7, 0] },
+  };
 
   const handleFloorClick = useCallback(
     (point: THREE.Vector3) => {

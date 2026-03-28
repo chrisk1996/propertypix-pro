@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
+import * as THREE from 'three';
 import { Camera, Maximize2, RotateCcw, Eye, Lightbulb, Sun } from 'lucide-react';
 
 interface CameraPreset {
@@ -137,7 +138,7 @@ export default function CameraControls({
 // Hook for camera state management
 export function useCameraState() {
   const applyPreset = useCallback(
-    (preset: keyof typeof CAMERA_PRESETS, cameraRef: any) => {
+    (preset: keyof typeof CAMERA_PRESETS, cameraRef: React.RefObject<THREE.Camera> | null) => {
       if (!cameraRef?.current) return;
       
       const { position, target } = CAMERA_PRESETS[preset];
@@ -145,7 +146,7 @@ export function useCameraState() {
       
       // Animate to new position
       const startPos = camera.position.clone();
-      const endPos = new (window as any).THREE.Vector3(...position);
+      const endPos = new THREE.Vector3(...position);
       const duration = 1000;
       const startTime = Date.now();
       

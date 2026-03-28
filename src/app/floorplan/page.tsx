@@ -311,7 +311,7 @@ export default function FloorPlanPage() {
  {['perspective', 'top', 'front', 'side'].map((p) => (
  <button
  key={p}
- onClick={() => setCameraPreset(p as any)}
+ onClick={() => setCameraPreset(p as 'perspective' | 'top' | 'front' | 'side' | 'walkthrough')}
  className={`p-2 rounded-lg ${cameraPreset === p ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
  >
  <Camera className="w-4 h-4" />
