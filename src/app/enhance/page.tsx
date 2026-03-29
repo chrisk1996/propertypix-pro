@@ -34,7 +34,6 @@ const furnitureCatalog = [
   { id: '6', name: 'Mid-Century Bookshelf', category: 'Storage', image: 'https://images.unsplash.com/photo-1594620302200-9a2a3a79b4b3?w=400&q=80', price: '$799', style: 'Mid-Century' },
 ];
 
-// Image Comparison Slider Component
 function ImageCompareSlider({ beforeSrc, afterSrc }: { beforeSrc: string; afterSrc: string }) {
   const [sliderPos, setSliderPos] = useState(50);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -44,56 +43,24 @@ function ImageCompareSlider({ beforeSrc, afterSrc }: { beforeSrc: string; afterS
     if (!containerRef.current || !isDragging.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
-    const percent = (x / rect.width) * 100;
-    setSliderPos(percent);
+    setSliderPos((x / rect.width) * 100);
   };
 
   return (
-    <div
-      ref={containerRef}
-      className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl cursor-ew-resize select-none"
-      onMouseDown={() => { isDragging.current = true; }}
-      onMouseUp={() => { isDragging.current = false; }}
-      onMouseLeave={() => { isDragging.current = false; }}
-      onMouseMove={(e) => handleMove(e.clientX)}
-      onTouchStart={() => { isDragging.current = true; }}
-      onTouchEnd={() => { isDragging.current = false; }}
-      onTouchMove={(e) => handleMove(e.touches[0].clientX)}
-    >
-      {/* After image (full width, underneath) */}
+    <div ref={containerRef} className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl cursor-ew-resize select-none"
+      onMouseDown={() => { isDragging.current = true; }} onMouseUp={() => { isDragging.current = false; }} onMouseLeave={() => { isDragging.current = false; }} onMouseMove={(e) => handleMove(e.clientX)}
+      onTouchStart={() => { isDragging.current = true; }} onTouchEnd={() => { isDragging.current = false; }} onTouchMove={(e) => handleMove(e.touches[0].clientX)}>
       <img src={afterSrc} alt="Enhanced" className="absolute inset-0 w-full h-full object-cover" />
-      
-      {/* Before image (clipped) */}
-      <div 
-        className="absolute inset-0 overflow-hidden"
-        style={{ width: `${sliderPos}%` }}
-      >
-        <img 
-          src={beforeSrc} 
-          alt="Original" 
-          className="absolute inset-0 h-full object-cover"
-          style={{ width: `${100 / (sliderPos / 100)}%`, maxWidth: 'none' }}
-        />
+      <div className="absolute inset-0 overflow-hidden" style={{ width: `${sliderPos}%` }}>
+        <img src={beforeSrc} alt="Original" className="absolute inset-0 h-full object-cover" style={{ width: `${100 / (sliderPos / 100)}%`, maxWidth: 'none' }} />
       </div>
-
-      {/* Slider line */}
-      <div 
-        className="absolute top-0 bottom-0 w-1 bg-white shadow-lg"
-        style={{ left: `${sliderPos}%`, transform: 'translateX(-50%)' }}
-      >
-        {/* Slider handle */}
+      <div className="absolute top-0 bottom-0 w-1 bg-white shadow-lg" style={{ left: `${sliderPos}%`, transform: 'translateX(-50%)' }}>
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center">
           <span className="material-symbols-outlined text-slate-600 text-xl">compare_arrows</span>
         </div>
       </div>
-
-      {/* Labels */}
-      <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/70 text-white text-xs font-bold rounded-lg backdrop-blur-sm">
-        Before
-      </div>
-      <div className="absolute top-4 right-4 px-3 py-1.5 bg-black/70 text-white text-xs font-bold rounded-lg backdrop-blur-sm">
-        After
-      </div>
+      <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/70 text-white text-xs font-bold rounded-lg">Before</div>
+      <div className="absolute top-4 right-4 px-3 py-1.5 bg-black/70 text-white text-xs font-bold rounded-lg">After</div>
     </div>
   );
 }
@@ -114,54 +81,34 @@ export default function EnhancePage() {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (event) => {
-        setUploadedImage(event.target?.result as string);
-        setEnhancedImage(null);
-        setError(null);
-      };
+      reader.onload = (event) => { setUploadedImage(event.target?.result as string); setEnhancedImage(null); setError(null); };
       reader.readAsDataURL(file);
     }
   };
 
   const handleEnhance = async () => {
     if (!uploadedImage || !selectedTool) return;
-    setIsProcessing(true);
-    setError(null);
+    setIsProcessing(true); setError(null);
     try {
-      const response = await fetch('/api/enhance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: uploadedImage, enhancementType: selectedTool === 'sky-replacement' ? 'sky' : 'auto' }),
-      });
+      const response = await fetch('/api/enhance', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: uploadedImage, enhancementType: selectedTool === 'sky-replacement' ? 'sky' : 'auto' }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Enhancement failed');
       setEnhancedImage(data.output);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to enhance image');
-    } finally {
-      setIsProcessing(false);
-    }
+    } catch (err) { setError(err instanceof Error ? err.message : 'Failed to enhance image'); } finally { setIsProcessing(false); }
   };
 
   const handleStaging = async () => {
     if (!uploadedImage || !selectedRoom) return;
-    setIsProcessing(true);
-    setError(null);
+    setIsProcessing(true); setError(null);
     const room = stagingRooms.find(r => r.id === selectedRoom);
     try {
-      const response = await fetch('/api/staging', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: uploadedImage, roomType: room?.value, furnitureStyle: selectedStyle }),
-      });
+      const response = await fetch('/api/staging', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: uploadedImage, roomType: room?.value, furnitureStyle: selectedStyle }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Staging failed');
       setEnhancedImage(data.output);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to stage room');
-    } finally {
-      setIsProcessing(false);
-    }
+    } catch (err) { setError(err instanceof Error ? err.message : 'Failed to stage room'); } finally { setIsProcessing(false); }
   };
 
   const categories = Array.from(new Set(furnitureCatalog.map(item => item.category)));
@@ -169,26 +116,16 @@ export default function EnhancePage() {
   return (
     <AppLayout title="Image Enhancer">
       <div className="flex h-[calc(100vh-5rem)]">
-        {/* Left Sidebar */}
         <div className="w-72 shrink-0 border-r border-slate-200 bg-white overflow-y-auto">
           <div className="p-6">
             <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-slate-900 text-sm mb-1">AI Enhancement</h3>
             <p className="text-slate-500 text-xs mb-4">Studio-grade image processing</p>
             <div className="space-y-2">
               {enhancementTools.map(tool => (
-                <button
-                  key={tool.id}
-                  onClick={() => setSelectedTool(tool.id)}
-                  disabled={!uploadedImage || isProcessing}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                    selectedTool === tool.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
+                <button key={tool.id} onClick={() => setSelectedTool(tool.id)} disabled={!uploadedImage || isProcessing}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${selectedTool === tool.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'} disabled:opacity-50 disabled:cursor-not-allowed`}>
                   <span className="material-symbols-outlined">{tool.icon}</span>
-                  <div className="text-left">
-                    <div className="font-semibold text-sm">{tool.label}</div>
-                    <div className="text-xs opacity-75">{tool.description}</div>
-                  </div>
+                  <div className="text-left"><div className="font-semibold text-sm">{tool.label}</div><div className="text-xs opacity-75">{tool.description}</div></div>
                 </button>
               ))}
             </div>
@@ -198,20 +135,13 @@ export default function EnhancePage() {
               </button>
             )}
           </div>
-
           <div className="p-6 border-t border-slate-200">
             <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-slate-900 text-sm mb-1">Virtual Staging</h3>
             <p className="text-slate-500 text-xs mb-4">AI furniture placement</p>
             <div className="grid grid-cols-2 gap-2">
               {stagingRooms.map(room => (
-                <button
-                  key={room.id}
-                  onClick={() => setSelectedRoom(room.id)}
-                  disabled={!uploadedImage}
-                  className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-all ${
-                    selectedRoom === room.id ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
+                <button key={room.id} onClick={() => setSelectedRoom(room.id)} disabled={!uploadedImage}
+                  className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-all ${selectedRoom === room.id ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-700 hover:bg-slate-100'} disabled:opacity-50 disabled:cursor-not-allowed`}>
                   <span className="material-symbols-outlined">{room.icon}</span>
                   <span className="text-xs font-semibold">{room.label}</span>
                 </button>
@@ -222,9 +152,8 @@ export default function EnhancePage() {
                 <label className="text-xs font-semibold text-slate-600">Furniture Style</label>
                 <div className="flex flex-wrap gap-2">
                   {furnitureStyles.map(style => (
-                    <button key={style.id} onClick={() => setSelectedStyle(style.id)} className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                      selectedStyle === style.id ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}>
+                    <button key={style.id} onClick={() => setSelectedStyle(style.id)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${selectedStyle === style.id ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                       {style.label}
                     </button>
                   ))}
@@ -236,16 +165,11 @@ export default function EnhancePage() {
             )}
           </div>
         </div>
-
-        {/* Center - Photo Canvas */}
         <div className="flex-1 bg-slate-100 flex items-center justify-center p-8">
           {!uploadedImage ? (
             <div onClick={() => fileInputRef.current?.click()} className="w-full max-w-4xl aspect-[4/3] bg-white rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-blue-500 hover:bg-blue-50/50 transition-all">
               <span className="material-symbols-outlined text-6xl text-slate-400">add_photo_alternate</span>
-              <div className="text-center">
-                <p className="font-semibold text-slate-700 text-lg">Drop your image here</p>
-                <p className="text-sm text-slate-500">or click to browse</p>
-              </div>
+              <div className="text-center"><p className="font-semibold text-slate-700 text-lg">Drop your image here</p><p className="text-sm text-slate-500">or click to browse</p></div>
               <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
             </div>
           ) : enhancedImage ? (
@@ -270,8 +194,7 @@ export default function EnhancePage() {
               )}
               {error && (
                 <div className="absolute top-4 left-4 right-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex justify-between items-center">
-                  {error}
-                  <button onClick={() => setError(null)} className="font-bold">×</button>
+                  {error}<button onClick={() => setError(null)} className="font-bold">×</button>
                 </div>
               )}
               <button onClick={() => setUploadedImage(null)} className="absolute top-4 right-4 bg-white/90 backdrop-blur p-2 rounded-full shadow-lg hover:bg-white">
@@ -280,8 +203,6 @@ export default function EnhancePage() {
             </div>
           )}
         </div>
-
-        {/* Right Panel */}
         <div className={`${isRightPanelOpen ? 'w-96' : 'w-14'} shrink-0 border-l border-slate-200 bg-white transition-all duration-300 overflow-hidden relative`}>
           <button onClick={() => setIsRightPanelOpen(!isRightPanelOpen)} className="absolute top-4 right-4 z-10 w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center hover:bg-slate-200 shadow-sm">
             <span className="material-symbols-outlined text-slate-600">{isRightPanelOpen ? 'chevron_right' : 'chevron_left'}</span>
@@ -297,4 +218,22 @@ export default function EnhancePage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 {furnitureCatalog.filter(item => !selectedCategory || item.category === selectedCategory).map(item => (
-                  <div key={item.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer
+                  <div key={item.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                    <div className="aspect-square bg-slate-100"><img src={item.image} alt={item.name} className="w-full h-full object-cover" /></div>
+                    <div className="p-3">
+                      <h4 className="font-semibold text-slate-900 text-sm truncate">{item.name}</h4>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-xs text-slate-500">{item.style}</span>
+                        <span className="text-xs font-bold text-blue-600">{item.price}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </AppLayout>
+  );
+}
