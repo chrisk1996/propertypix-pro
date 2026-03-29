@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import Image from "next/image";
 import { AppLayout } from "@/components/layout";
 
 const quickActions = [
@@ -89,13 +88,10 @@ export default function DashboardPage() {
           {/* Image Enhancer - Primary Card */}
           <div className="col-span-12 lg:col-span-7 group relative overflow-hidden bg-slate-900 rounded-2xl aspect-[16/7] p-10 flex flex-col justify-between shadow-xl transition-all hover:shadow-2xl">
             <div className="absolute inset-0 z-0 opacity-60">
-              <Image
+              <img
                 src={quickActions[0].image!}
                 alt="Luxury modern house exterior with perfect lighting"
-                fill
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-                priority
-                unoptimized
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
             </div>
             <div className="relative z-10">
@@ -202,12 +198,10 @@ export default function DashboardPage() {
               </Link>
             </div>
             <div className="md:w-1/2 min-h-[250px] relative">
-              <Image
+              <img
                 src={quickActions[3].image!}
                 alt="Stylized 3D architectural floor plan visualization"
-                fill
-                className="object-cover"
-                unoptimized
+                className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-slate-50 to-transparent" />
             </div>
@@ -243,12 +237,10 @@ export default function DashboardPage() {
                 className="group bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-xl transition-all duration-300"
               >
                 <div className="relative overflow-hidden aspect-[16/10]">
-                  <Image
+                  <img
                     src={project.image}
                     alt={project.title}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-700"
-                    unoptimized
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   />
                   <div
                     className={`absolute top-4 right-4 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-sm ${
@@ -325,3 +317,5 @@ export default function DashboardPage() {
         </button>
       </div>
     </AppLayout>
+  );
+}
