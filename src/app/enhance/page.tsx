@@ -1,6 +1,7 @@
 'use client';
 import { useState, useRef } from 'react';
 import { AppLayout } from '@/components/layout';
+import AIModelSelector, { type AIModel } from '@/components/AIModelSelector';
 
 type EnhancementTool = 'auto-lighting' | 'denoise' | 'sky-replacement' | null;
 type StagingRoom = 'living-room' | 'bedroom' | 'dining' | 'home-office' | null;
@@ -71,6 +72,8 @@ export default function EnhancePage() {
   const [selectedTool, setSelectedTool] = useState<EnhancementTool>(null);
   const [selectedRoom, setSelectedRoom] = useState<StagingRoom>(null);
   const [selectedStyle, setSelectedStyle] = useState('modern');
+  const [selectedEnhanceModel, setSelectedEnhanceModel] = useState<AIModel>('auto');
+  const [selectedStagingModel, setSelectedStagingModel] = useState<AIModel>('decor8');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
@@ -91,7 +94,7 @@ export default function EnhancePage() {
     setIsProcessing(true); setError(null);
     try {
       const response = await fetch('/api/enhance', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: uploadedImage, enhancementType: selectedTool === 'sky-replacement' ? 'sky' : 'auto' }) });
+        body: JSON.stringify({ image: uploadedImage, enhancementType: selectedTool === 'sky-replacement' ? 'sky' : 'auto', model: selectedEnhanceModel }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Enhancement failed');
       setEnhancedImage(data.output);
@@ -104,7 +107,7 @@ export default function EnhancePage() {
     const room = stagingRooms.find(r => r.id === selectedRoom);
     try {
       const response = await fetch('/api/staging', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: uploadedImage, roomType: room?.value, furnitureStyle: selectedStyle }) });
+        body: JSON.stringify({ image: uploadedImage, roomType: room?.value, furnitureStyle: selectedStyle, model: selectedStagingModel }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Staging failed');
       setEnhancedImage(data.output);
@@ -134,6 +137,12 @@ export default function EnhancePage() {
                 {isProcessing ? 'Processing...' : 'Apply Enhancement'}
               </button>
             )}
+            {/* AI Model Selector for Enhancement */}
+            {selectedTool && uploadedImage && (
+              <div className="mt-4 p-3 bg-slate-50 rounded-xl">
+                <AIModelSelector category="enhance" selected={selectedEnhanceModel} onSelect={setSelectedEnhanceModel} />
+              </div>
+            )}
           </div>
           <div className="p-6 border-t border-slate-200">
             <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-slate-900 text-sm mb-1">Virtual Staging</h3>
@@ -161,6 +170,10 @@ export default function EnhancePage() {
                 <button onClick={handleStaging} disabled={isProcessing} className="w-full mt-3 py-3 bg-purple-600 text-white rounded-xl font-bold text-sm hover:bg-purple-700 transition-colors disabled:opacity-50">
                   {isProcessing ? 'Staging...' : 'Apply Staging (2 credits)'}
                 </button>
+                {/* AI Model Selector for Staging */}
+                <div className="mt-4 p-3 bg-slate-50 rounded-xl">
+                  <AIModelSelector category="staging" selected={selectedStagingModel} onSelect={setSelectedStagingModel} />
+                </div>
               </div>
             )}
           </div>

@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react';
 import { AppLayout } from '@/components/layout';
+import AIModelSelector, { type AIModel } from '@/components/AIModelSelector';
 import FurnitureLibrary, { type FurnitureItem } from '@/components/FurnitureLibrary';
 import type { PlacedFurniturePiece } from '@/components/PlacedFurniture';
 import dynamic from 'next/dynamic';
@@ -75,6 +76,7 @@ export default function FloorPlanPage() {
   const [selectedFurnitureItem, setSelectedFurnitureItem] = useState<FurnitureItem | null>(null);
   const [selectedPieceId, setSelectedPieceId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'materials' | 'furniture' | 'lighting'>('furniture');
+  const [selectedModel, setSelectedModel] = useState<AIModel>('llama-vision');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
