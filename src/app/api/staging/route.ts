@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
     const roomPrompt = ROOM_PROMPTS[normalizedRoomType];
     const stylePrompt = STYLE_PROMPTS[normalizedStyle];
     
-    const prompt = `Empty room virtual staging: ${roomPrompt} with ${stylePrompt}, preserve original architecture walls windows flooring exactly, add furniture only, photorealistic real estate photography, bright natural lighting, professional interior design`;
+    const prompt = `Interior design virtual staging: beautifully furnished ${normalizedRoomType} with ${stylePrompt}, ${roomPrompt}, photorealistic, professional real estate photography, bright natural lighting, 8k quality, architectural digest style`;
 
     try {
       // Use Replicate's SDXL model for image-to-image virtual staging
@@ -169,9 +169,11 @@ export async function POST(request: NextRequest) {
           input: {
             image: image,
             prompt: prompt,
-            negative_prompt: "blurry, low quality, distorted, change walls, change windows, change flooring, overexposed, underexposed, noisy, pixelated, cartoon, illustration, painting, watermark, text, empty room, vacant, different room",
+            negative_prompt: "blurry, low quality, empty, vacant, no furniture, cartoon, illustration, watermark, text",
             num_inference_steps: 30,
-            prompt_strength: 0.30, // Lower value preserves more of original room structure
+            prompt_strength: 0.65, // Higher value to actually add furniture visible
+          num_inference_steps: 40,
+          high_noise_frac: 0.8,
             guidance_scale: 7.5,
             refine: "expert_ensemble_refiner",
           },
