@@ -4,6 +4,10 @@ import { AppLayout } from '@/components/layout';
 import FloorPlanCanvas2D, { type WallSegment, type RoomPolygon, type DoorData, type WindowData, type Tool } from '@/components/floorplan/FloorPlanCanvas2D';
 import ToolPalette from '@/components/floorplan/ToolPalette';
 import PropertiesPanel from '@/components/floorplan/PropertiesPanel';
+import KeyboardShortcutsHelp from '@/components/floorplan/KeyboardShortcutsHelp';
+import QuickActions, { FLOORPLAN_ACTIONS } from '@/components/floorplan/QuickActions';
+import { useUndoRedo } from '@/components/floorplan/useUndoRedo';
+import { exportAsPNG, exportAsPDF, exportAsSVG } from '@/components/floorplan/ExportUtils';
 import FurnitureLibrary, { type FurnitureItem } from '@/components/FurnitureLibrary';
 import type { PlacedFurniturePiece } from '@/components/PlacedFurniture';
 import dynamic from 'next/dynamic';
@@ -16,12 +20,13 @@ export default function FloorPlanPage() {
   // View mode
   const [viewMode, setViewMode] = useState<ViewMode>('2d');
   
-  // 2D Editor state
-  const [tool, setTool] = useState<Tool>('select');
-  const [walls, setWalls] = useState<WallSegment[]>([]);
-  const [rooms, setRooms] = useState<RoomPolygon[]>([]);
+  // 2D Editor state with undo/redo
+  const { state: walls, set: setWalls, undo: undoWalls, redo: redoWalls, canUndo: canUndoWalls, canRedo: canRedoWalls } = useUndoRedo<WallSegment[]>([]);
+  const { state: rooms, set: setRooms, undo: undoRooms, redo: redoRooms, canUndo: canUndoRooms, canRedo: canRedoRooms } = useUndoRedo<RoomPolygon[]>([]);
+  
   const [doors, setDoors] = useState<DoorData[]>([]);
   const [windows, setWindows] = useState<WindowData[]>([]);
+  const [tool, setTool] = useState<Tool>('select');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<'wall' | 'room' | 'door' | 'window' | null>(null);
   
@@ -54,10 +59,12 @@ export default function FloorPlanPage() {
       if (e.key === 'r' || e.key === 'R') setTool('room');
       if (e.key === 'd' || e.key === 'D') setTool('door');
       if (e.key === 'h' || e.key === 'H') setTool('pan');
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undoWalls(); undoRooms(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); redoWalls(); redoRooms(); }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedId, selectedType]);
+  }, [selectedId, selectedType, setWalls, setRooms, undoWalls, undoRooms, redoWalls, redoRooms]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
