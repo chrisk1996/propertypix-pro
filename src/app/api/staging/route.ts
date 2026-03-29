@@ -63,22 +63,22 @@ export async function POST(request: NextRequest) {
     const roomPrompt = ROOM_PROMPTS[roomType] || ROOM_PROMPTS.living;
     const styleModifier = STYLE_MODIFIERS[furnitureStyle] || STYLE_MODIFIERS.modern;
 
-    // Use XLabs FLUX ControlNet with depth preservation
-    // This model uses depth + canny ControlNets to preserve room structure
+    // Build prompt for virtual staging
     const prompt = `${roomPrompt}, ${styleModifier}, professional real estate photography, bright natural lighting, photorealistic`;
 
-    // Create prediction with FLUX ControlNet (depth + canny)
+    // Use FLUX ControlNet with depth - preserves room structure
+    // Correct input format for xlabs-ai/flux-dev-controlnet
     const prediction = await replicate.predictions.create({
       model: "xlabs-ai/flux-dev-controlnet",
       input: {
         prompt: prompt,
         control_image: image,
         control_type: "depth",  // Depth preserves 3D geometry
-        control_strength: 0.85, // Strong structure preservation
-        num_inference_steps: 30,
+        control_strength: 0.85,
+        steps: 30,
         guidance_scale: 7.5,
-        image_size: "1024x1024",
         output_format: "jpg",
+        output_quality: 90,
       },
     });
 
