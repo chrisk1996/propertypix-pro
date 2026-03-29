@@ -13,7 +13,7 @@ const quickActions = [
     gradient: "from-blue-600 to-cyan-500",
     featured: true,
     image:
-      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80",
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuBp8KPlQNUhm7IMfuJe2CRwP1IGjm__C9on2QcYpkY1DxCrfcsnacSnvowGBiG2vCdnudgpHTzde52x9N5a6-7xESu8QukvPT8V4Wa5n7S-RanersX25Ci6prIpuKu1ZKynRSKEoGMXlkfQsnjye2vxk_3ygtyzntFLR8_pzSFfAcSQlGGMfb6heR5p-SA9wWKhStotrqWfA3py-KmYXvZyrlP_lxWuOoY6hMMjExcPC8gp5ek2oSFmjBH7CXBUgB-XfvgPtFf0RG4",
   },
   {
     title: "Virtual Staging",
@@ -37,7 +37,7 @@ const quickActions = [
     href: "/floorplan",
     featured: true,
     image:
-      "https://images.unsplash.com/photo-1600585154340-be6161a56a0b?w=800&q=80",
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuBqVVyT2G-fQcIVDK-vN9z78cVlt_Oqx91HsQmmjnM-_GyEqipU9fqlrfIyLx-QWEVSc1P38kABenrLydpMpS9s1fQnpKRtVs6OzQphiRKFggq9ifvj5E09V09F2Cc2-yN-FSRln8GvljBavQOoWbOUs9d_VF1EnO89PfKtIBhPZo55A4PMvx5xImpZTYFv2HanToN4JEE-sQ88KT5SXLZ0amxzfnVfA_-HSPxzIpbVgM53LVD1OSHpsHFUZniuwAe9UHqJH7_G3iM",
   },
 ];
 
@@ -48,7 +48,7 @@ const recentProjects = [
     time: "2h ago",
     status: "processing",
     image:
-      "https://images.unsplash.com/photo-1613490493576-7fde63afd811?w=400&q=80",
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuCsLKRvmaZ8ohnrTW3b0pulDJq5gcNeboPq9e8e1e_k80StODXJfEknDfO0wWrICFP6uTTcqS5hsfpzlZqpkhHUdvndl7A5dMK5nQMogGDEjLdpqzzl39flSx6Jj6tZ0XgXfSp8D6iIXDKOKQQ9U7SAw9eeDtnAyUU_yNjcTk3iv4ddDh5QJpmOgZQkI9yaCPfJ-R2DO0zqOHxevlszV58HUYRax5JjbfgqjYHuzq25FhU35CJEy72uxJu47WMFvLSxqkQo0WVojZI",
   },
   {
     title: "The Obsidian Penthouse",
@@ -56,7 +56,7 @@ const recentProjects = [
     time: "1d ago",
     status: "completed",
     image:
-      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&q=80",
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuBsAnQSRE5rEnkayRAfqoHCAVwWmL2S9FLoi7JpAENOUIryE277aGnZH4hisZJcFT9MQcUs1rNF3lrZVsr9LRX6ET_8lix7cyJ-N-2bneEFEi-fSIDqqXd5Zg64zKUOegbt5EClt91B_fAsJhaqYf3nu1mjC7x-N9S__fjlBlVmxsq8C531OM5WPC44faMU7DHayM1GPfv87mT8CwPArCdxETSbAuCkNFqRqOZcy1KrWb_IqoL_qKa4ObfnOIGncVn_RCzF0dwev0M",
   },
   {
     title: "Willow Creek Retreat",
@@ -64,7 +64,7 @@ const recentProjects = [
     time: "3d ago",
     status: "inactive",
     image:
-      "https://images.unsplash.com/photo-1600566753086-00f18fb78b95?w=400&q=80",
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuAC5e07NET2nwhaStrXK6YeCE_pb2cLnQPATR2DYwWPmeNTECWEA6FAl-5qEBz0NdyjocSh1bmigxNeh9ChS8fwxrIX6CvIeRrILfAPDDcUUhcn-i_jdCJZLTczpJMx8wqt42O23vbRw3gN4A5Z9BfEzckkD7fGuNHfXoj7YIZljRpckawryf_RkAHdqmP3CD8VueX3_6nAoJRq2ZpcicO80L8joRNOVNYn-n68ahwv-KS9ph5WrFmOV1k7FwcXUQmKkQRnp_Umr8k",
   },
 ];
 
@@ -91,10 +91,11 @@ export default function DashboardPage() {
             <div className="absolute inset-0 z-0 opacity-60">
               <Image
                 src={quickActions[0].image!}
-                alt="Luxury modern house"
+                alt="Luxury modern house exterior with perfect lighting"
                 fill
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
                 priority
+                unoptimized
               />
             </div>
             <div className="relative z-10">
@@ -203,9 +204,10 @@ export default function DashboardPage() {
             <div className="md:w-1/2 min-h-[250px] relative">
               <Image
                 src={quickActions[3].image!}
-                alt="3D Floor Plan"
+                alt="Stylized 3D architectural floor plan visualization"
                 fill
                 className="object-cover"
+                unoptimized
               />
               <div className="absolute inset-0 bg-gradient-to-r from-slate-50 to-transparent" />
             </div>
@@ -246,6 +248,7 @@ export default function DashboardPage() {
                     alt={project.title}
                     fill
                     className="object-cover group-hover:scale-110 transition-transform duration-700"
+                    unoptimized
                   />
                   <div
                     className={`absolute top-4 right-4 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-sm ${
@@ -322,5 +325,3 @@ export default function DashboardPage() {
         </button>
       </div>
     </AppLayout>
-  );
-}
