@@ -34,6 +34,70 @@ const furnitureCatalog = [
   { id: '6', name: 'Mid-Century Bookshelf', category: 'Storage', image: 'https://images.unsplash.com/photo-1594620302200-9a2a3a79b4b3?w=400&q=80', price: '$799', style: 'Mid-Century' },
 ];
 
+// Image Comparison Slider Component
+function ImageCompareSlider({ beforeSrc, afterSrc }: { beforeSrc: string; afterSrc: string }) {
+  const [sliderPos, setSliderPos] = useState(50);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+
+  const handleMove = (clientX: number) => {
+    if (!containerRef.current || !isDragging.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
+    const percent = (x / rect.width) * 100;
+    setSliderPos(percent);
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl cursor-ew-resize select-none"
+      onMouseDown={() => { isDragging.current = true; }}
+      onMouseUp={() => { isDragging.current = false; }}
+      onMouseLeave={() => { isDragging.current = false; }}
+      onMouseMove={(e) => handleMove(e.clientX)}
+      onTouchStart={() => { isDragging.current = true; }}
+      onTouchEnd={() => { isDragging.current = false; }}
+      onTouchMove={(e) => handleMove(e.touches[0].clientX)}
+    >
+      {/* After image (full width, underneath) */}
+      <img src={afterSrc} alt="Enhanced" className="absolute inset-0 w-full h-full object-cover" />
+      
+      {/* Before image (clipped) */}
+      <div 
+        className="absolute inset-0 overflow-hidden"
+        style={{ width: `${sliderPos}%` }}
+      >
+        <img 
+          src={beforeSrc} 
+          alt="Original" 
+          className="absolute inset-0 h-full object-cover"
+          style={{ width: `${100 / (sliderPos / 100)}%`, maxWidth: 'none' }}
+        />
+      </div>
+
+      {/* Slider line */}
+      <div 
+        className="absolute top-0 bottom-0 w-1 bg-white shadow-lg"
+        style={{ left: `${sliderPos}%`, transform: 'translateX(-50%)' }}
+      >
+        {/* Slider handle */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center">
+          <span className="material-symbols-outlined text-slate-600 text-xl">compare_arrows</span>
+        </div>
+      </div>
+
+      {/* Labels */}
+      <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/70 text-white text-xs font-bold rounded-lg backdrop-blur-sm">
+        Before
+      </div>
+      <div className="absolute top-4 right-4 px-3 py-1.5 bg-black/70 text-white text-xs font-bold rounded-lg backdrop-blur-sm">
+        After
+      </div>
+    </div>
+  );
+}
+
 export default function EnhancePage() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [enhancedImage, setEnhancedImage] = useState<string | null>(null);
@@ -105,7 +169,7 @@ export default function EnhancePage() {
   return (
     <AppLayout title="Image Enhancer">
       <div className="flex h-[calc(100vh-5rem)]">
-        {/* Left Sidebar - AI Enhancement Tools */}
+        {/* Left Sidebar */}
         <div className="w-72 shrink-0 border-r border-slate-200 bg-white overflow-y-auto">
           <div className="p-6">
             <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-slate-900 text-sm mb-1">AI Enhancement</h3>
@@ -135,7 +199,6 @@ export default function EnhancePage() {
             )}
           </div>
 
-          {/* Virtual Staging Section */}
           <div className="p-6 border-t border-slate-200">
             <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-slate-900 text-sm mb-1">Virtual Staging</h3>
             <p className="text-slate-500 text-xs mb-4">AI furniture placement</p>
@@ -174,7 +237,7 @@ export default function EnhancePage() {
           </div>
         </div>
 
-        {/* Center - Photo Canvas (expands when right panel is closed) */}
+        {/* Center - Photo Canvas */}
         <div className="flex-1 bg-slate-100 flex items-center justify-center p-8">
           {!uploadedImage ? (
             <div onClick={() => fileInputRef.current?.click()} className="w-full max-w-4xl aspect-[4/3] bg-white rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-blue-500 hover:bg-blue-50/50 transition-all">
@@ -183,12 +246,20 @@ export default function EnhancePage() {
                 <p className="font-semibold text-slate-700 text-lg">Drop your image here</p>
                 <p className="text-sm text-slate-500">or click to browse</p>
               </div>
-              <p className="text-xs text-slate-400 mt-2">Supports JPG, PNG, WebP up to 20MB</p>
               <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+            </div>
+          ) : enhancedImage ? (
+            <div className="w-full max-w-4xl">
+              <ImageCompareSlider beforeSrc={uploadedImage} afterSrc={enhancedImage} />
+              <div className="flex justify-center gap-3 mt-4">
+                <button onClick={() => setEnhancedImage(null)} className="px-4 py-2 bg-white rounded-lg text-sm font-semibold text-slate-700 shadow hover:bg-slate-50">Reset</button>
+                <button onClick={() => window.open(enhancedImage, '_blank')} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold shadow hover:bg-blue-700">Download</button>
+                <button onClick={() => { setUploadedImage(null); setEnhancedImage(null); }} className="px-4 py-2 bg-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-300">New Image</button>
+              </div>
             </div>
           ) : (
             <div className="relative w-full max-w-4xl">
-              <img src={enhancedImage || uploadedImage} alt={enhancedImage ? 'Enhanced' : 'Uploaded'} className="w-full rounded-2xl shadow-2xl" />
+              <img src={uploadedImage} alt="Uploaded" className="w-full rounded-2xl shadow-2xl" />
               {isProcessing && (
                 <div className="absolute inset-0 bg-black/50 rounded-2xl flex items-center justify-center">
                   <div className="bg-white px-6 py-4 rounded-xl shadow-lg flex items-center gap-3">
@@ -197,67 +268,33 @@ export default function EnhancePage() {
                   </div>
                 </div>
               )}
-              {enhancedImage && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                  <button onClick={() => setEnhancedImage(null)} className="px-4 py-2 bg-white/90 backdrop-blur rounded-lg text-sm font-semibold text-slate-700 shadow-lg hover:bg-white">
-                    Show Original
-                  </button>
-                </div>
-              )}
               {error && (
                 <div className="absolute top-4 left-4 right-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm flex justify-between items-center">
                   {error}
                   <button onClick={() => setError(null)} className="font-bold">×</button>
                 </div>
               )}
-              <button onClick={() => { setUploadedImage(null); setEnhancedImage(null); }} className="absolute top-4 right-4 bg-white/90 backdrop-blur p-2 rounded-full shadow-lg hover:bg-white transition-colors">
+              <button onClick={() => setUploadedImage(null)} className="absolute top-4 right-4 bg-white/90 backdrop-blur p-2 rounded-full shadow-lg hover:bg-white">
                 <span className="material-symbols-outlined text-slate-600">close</span>
               </button>
             </div>
           )}
         </div>
 
-        {/* Right Panel - Collapsible */}
+        {/* Right Panel */}
         <div className={`${isRightPanelOpen ? 'w-96' : 'w-14'} shrink-0 border-l border-slate-200 bg-white transition-all duration-300 overflow-hidden relative`}>
-          {/* Toggle Button */}
-          <button onClick={() => setIsRightPanelOpen(!isRightPanelOpen)} className="absolute top-4 right-4 z-10 w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center hover:bg-slate-200 transition-colors shadow-sm">
+          <button onClick={() => setIsRightPanelOpen(!isRightPanelOpen)} className="absolute top-4 right-4 z-10 w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center hover:bg-slate-200 shadow-sm">
             <span className="material-symbols-outlined text-slate-600">{isRightPanelOpen ? 'chevron_right' : 'chevron_left'}</span>
           </button>
-
           {isRightPanelOpen && (
             <div className="p-6 pt-16 overflow-y-auto h-full">
               <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-slate-900 text-lg mb-1">Furniture Catalog</h3>
-              <p className="text-slate-500 text-xs mb-4">Browse furniture items</p>
-
-              {/* Category Filters */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                <button onClick={() => setSelectedCategory(null)} className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${!selectedCategory ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>All</button>
+              <div className="flex flex-wrap gap-2 mb-4 mt-4">
+                <button onClick={() => setSelectedCategory(null)} className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${!selectedCategory ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}`}>All</button>
                 {categories.map(cat => (
-                  <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${selectedCategory === cat ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>{cat}</button>
+                  <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${selectedCategory === cat ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}`}>{cat}</button>
                 ))}
               </div>
-
-              {/* Furniture Grid */}
               <div className="grid grid-cols-2 gap-4">
                 {furnitureCatalog.filter(item => !selectedCategory || item.category === selectedCategory).map(item => (
-                  <div key={item.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:shadow-lg hover:border-blue-300 transition-all group">
-                    <div className="aspect-square bg-slate-100 relative overflow-hidden">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                    </div>
-                    <div className="p-3">
-                      <h4 className="font-semibold text-slate-900 text-sm truncate">{item.name}</h4>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="text-xs text-slate-500">{item.style}</span>
-                        <span className="text-xs font-bold text-blue-600">{item.price}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </AppLayout>
-  );
-}
+                  <div key={item.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden cursor-pointer
