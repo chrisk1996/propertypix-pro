@@ -1,6 +1,9 @@
 'use client';
 import { useState, useRef, useCallback } from 'react';
 import { Stage, Layer, Line, Rect, Text, Group } from 'react-konva';
+import WallEditor from './WallEditor';
+import RoomEditor from './RoomEditor';
+import DoorWindowEditor from './DoorWindowEditor';
 
 export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'furniture' | 'pan';
 export type WallType = 'exterior' | 'interior';
