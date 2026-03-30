@@ -6,7 +6,7 @@ import { exportAsSVG, exportAsGLTF, createFloorPlan3DScene } from './ExportUtils
 interface ExportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  canvasRef: React.RefObject<HTMLCanvasElement | null>;
+  canvasRef: React.RefObject<HTMLCanvasElement | HTMLDivElement | null>;
   walls: Array<{
     id: string;
     x1: number;

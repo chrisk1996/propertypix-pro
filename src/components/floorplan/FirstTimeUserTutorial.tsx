@@ -85,7 +85,7 @@ export default function FirstTimeUserTutorial({ onComplete, forceShow = false }:
       setHasCompleted(false);
       return;
     }
-    
+
     try {
       const completed = localStorage.getItem(STORAGE_KEY);
       if (completed !== 'true') {
@@ -143,7 +143,7 @@ export default function FirstTimeUserTutorial({ onComplete, forceShow = false }:
         prevStep();
       }
     };
-    
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, nextStep, prevStep, skipTutorial]);
@@ -158,25 +158,25 @@ export default function FirstTimeUserTutorial({ onComplete, forceShow = false }:
   return (
     <>
       {/* Backdrop */}
-      <div 
+      <div
         className="fixed inset-0 bg-black/60 z-50 animate-fade-in"
         onClick={skipTutorial}
       />
-      
+
       {/* Modal */}
-      <div 
+      <div
         className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] max-w-[90vw]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
           {/* Progress bar */}
           <div className="h-1 bg-slate-200">
-            <div 
+            <div
               className="h-full bg-blue-600 transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
-          
+
           {/* Content */}
           <div className="p-6">
             {/* Icon */}
@@ -185,22 +185,22 @@ export default function FirstTimeUserTutorial({ onComplete, forceShow = false }:
                 {step.icon}
               </span>
             </div>
-            
+
             {/* Step counter */}
             <p className="text-center text-sm text-slate-400 mb-2">
               Step {currentStep + 1} of {TUTORIAL_STEPS.length}
             </p>
-            
+
             {/* Title */}
             <h2 className="text-xl font-bold text-center text-slate-900 mb-3">
               {step.title}
             </h2>
-            
+
             {/* Description */}
             <p className="text-center text-slate-600 mb-6 leading-relaxed">
               {step.description}
             </p>
-            
+
             {/* Navigation dots */}
             <div className="flex justify-center gap-1.5 mb-6">
               {TUTORIAL_STEPS.map((_, index) => (
@@ -208,16 +208,16 @@ export default function FirstTimeUserTutorial({ onComplete, forceShow = false }:
                   key={index}
                   onClick={() => setCurrentStep(index)}
                   className={`w-2 h-2 rounded-full transition-all
-                    ${index === currentStep 
-                      ? 'bg-blue-600 w-6' 
-                      : index < currentStep 
-                        ? 'bg-blue-400' 
+                    ${index === currentStep
+                      ? 'bg-blue-600 w-6'
+                      : index < currentStep
+                        ? 'bg-blue-400'
                         : 'bg-slate-300 hover:bg-slate-400'
                     }`}
                 />
               ))}
             </div>
-            
+
             {/* Buttons */}
             <div className="flex gap-3">
               {currentStep > 0 && (
@@ -229,7 +229,7 @@ export default function FirstTimeUserTutorial({ onComplete, forceShow = false }:
                   Back
                 </button>
               )}
-              
+
               <button
                 onClick={nextStep}
                 className="flex-1 py-2.5 px-4 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
@@ -248,7 +248,7 @@ export default function FirstTimeUserTutorial({ onComplete, forceShow = false }:
               </button>
             </div>
           </div>
-          
+
           {/* Skip link */}
           <div className="px-6 pb-4">
             <button
@@ -260,7 +260,7 @@ export default function FirstTimeUserTutorial({ onComplete, forceShow = false }:
           </div>
         </div>
       </div>
-      
+
       {/* Re-open tutorial button (hidden, shown by parent) */}
       <style jsx global>{`
         @keyframes fade-in {
@@ -278,7 +278,7 @@ export default function FirstTimeUserTutorial({ onComplete, forceShow = false }:
 // Hook to check and show tutorial
 export function useTutorialState() {
   const [showTutorial, setShowTutorial] = useState(false);
-  
+
   useEffect(() => {
     try {
       const completed = localStorage.getItem(STORAGE_KEY);
@@ -287,13 +287,13 @@ export function useTutorialState() {
         setTimeout(() => setShowTutorial(true), 500);
       }
     } catch (e) {
-      // Ignore
+      // Ignore - SSR safe
     }
   }, []);
-  
+
   const reopenTutorial = useCallback(() => {
     setShowTutorial(true);
   }, []);
-  
+
   return { showTutorial, setShowTutorial, reopenTutorial };
 }
