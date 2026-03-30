@@ -11,24 +11,30 @@ import FurnitureLibraryPanel from './FurnitureLibraryPanel';
 import FurnitureCanvas2D from './FurnitureCanvas2D';
 import FurnitureLayer from './FurnitureLayer';
 import { useUndoRedo } from './useUndoRedo';
-import { 
-  useFurniture, 
-  FURNITURE_LIBRARY_2D, 
-  FURNITURE_ICONS,
-  type PlacedFurniture2D,
-  type FurnitureDragItem 
-} from './useFurniture';
+import { useFurniture, FURNITURE_LIBRARY_2D, FURNITURE_ICONS, type PlacedFurniture2D, type FurnitureDragItem } from './useFurniture';
+import {
+  exportAsPNG,
+  exportAsPDF,
+  exportAsSVG,
+  exportAsGLTF,
+  createFloorPlan3DScene,
+  downloadBlob,
+  type ExportOptions,
+  DEFAULT_OPTIONS,
+} from './ExportUtils';
+import ExportModal from './ExportModal';
 
 export type { WallSegment, RoomPolygon, DoorData, WindowData, Tool };
 export type { PlacedFurniture2D, FurnitureDragItem };
+export type { ExportOptions };
 
-export { 
-  FloorPlanCanvas2D, 
-  WallEditor, 
-  RoomEditor, 
-  DoorWindowEditor, 
-  DoorWindowPicker, 
-  ToolPalette, 
+export {
+  FloorPlanCanvas2D,
+  WallEditor,
+  RoomEditor,
+  DoorWindowEditor,
+  DoorWindowPicker,
+  ToolPalette,
   PropertiesPanel,
   KeyboardShortcutsHelp,
   QuickActions,
@@ -42,4 +48,14 @@ export {
   useFurniture,
   FURNITURE_LIBRARY_2D,
   FURNITURE_ICONS,
+  // Export utilities
+  exportAsPNG,
+  exportAsPDF,
+  exportAsSVG,
+  exportAsGLTF,
+  createFloorPlan3DScene,
+  downloadBlob,
+  DEFAULT_OPTIONS,
+  // Export modal
+  ExportModal,
 };
