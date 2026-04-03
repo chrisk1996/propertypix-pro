@@ -113,7 +113,7 @@ export default function FloorPlanCanvas2D({
     const pos = getPointerPosition();
     setIsDrawing(true);
     setDrawPoints([pos.x, pos.y]);
-  }, [tool, getPointerPosition]);
+  }, [activeTool, getPointerPosition]);
 
   // Handle mouse move for drawing
   const handleMouseMove = useCallback((e: any) => {
@@ -156,15 +156,15 @@ export default function FloorPlanCanvas2D({
     }
     
     setDrawPoints([]);
-  }, [isDrawing, tool, drawPoints, walls, rooms, onWallsChange, onRoomsChange]);
+  }, [isDrawing, activeTool, drawPoints, walls, rooms, onWallsChange, onRoomsChange]);
 
   // Handle selection
   const handleSelect = useCallback((id: string, type: 'wall' | 'room' | 'door' | 'window') => {
-    if (tool !== 'select') return;
+    if (activeTool !== 'select') return;
     setSelectedId(id);
     setSelectedType(type);
     onSelectionChange?.(id, type);
-  }, [tool, onSelectionChange]);
+  }, [activeTool, onSelectionChange]);
 
   // Handle delete
   const handleDelete = useCallback(() => {
@@ -205,12 +205,12 @@ export default function FloorPlanCanvas2D({
 
   // Pan
   const handleDragEnd = useCallback((e: any) => {
-    if (tool !== 'pan') return;
+    if (activeTool !== 'pan') return;
     setPosition({
       x: e.target.x(),
       y: e.target.y(),
     });
-  }, [tool]);
+  }, [activeTool]);
 
   return (
     <div className="relative w-full h-full bg-slate-50">
