@@ -28,20 +28,20 @@ function checkRateLimit(ip: string): boolean {
 
 // Map room types to prompt keywords
 const ROOM_PROMPTS: Record<string, string> = {
-  living: 'living room with comfortable sofa, coffee table, entertainment center, rug, lamps',
-  bedroom: 'bedroom with bed, nightstands, dresser, lamp, cozy bedding',
-  dining: 'dining room with dining table, chairs, chandelier, sideboard',
-  office: 'home office with desk, office chair, bookshelf, computer, lamp',
-  kitchen: 'kitchen with countertops, appliances, dining area, modern fixtures',
+  living: 'furnished living room with comfortable sofa, coffee table, entertainment center, rug, lamps, professional interior design',
+  bedroom: 'furnished bedroom with bed, nightstands, dresser, lamp, cozy bedding, window treatments, professional interior design',
+  dining: 'furnished dining room with dining table, chairs, chandelier, sideboard, table setting, professional interior design',
+  office: 'furnished home office with desk, office chair, bookshelf, computer, lamp, professional interior design',
+  kitchen: 'furnished kitchen with countertops, appliances, dining area, modern fixtures, professional interior design',
 };
 
 // Map styles to prompt keywords
 const STYLE_PROMPTS: Record<string, string> = {
-  modern: 'modern contemporary furniture, clean lines, neutral colors, sleek design',
-  scandinavian: 'scandinavian style, light wood, white and beige, minimalist, cozy hygge',
-  luxury: 'luxury high-end furniture, elegant, premium materials, sophisticated design',
-  minimalist: 'minimalist furniture, simple clean design, uncluttered, zen aesthetic',
-  industrial: 'industrial style, metal and wood, exposed elements, urban loft aesthetic',
+  modern: 'modern contemporary furniture, clean lines, neutral colors, sleek design, minimalist decor',
+  scandinavian: 'scandinavian style, light wood, white and beige, minimalist, cozy hygge, natural textures',
+  luxury: 'luxury high-end furniture, elegant, premium materials, sophisticated design, marble, gold accents',
+  minimalist: 'minimalist furniture, simple clean design, uncluttered, zen aesthetic, neutral palette',
+  industrial: 'industrial style, metal and wood, exposed elements, urban loft aesthetic, leather furniture',
 };
 
 export async function POST(request: NextRequest) {
@@ -69,25 +69,24 @@ export async function POST(request: NextRequest) {
     const roomPrompt = ROOM_PROMPTS[roomType] || ROOM_PROMPTS.living;
     const stylePrompt = STYLE_PROMPTS[furnitureStyle] || STYLE_PROMPTS.modern;
     
-    const prompt = `${roomPrompt}, ${stylePrompt}, professional real estate photography, well-lit, high quality, interior design magazine`;
-    const negativePrompt = 'empty room, unfurnished, blurry, low quality, distorted, overexposed, underexposed, noisy, pixelated, watermark, text';
+    const prompt = `${roomPrompt}, ${stylePrompt}, professional real estate photography, well-lit, high quality, interior design magazine, bright and clean`;
+    const negativePrompt = 'empty room, unfurnished, blurry, low quality, distorted, overexposed, underexposed, noisy, pixelated, watermark, text, dark, cluttered';
 
-    // Use FLUX Depth Pro for virtual staging (preserves room structure)
-    // Model ID: flux-depth-pro
-    const modelName = model === 'flux-kontext' 
-      ? 'black-forest-labs/flux-depth-pro'
-      : 'black-forest-labs/flux-depth-pro';
+    console.log('Calling Replicate for virtual staging:', { roomType, furnitureStyle, model });
 
-    console.log('Calling Replicate for virtual staging:', { roomType, furnitureStyle, model: modelName });
-
+    // Use SDXL for image-to-image transformation (similar to enhance API)
+    // This works better for virtual staging as it preserves the room structure
     const result = await replicate.run(
-      modelName,
+      "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
       {
         input: {
-          control_image: image,
+          image: image,
           prompt: prompt,
-          num_inference_steps: 28,
-          guidance_scale: 3.5,
+          negative_prompt: negativePrompt,
+          num_inference_steps: 30,
+          prompt_strength: 0.7, // Higher strength for more furniture changes
+          guidance_scale: 7.5,
+          refine: "expert_ensemble_refiner",
         },
       }
     );
