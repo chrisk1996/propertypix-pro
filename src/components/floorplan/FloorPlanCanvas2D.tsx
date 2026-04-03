@@ -68,6 +68,7 @@ const ROOM_COLORS: Record<string, string> = {
 };
 
 export default function FloorPlanCanvas2D({
+  tool,
   width = 800,
   height = 600,
   walls = [],

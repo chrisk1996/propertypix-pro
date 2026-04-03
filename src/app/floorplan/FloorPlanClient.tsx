@@ -300,7 +300,6 @@ export default function FloorPlanPage() {
               Split
             </button>
             <div className="flex-1" />
-            </button>
             <button
               onClick={() => fileInputRef.current?.click()}
               className="px-4 py-2 m-2 bg-emerald-600 text-white rounded-lg text-sm font-semibold hover:bg-emerald-700"
