@@ -42,6 +42,7 @@ export interface WindowData {
 }
 
 interface FloorPlanCanvas2DProps {
+  tool?: Tool;
   width?: number;
   height?: number;
   walls?: WallSegment[];
@@ -77,7 +78,8 @@ export default function FloorPlanCanvas2D({
   onRoomsChange,
   onSelectionChange,
 }: FloorPlanCanvas2DProps) {
-  const [tool, setTool] = useState<Tool>('select');
+  // Tool is now passed as prop
+  const activeTool = tool ?? 'select';
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDrawing, setIsDrawing] = useState(false);
@@ -105,7 +107,7 @@ export default function FloorPlanCanvas2D({
 
   // Handle mouse down for drawing
   const handleMouseDown = useCallback((e: any) => {
-    if (tool === 'select' || tool === 'pan') return;
+    if (activeTool === 'select' || activeTool === 'pan') return;
     
     const pos = getPointerPosition();
     setIsDrawing(true);
@@ -129,7 +131,7 @@ export default function FloorPlanCanvas2D({
     
     setIsDrawing(false);
     
-    if (tool === 'wall' && drawPoints.length >= 4) {
+    if (activeTool === 'wall' && drawPoints.length >= 4) {
       const newWall: WallSegment = {
         id: `wall-${Date.now()}`,
         x1: drawPoints[0],
@@ -142,7 +144,7 @@ export default function FloorPlanCanvas2D({
       onWallsChange?.([...walls, newWall]);
     }
     
-    if (tool === 'room' && drawPoints.length >= 6) {
+    if (activeTool === 'room' && drawPoints.length >= 6) {
       const newRoom: RoomPolygon = {
         id: `room-${Date.now()}`,
         name: `Room ${(rooms?.length || 0) + 1}`,
@@ -236,7 +238,7 @@ export default function FloorPlanCanvas2D({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onWheel={handleWheel}
-        draggable={tool === 'pan'}
+        draggable={activeTool === 'pan'}
         onDragEnd={handleDragEnd}
         tabIndex={0}
         onKeyDown={(e: any) => {

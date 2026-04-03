@@ -300,12 +300,6 @@ export default function FloorPlanPage() {
               Split
             </button>
             <div className="flex-1" />
-            <button
-              onClick={() => setShowExportModal(true)}
-              className="px-4 py-2 m-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700"
-            >
-              <span className="material-symbols-outlined text-sm mr-1">download</span>
-              Export
             </button>
             <button
               onClick={() => fileInputRef.current?.click()}
@@ -327,6 +321,7 @@ export default function FloorPlanPage() {
             {(viewMode === '2d' || viewMode === 'split') && (
               <div ref={canvasContainerRef} className={viewMode === 'split' ? 'w-1/2' : 'flex-1'}>
                 <FloorPlanCanvas2D
+                tool={tool}
                   walls={walls}
                   rooms={rooms}
                   doors={doors}

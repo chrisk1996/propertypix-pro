@@ -12,7 +12,7 @@ interface ToolConfig {
 }
 
 const TOOLS: ToolConfig[] = [
-  { id: 'select', icon: 'arrow-pointer', label: 'Select', shortcut: 'V', description: 'Select and edit elements' },
+  { id: 'select', icon: 'touch_app', label: 'Select', shortcut: 'V', description: 'Select and edit elements' },
   { id: 'wall', icon: 'timeline', label: 'Wall', shortcut: 'W', description: 'Draw walls by clicking points' },
   { id: 'room', icon: 'crop_square', label: 'Room', shortcut: 'R', description: 'Draw room boundaries' },
   { id: 'door', icon: 'door_front', label: 'Door', shortcut: 'D', description: 'Add doors to walls' },

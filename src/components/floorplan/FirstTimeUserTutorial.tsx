@@ -61,7 +61,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'export',
     title: 'Save & Export',
-    description: 'Use Quick Actions to save your project or export as PNG/PDF. Your work is automatically saved in browser storage.',
+    description: 'Use Quick Actions to save your project or export as PNG, PDF, SVG, GLB, or GLTF. Your work is automatically saved in browser storage.',
     icon: 'download',
   },
 ];
