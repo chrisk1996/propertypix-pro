@@ -16,7 +16,7 @@ const stagingRooms = [
 ];
 
 const furnitureStyles = [
-  { id: 'modern' as const, label: 'Modern', icon: 'sofa' },
+  { id: 'modern' as const, label: 'Modern', icon: 'weekend' },
   { id: 'scandinavian' as const, label: 'Scandinavian', icon: 'chair' },
   { id: 'luxury' as const, label: 'Luxury', icon: 'diamond' },
   { id: 'minimalist' as const, label: 'Minimalist', icon: 'minimize' },
@@ -78,7 +78,7 @@ export default function VirtualStagingPage() {
   const [stagedImage, setStagedImage] = useState<string | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<StagingRoom>('living');
   const [selectedStyle, setSelectedStyle] = useState<FurnitureStyle>('modern');
-  const [selectedModel, setSelectedModel] = useState<AIModel>('decor8');
+  const [selectedModel, setSelectedModel] = useState<AIModel>('flux-depth');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);

@@ -22,8 +22,7 @@ export const AI_MODELS: Record<string, AIModelOption[]> = {
     { id: 'ideogram', name: 'Ideogram v2', description: 'Best for text in images', cost: '$0.02', quality: '⭐⭐⭐⭐', speed: '⚡⚡', bestFor: 'Text/logos' },
   ],
   staging: [
-    { id: 'decor8', name: 'Decor8.ai', description: 'Preserves architecture perfectly', cost: '$0.20', quality: '⭐⭐⭐⭐⭐', speed: '⚡⚡', bestFor: 'Virtual staging' },
-    { id: 'flux-depth', name: 'FLUX Depth Pro', description: 'Good depth preservation', cost: '$0.02', quality: '⭐⭐⭐⭐', speed: '⚡⚡⚡', bestFor: 'Furniture addition' },
+    { id: 'flux-depth', name: 'FLUX Depth Pro', description: 'Good depth preservation', cost: '$0.02', quality: '⭐⭐⭐⭐', speed: '⚡⚡⚡', bestFor: 'Virtual staging' },
     { id: 'flux-kontext', name: 'FLUX Kontext Pro', description: 'Instruction-based editing', cost: '$0.02', quality: '⭐⭐⭐⭐', speed: '⚡⚡', bestFor: 'Creative staging' },
   ],
   floorplan: [
