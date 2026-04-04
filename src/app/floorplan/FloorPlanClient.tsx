@@ -605,43 +605,6 @@ export default function FloorPlanPage() {
 
       {/* Quick Actions */}
       <div className="absolute top-20 left-1/2 -translate-x-1/2 z-10">
-        <QuickActions
-          actions={[
-            {
-              id: "undo",
-              icon: "undo",
-              label: "Undo",
-              shortcut: "⌘Z",
-              onClick: handleUndo,
-              disabled: !canUndo,
-            },
-            {
-              id: "redo",
-              icon: "redo",
-              label: "Redo",
-              shortcut: "⌘Y",
-              onClick: handleRedo,
-              disabled: !canRedo,
-            },
-            {
-              id: "export",
-              icon: "download",
-              label: "Export",
-              shortcut: "⌘E",
-              onClick: () => setShowExportModal(true),
-            },
-            {
-              id: "save",
-              icon: "save",
-              label: "Save",
-              shortcut: "⌘S",
-              onClick: handleSave,
-              variant: "primary",
-            },
-            { id: "new", icon: "add", label: "New", onClick: handleNew },
-          ]}
-          position="top"
-        />
       </div>
 
       {/* Processing overlay */}
