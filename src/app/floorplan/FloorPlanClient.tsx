@@ -1,29 +1,39 @@
-'use client';
+"use client";
 
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { AppLayout } from '@/components/layout';
+import { useState, useCallback, useRef, useEffect } from "react";
+import { AppLayout } from "@/components/layout";
 import FloorPlanCanvas2D, {
   type WallSegment,
   type RoomPolygon,
   type DoorData,
   type WindowData,
   type Tool,
-} from '@/components/floorplan/FloorPlanCanvas2D';
-import ToolPalette from '@/components/floorplan/ToolPalette';
-import PropertiesPanel from '@/components/floorplan/PropertiesPanel';
-import KeyboardShortcutsHelp from '@/components/floorplan/KeyboardShortcutsHelp';
-import QuickActions from '@/components/floorplan/QuickActions';
-import FirstTimeUserTutorial, { useTutorialState } from '@/components/floorplan/FirstTimeUserTutorial';
-import ExportModal from '@/components/floorplan/ExportModal';
-import { useUndoRedo } from '@/components/floorplan/useUndoRedo';
-import { useFurniture, type FurnitureDragItem } from '@/components/floorplan/useFurniture';
-import FurnitureLibrary, { type FurnitureItem } from '@/components/FurnitureLibrary';
-import type { PlacedFurniturePiece } from '@/components/PlacedFurniture';
-import dynamic from 'next/dynamic';
+} from "@/components/floorplan/FloorPlanCanvas2D";
+import ToolPalette from "@/components/floorplan/ToolPalette";
+import PropertiesPanel from "@/components/floorplan/PropertiesPanel";
+import KeyboardShortcutsHelp from "@/components/floorplan/KeyboardShortcutsHelp";
+import QuickActions from "@/components/floorplan/QuickActions";
+import FirstTimeUserTutorial, {
+  useTutorialState,
+} from "@/components/floorplan/FirstTimeUserTutorial";
+import ExportModal from "@/components/floorplan/ExportModal";
+import { useUndoRedo } from "@/components/floorplan/useUndoRedo";
+import {
+  useFurniture,
+  type FurnitureDragItem,
+} from "@/components/floorplan/useFurniture";
+import FurnitureLibrary, {
+  type FurnitureItem,
+} from "@/components/FurnitureLibrary";
+import type { PlacedFurniturePiece } from "@/components/PlacedFurniture";
+import dynamic from "next/dynamic";
 
-const FloorPlan3DViewer = dynamic(() => import('@/components/FloorPlan3DViewer'), { ssr: false });
+const FloorPlan3DViewer = dynamic(
+  () => import("@/components/FloorPlan3DViewer"),
+  { ssr: false },
+);
 
-type ViewMode = '2d' | '3d' | 'split';
+type ViewMode = "2d" | "3d" | "split";
 
 export default function FloorPlanPage() {
   // Export modal state
@@ -31,7 +41,7 @@ export default function FloorPlanPage() {
   const canvasContainerRef = useRef<HTMLDivElement>(null);
 
   // View mode
-  const [viewMode, setViewMode] = useState<ViewMode>('2d');
+  const [viewMode, setViewMode] = useState<ViewMode>("2d");
 
   // 2D Editor state with undo/redo
   const {
@@ -54,15 +64,19 @@ export default function FloorPlanPage() {
 
   const [doors, setDoors] = useState<DoorData[]>([]);
   const [windows, setWindows] = useState<WindowData[]>([]);
-  const [tool, setTool] = useState<Tool>('select');
+  const [tool, setTool] = useState<Tool>("select");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedType, setSelectedType] = useState<'wall' | 'room' | 'door' | 'window' | 'furniture' | null>(null);
+  const [selectedType, setSelectedType] = useState<
+    "wall" | "room" | "door" | "window" | "furniture" | null
+  >(null);
 
   // Furniture state (2D)
   const {
     furniture: furniture2D,
     selectedFurnitureId,
     setSelectedFurnitureId,
+    addFurniture,
+    updateFurniture,
     rotateFurniture,
     deleteFurniture,
     clearAllFurniture,
@@ -73,13 +87,18 @@ export default function FloorPlanPage() {
   } = useFurniture();
 
   // Selected furniture for placement
-  const [selectedFurnitureItem] = useState<FurnitureDragItem | null>(null);
+  const [selectedFurnitureItem, setSelectedFurnitureItem] =
+    useState<FurnitureDragItem | null>(null);
 
   // 3D Viewer state
-  const [placedFurniture, setPlacedFurniture] = useState<PlacedFurniturePiece[]>([]);
+  const [placedFurniture, setPlacedFurniture] = useState<
+    PlacedFurniturePiece[]
+  >([]);
   const [selectedPieceId, setSelectedPieceId] = useState<string | null>(null);
-  const [cameraPreset] = useState<'perspective' | 'top' | 'front' | 'side' | 'walkthrough'>('perspective');
-  const [lightingMode] = useState<'day' | 'night'>('day');
+  const [cameraPreset] = useState<
+    "perspective" | "top" | "front" | "side" | "walkthrough"
+  >("perspective");
+  const [lightingMode] = useState<"day" | "night">("day");
 
   // Upload state
   const [isProcessing, setIsProcessing] = useState(false);
@@ -109,48 +128,50 @@ export default function FloorPlanPage() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement) return;
 
-      if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (selectedType === 'furniture' && selectedFurnitureId) {
+      if (e.key === "Delete" || e.key === "Backspace") {
+        if (selectedType === "furniture" && selectedFurnitureId) {
           deleteFurniture(selectedFurnitureId);
           setSelectedFurnitureId(null);
           setSelectedType(null);
         } else if (selectedId && selectedType) {
-          if (selectedType === 'wall') setWalls(walls.filter((w) => w.id !== selectedId));
-          if (selectedType === 'room') setRooms(rooms.filter((r) => r.id !== selectedId));
+          if (selectedType === "wall")
+            setWalls(walls.filter((w) => w.id !== selectedId));
+          if (selectedType === "room")
+            setRooms(rooms.filter((r) => r.id !== selectedId));
           setSelectedId(null);
           setSelectedType(null);
         }
       }
 
-      if (e.key === 'v' || e.key === 'V') setTool('select');
-      if (e.key === 'w' || e.key === 'W') setTool('wall');
-      if (e.key === 'r' || e.key === 'R') {
-        if (selectedType === 'furniture' && selectedFurnitureId) {
+      if (e.key === "v" || e.key === "V") setTool("select");
+      if (e.key === "w" || e.key === "W") setTool("wall");
+      if (e.key === "r" || e.key === "R") {
+        if (selectedType === "furniture" && selectedFurnitureId) {
           rotateFurniture(selectedFurnitureId);
         } else {
-          setTool('room');
+          setTool("room");
         }
       }
-      if (e.key === 'd' || e.key === 'D') setTool('door');
-      if (e.key === 'h' || e.key === 'H') setTool('pan');
-      if (e.key === 'f' || e.key === 'F') setTool('furniture');
+      if (e.key === "d" || e.key === "D") setTool("door");
+      if (e.key === "h" || e.key === "H") setTool("pan");
+      if (e.key === "f" || e.key === "F") setTool("furniture");
 
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+      if ((e.ctrlKey || e.metaKey) && e.key === "z") {
         e.preventDefault();
         handleUndo();
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
+      if ((e.ctrlKey || e.metaKey) && e.key === "y") {
         e.preventDefault();
         handleRedo();
       }
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'e' || e.key === 'E')) {
+      if ((e.ctrlKey || e.metaKey) && (e.key === "e" || e.key === "E")) {
         e.preventDefault();
         setShowExportModal(true);
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [
     selectedId,
     selectedType,
@@ -169,7 +190,7 @@ export default function FloorPlanPage() {
   interface WallAPIResponse {
     start: [number, number];
     end: [number, number];
-    type: 'exterior' | 'interior';
+    type: "exterior" | "interior";
   }
 
   interface RoomAPIResponse {
@@ -196,10 +217,13 @@ export default function FloorPlanPage() {
     const reader = new FileReader();
     reader.onload = async (event) => {
       try {
-        const response = await fetch('/api/floorplan', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: event.target?.result, fileType: file.type }),
+        const response = await fetch("/api/floorplan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            image: event.target?.result,
+            fileType: file.type,
+          }),
         });
 
         const data: FloorPlanAPIResponse = await response.json();
@@ -213,8 +237,8 @@ export default function FloorPlanPage() {
               x2: w.end[0] * 20,
               y2: w.end[1] * 20,
               type: w.type,
-              thickness: w.type === 'exterior' ? 30 : 15,
-            }))
+              thickness: w.type === "exterior" ? 30 : 15,
+            })),
           );
         }
 
@@ -234,11 +258,11 @@ export default function FloorPlanPage() {
                 r.x * 20,
                 (r.y + r.height) * 20,
               ],
-            }))
+            })),
           );
         }
       } catch {
-        console.error('Failed to analyze floor plan');
+        console.error("Failed to analyze floor plan");
       } finally {
         setIsProcessing(false);
       }
@@ -249,13 +273,20 @@ export default function FloorPlanPage() {
 
   // Quick actions
   const handleSave = useCallback(() => {
-    const data = { walls, rooms, doors, windows, furniture: furniture2D, savedAt: new Date().toISOString() };
-    localStorage.setItem('floorplan-project', JSON.stringify(data));
-    alert('Project saved!');
+    const data = {
+      walls,
+      rooms,
+      doors,
+      windows,
+      furniture: furniture2D,
+      savedAt: new Date().toISOString(),
+    };
+    localStorage.setItem("floorplan-project", JSON.stringify(data));
+    alert("Project saved!");
   }, [walls, rooms, doors, windows, furniture2D]);
 
   const handleNew = useCallback(() => {
-    if (confirm('Clear all and start new project?')) {
+    if (confirm("Clear all and start new project?")) {
       setWalls([]);
       setRooms([]);
       setDoors([]);
@@ -266,7 +297,10 @@ export default function FloorPlanPage() {
 
   return (
     <AppLayout title="Floor Planner">
-      <FirstTimeUserTutorial onComplete={() => setShowTutorial(false)} forceShow={showTutorial} />
+      <FirstTimeUserTutorial
+        onComplete={() => setShowTutorial(false)}
+        forceShow={showTutorial}
+      />
 
       <div className="flex h-[calc(100vh-5rem)]">
         <div data-tutorial="tools">
@@ -274,27 +308,36 @@ export default function FloorPlanPage() {
         </div>
 
         <div className="flex-1 flex flex-col">
-          <div className="flex border-b border-slate-200 bg-white" data-tutorial="views">
+          <div
+            className="flex border-b border-slate-200 bg-white"
+            data-tutorial="views"
+          >
             <button
-              onClick={() => setViewMode('2d')}
+              onClick={() => setViewMode("2d")}
               className={`px-6 py-3 text-sm font-semibold transition-all ${
-                viewMode === '2d' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'
+                viewMode === "2d"
+                  ? "bg-blue-600 text-white"
+                  : "text-slate-600 hover:bg-slate-50"
               }`}
             >
               2D Editor
             </button>
             <button
-              onClick={() => setViewMode('3d')}
+              onClick={() => setViewMode("3d")}
               className={`px-6 py-3 text-sm font-semibold transition-all ${
-                viewMode === '3d' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'
+                viewMode === "3d"
+                  ? "bg-blue-600 text-white"
+                  : "text-slate-600 hover:bg-slate-50"
               }`}
             >
               3D View
             </button>
             <button
-              onClick={() => setViewMode('split')}
+              onClick={() => setViewMode("split")}
               className={`px-6 py-3 text-sm font-semibold transition-all ${
-                viewMode === 'split' ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'
+                viewMode === "split"
+                  ? "bg-blue-600 text-white"
+                  : "text-slate-600 hover:bg-slate-50"
               }`}
             >
               Split
@@ -304,7 +347,9 @@ export default function FloorPlanPage() {
               onClick={() => fileInputRef.current?.click()}
               className="px-4 py-2 m-2 bg-emerald-600 text-white rounded-lg text-sm font-semibold hover:bg-emerald-700"
             >
-              <span className="material-symbols-outlined text-sm mr-1">upload</span>
+              <span className="material-symbols-outlined text-sm mr-1">
+                upload
+              </span>
               Upload
             </button>
             <input
@@ -316,15 +361,22 @@ export default function FloorPlanPage() {
             />
           </div>
 
-          <div className={`flex-1 flex ${viewMode === 'split' ? 'divide-x divide-slate-200' : ''}`}>
-            {(viewMode === '2d' || viewMode === 'split') && (
-              <div ref={canvasContainerRef} className={viewMode === 'split' ? 'w-1/2' : 'flex-1'}>
+          <div
+            className={`flex-1 flex ${viewMode === "split" ? "divide-x divide-slate-200" : ""}`}
+          >
+            {(viewMode === "2d" || viewMode === "split") && (
+              <div
+                ref={canvasContainerRef}
+                className={viewMode === "split" ? "w-1/2" : "flex-1"}
+              >
                 <FloorPlanCanvas2D
-                tool={tool}
+                  tool={tool}
                   walls={walls}
                   rooms={rooms}
                   doors={doors}
                   windows={windows}
+                  furniture={furniture2D}
+                  selectedFurnitureId={selectedFurnitureId}
                   onWallsChange={setWalls}
                   onRoomsChange={setRooms}
                   onSelectionChange={(id, type) => {
@@ -332,12 +384,29 @@ export default function FloorPlanPage() {
                     setSelectedType(type);
                     if (id) setSelectedFurnitureId(null);
                   }}
+                  onFurniturePlace={(x, y) => {
+                    if (selectedFurnitureItem) {
+                      addFurniture(selectedFurnitureItem, x, y);
+                    }
+                  }}
+                  onFurnitureSelect={(id) => {
+                    setSelectedFurnitureId(id);
+                    if (id) {
+                      setSelectedId(null);
+                      setSelectedType("furniture");
+                    }
+                  }}
+                  onFurnitureMove={(id, x, y) => {
+                    updateFurniture(id, { x, y });
+                  }}
+                  onFurnitureRotate={rotateFurniture}
+                  onFurnitureDelete={deleteFurniture}
                 />
               </div>
             )}
 
-            {(viewMode === '3d' || viewMode === 'split') && (
-              <div className={viewMode === 'split' ? 'w-1/2' : 'flex-1'}>
+            {(viewMode === "3d" || viewMode === "split") && (
+              <div className={viewMode === "split" ? "w-1/2" : "flex-1"}>
                 <FloorPlan3DViewer
                   floorPlanData={{
                     rooms: rooms.map((r) => ({
@@ -395,17 +464,38 @@ export default function FloorPlanPage() {
           <div className="absolute top-20 left-1/2 -translate-x-1/2 z-10">
             <QuickActions
               actions={[
-                { id: 'undo', icon: 'undo', label: 'Undo', shortcut: '⌘Z', onClick: handleUndo, disabled: !canUndo },
-                { id: 'redo', icon: 'redo', label: 'Redo', shortcut: '⌘Y', onClick: handleRedo, disabled: !canRedo },
                 {
-                  id: 'export',
-                  icon: 'download',
-                  label: 'Export',
-                  shortcut: '⌘E',
+                  id: "undo",
+                  icon: "undo",
+                  label: "Undo",
+                  shortcut: "⌘Z",
+                  onClick: handleUndo,
+                  disabled: !canUndo,
+                },
+                {
+                  id: "redo",
+                  icon: "redo",
+                  label: "Redo",
+                  shortcut: "⌘Y",
+                  onClick: handleRedo,
+                  disabled: !canRedo,
+                },
+                {
+                  id: "export",
+                  icon: "download",
+                  label: "Export",
+                  shortcut: "⌘E",
                   onClick: () => setShowExportModal(true),
                 },
-                { id: 'save', icon: 'save', label: 'Save', shortcut: '⌘S', onClick: handleSave, variant: 'primary' },
-                { id: 'new', icon: 'add', label: 'New', onClick: handleNew },
+                {
+                  id: "save",
+                  icon: "save",
+                  label: "Save",
+                  shortcut: "⌘S",
+                  onClick: handleSave,
+                  variant: "primary",
+                },
+                { id: "new", icon: "add", label: "New", onClick: handleNew },
               ]}
               position="top"
             />
@@ -424,16 +514,42 @@ export default function FloorPlanPage() {
         <div data-tutorial="properties">
           <PropertiesPanel
             selectedId={selectedId}
-            selectedType={selectedType === 'furniture' ? null : (selectedType as 'wall' | 'room' | 'door' | 'window' | null)}
-            wall={selectedType === 'wall' ? walls.find((w) => w.id === selectedId) : undefined}
-            room={selectedType === 'room' ? rooms.find((r) => r.id === selectedId) : undefined}
-            door={selectedType === 'door' ? doors.find((d) => d.id === selectedId) : undefined}
-            window={selectedType === 'window' ? windows.find((w) => w.id === selectedId) : undefined}
-            onWallUpdate={(wall) => setWalls(walls.map((w) => (w.id === wall.id ? wall : w)))}
-            onRoomUpdate={(room) => setRooms(rooms.map((r) => (r.id === room.id ? room : r)))}
+            selectedType={
+              selectedType === "furniture"
+                ? null
+                : (selectedType as "wall" | "room" | "door" | "window" | null)
+            }
+            wall={
+              selectedType === "wall"
+                ? walls.find((w) => w.id === selectedId)
+                : undefined
+            }
+            room={
+              selectedType === "room"
+                ? rooms.find((r) => r.id === selectedId)
+                : undefined
+            }
+            door={
+              selectedType === "door"
+                ? doors.find((d) => d.id === selectedId)
+                : undefined
+            }
+            window={
+              selectedType === "window"
+                ? windows.find((w) => w.id === selectedId)
+                : undefined
+            }
+            onWallUpdate={(wall) =>
+              setWalls(walls.map((w) => (w.id === wall.id ? wall : w)))
+            }
+            onRoomUpdate={(room) =>
+              setRooms(rooms.map((r) => (r.id === room.id ? room : r)))
+            }
             onDelete={() => {
-              if (selectedType === 'wall') setWalls(walls.filter((w) => w.id !== selectedId));
-              if (selectedType === 'room') setRooms(rooms.filter((r) => r.id !== selectedId));
+              if (selectedType === "wall")
+                setWalls(walls.filter((w) => w.id !== selectedId));
+              if (selectedType === "room")
+                setRooms(rooms.filter((r) => r.id !== selectedId));
               setSelectedId(null);
               setSelectedType(null);
             }}
@@ -442,9 +558,45 @@ export default function FloorPlanPage() {
       </div>
 
       {/* Bottom Furniture Library */}
-      <div className="h-32 border-t border-slate-200 bg-white p-4" data-tutorial="furniture">
+      <div
+        className="h-32 border-t border-slate-200 bg-white p-4"
+        data-tutorial="furniture"
+      >
         <div className="flex items-center gap-4 h-full">
-          <FurnitureLibrary selectedFurniture={null} onSelectFurniture={() => {}} compact />
+          <FurnitureLibrary
+            selectedFurniture={
+              selectedFurnitureItem
+                ? {
+                    id: selectedFurnitureItem.id,
+                    name: selectedFurnitureItem.name,
+                    category: selectedFurnitureItem.category,
+                    dimensions: {
+                      width: selectedFurnitureItem.width,
+                      height: 1,
+                      depth: selectedFurnitureItem.height,
+                    },
+                    color: selectedFurnitureItem.color,
+                    icon: selectedFurnitureItem.id,
+                  }
+                : null
+            }
+            onSelectFurniture={(item) => {
+              if (item) {
+                setSelectedFurnitureItem({
+                  id: item.id,
+                  name: item.name,
+                  category: item.category,
+                  width: item.dimensions.width,
+                  height: item.dimensions.depth,
+                  color: item.color,
+                });
+                setTool("furniture");
+              } else {
+                setSelectedFurnitureItem(null);
+              }
+            }}
+            compact
+          />
         </div>
       </div>
 

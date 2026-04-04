@@ -4,6 +4,7 @@ import { Stage, Layer, Line, Rect, Text, Group } from 'react-konva';
 import WallEditor from './WallEditor';
 import RoomEditor from './RoomEditor';
 import DoorWindowEditor from './DoorWindowEditor';
+import type { PlacedFurniture2D } from './useFurniture';
 
 export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'furniture' | 'pan';
 export type WallType = 'exterior' | 'interior';
@@ -49,16 +50,28 @@ interface FloorPlanCanvas2DProps {
   rooms?: RoomPolygon[];
   doors?: DoorData[];
   windows?: WindowData[];
+  furniture?: PlacedFurniture2D[];
+  selectedFurnitureId?: string | null;
   onWallsChange?: (walls: WallSegment[]) => void;
   onRoomsChange?: (rooms: RoomPolygon[]) => void;
   onDoorsChange?: (doors: DoorData[]) => void;
   onWindowsChange?: (windows: WindowData[]) => void;
   onSelectionChange?: (id: string | null, type: 'wall' | 'room' | 'door' | 'window' | null) => void;
+  onFurniturePlace?: (x: number, y: number) => void;
+  onFurnitureSelect?: (id: string | null) => void;
+  onFurnitureMove?: (id: string, x: number, y: number) => void;
+  onFurnitureRotate?: (id: string) => void;
+  onFurnitureDelete?: (id: string) => void;
 }
 
 const GRID_SIZE = 20; // 20px = 10cm at 1:50 scale
 const SNAP_THRESHOLD = 10;
-const WALL_COLORS = { exterior: '#333333', interior: '#666666' };
+
+const WALL_COLORS = {
+  exterior: '#333333',
+  interior: '#666666'
+};
+
 const ROOM_COLORS: Record<string, string> = {
   living: 'rgba(129, 199, 132, 0.3)',
   kitchen: 'rgba(255, 183, 77, 0.3)',
@@ -77,13 +90,19 @@ export default function FloorPlanCanvas2D({
   rooms = [],
   doors = [],
   windows = [],
+  furniture = [],
+  selectedFurnitureId,
   onWallsChange,
   onRoomsChange,
   onDoorsChange,
   onWindowsChange,
   onSelectionChange,
+  onFurniturePlace,
+  onFurnitureSelect,
+  onFurnitureMove,
+  onFurnitureRotate,
+  onFurnitureDelete,
 }: FloorPlanCanvas2DProps) {
-  // Tool is now passed as prop
   const activeTool = tool ?? 'select';
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
@@ -93,20 +112,18 @@ export default function FloorPlanCanvas2D({
   const [drawPoints, setDrawPoints] = useState<number[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<'wall' | 'room' | 'door' | 'window' | null>(null);
-  
   const stageRef = useRef<any>(null);
 
-// Resize observer for responsive canvas
-useEffect(() => {
-  if (!containerRef.current) return;
-  const resizeObserver = new ResizeObserver((entries) => {
-    const { width, height } = entries[0].contentRect;
-    setDimensions({ width: width || 800, height: height || 600 });
-  });
-  resizeObserver.observe(containerRef.current);
-  return () => resizeObserver.disconnect();
-}, []);
-
+  // Resize observer for responsive canvas
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const resizeObserver = new ResizeObserver((entries) => {
+      const { width, height } = entries[0].contentRect;
+      setDimensions({ width: width || 800, height: height || 600 });
+    });
+    resizeObserver.observe(containerRef.current);
+    return () => resizeObserver.disconnect();
+  }, []);
 
   // Snap to grid
   const snapToGrid = useCallback((value: number): number => {
@@ -118,6 +135,7 @@ useEffect(() => {
     const stage = stageRef.current;
     if (!stage) return { x: 0, y: 0 };
     const pos = stage.getPointerPosition();
+    if (!pos) return { x: 0, y: 0 };
     return {
       x: snapToGrid((pos.x - position.x) / scale),
       y: snapToGrid((pos.y - position.y) / scale),
@@ -127,7 +145,6 @@ useEffect(() => {
   // Handle mouse down for drawing
   const handleMouseDown = useCallback((e: any) => {
     if (activeTool === 'select' || activeTool === 'pan') return;
-    
     const pos = getPointerPosition();
     setIsDrawing(true);
     setDrawPoints([pos.x, pos.y]);
@@ -136,10 +153,8 @@ useEffect(() => {
   // Handle mouse move for drawing
   const handleMouseMove = useCallback((e: any) => {
     if (!isDrawing) return;
-    
     const stage = stageRef.current;
     if (!stage) return;
-    
     const pos = getPointerPosition();
     setDrawPoints(prev => [...prev, pos.x, pos.y]);
   }, [isDrawing, getPointerPosition]);
@@ -147,9 +162,16 @@ useEffect(() => {
   // Handle mouse up to finish drawing
   const handleMouseUp = useCallback((e: any) => {
     if (!isDrawing) return;
-    
     setIsDrawing(false);
-    
+
+    // Handle furniture placement
+    if (activeTool === 'furniture') {
+      const pos = getPointerPosition();
+      onFurniturePlace?.(pos.x, pos.y);
+      setDrawPoints([]);
+      return;
+    }
+
     if (activeTool === 'wall' && drawPoints.length >= 4) {
       const newWall: WallSegment = {
         id: `wall-${Date.now()}`,
@@ -162,7 +184,6 @@ useEffect(() => {
       };
       onWallsChange?.([...walls, newWall]);
     }
-    
     if (activeTool === 'room' && drawPoints.length >= 6) {
       const newRoom: RoomPolygon = {
         id: `room-${Date.now()}`,
@@ -172,9 +193,8 @@ useEffect(() => {
       };
       onRoomsChange?.([...rooms, newRoom]);
     }
-    
     setDrawPoints([]);
-  }, [isDrawing, activeTool, drawPoints, walls, rooms, onWallsChange, onRoomsChange]);
+  }, [isDrawing, activeTool, drawPoints, walls, rooms, onWallsChange, onRoomsChange, onFurniturePlace, getPointerPosition]);
 
   // Handle selection
   const handleSelect = useCallback((id: string, type: 'wall' | 'room' | 'door' | 'window') => {
@@ -187,13 +207,11 @@ useEffect(() => {
   // Handle delete
   const handleDelete = useCallback(() => {
     if (!selectedId || !selectedType) return;
-    
     if (selectedType === 'wall') {
       onWallsChange?.(walls.filter(w => w.id !== selectedId));
     } else if (selectedType === 'room') {
       onRoomsChange?.(rooms.filter(r => r.id !== selectedId));
     }
-    
     setSelectedId(null);
     setSelectedType(null);
     onSelectionChange?.(null, null);
@@ -204,16 +222,13 @@ useEffect(() => {
     e.evt.preventDefault();
     const oldScale = scale;
     const pointer = stageRef.current.getPointerPosition();
-    
     const scaleBy = 1.1;
     const newScale = e.evt.deltaY > 0 ? oldScale * scaleBy : oldScale / scaleBy;
     const clampedScale = Math.max(0.1, Math.min(5, newScale));
-    
     const mousePointTo = {
       x: (pointer.x - position.x) / oldScale,
       y: (pointer.y - position.y) / oldScale,
     };
-    
     setScale(clampedScale);
     setPosition({
       x: pointer.x - mousePointTo.x * clampedScale,
@@ -230,10 +245,30 @@ useEffect(() => {
     });
   }, [activeTool]);
 
+  // Handle furniture click
+  const handleFurnitureClick = useCallback((id: string, e: any) => {
+    e.cancelBubble = true;
+    onFurnitureSelect?.(id === selectedFurnitureId ? null : id);
+    onSelectionChange?.(null, null);
+  }, [selectedFurnitureId, onFurnitureSelect, onSelectionChange]);
+
+  // Handle furniture drag end
+  const handleFurnitureDragEnd = useCallback((id: string, e: any) => {
+    const snapped = {
+      x: snapToGrid(e.target.x()),
+      y: snapToGrid(e.target.y()),
+    };
+    onFurnitureMove?.(id, snapped.x, snapped.y);
+  }, [snapToGrid, onFurnitureMove]);
+
+  // Use dimensions from resize observer instead of fixed width/height
+  const canvasWidth = dimensions.width;
+  const canvasHeight = dimensions.height;
+
   return (
-    <div className="relative w-full h-full bg-slate-50">
+    <div ref={containerRef} className="relative w-full h-full bg-slate-50">
       {/* Grid background */}
-      <div 
+      <div
         className="absolute inset-0 pointer-events-none"
         style={{
           backgroundImage: `
@@ -244,11 +279,11 @@ useEffect(() => {
           backgroundPosition: `${position.x}px ${position.y}px`,
         }}
       />
-      
+
       <Stage
         ref={stageRef}
-        width={width}
-        height={height}
+        width={canvasWidth}
+        height={canvasHeight}
         scaleX={scale}
         scaleY={scale}
         x={position.x}
@@ -290,7 +325,7 @@ useEffect(() => {
               />
             </Group>
           ))}
-          
+
           {/* Walls */}
           {walls.map(wall => (
             <Line
@@ -302,7 +337,7 @@ useEffect(() => {
               onClick={() => handleSelect(wall.id, 'wall')}
             />
           ))}
-          
+
           {/* Current drawing */}
           {isDrawing && drawPoints.length > 0 && (
             <Line
@@ -312,7 +347,7 @@ useEffect(() => {
               dash={[5 / scale, 5 / scale]}
             />
           )}
-          
+
           {/* Doors */}
           {doors.map(door => (
             <Rect
@@ -328,7 +363,7 @@ useEffect(() => {
               onClick={() => handleSelect(door.id, 'door')}
             />
           ))}
-          
+
           {/* Windows */}
           {windows.map(win => (
             <Rect
@@ -344,9 +379,85 @@ useEffect(() => {
               onClick={() => handleSelect(win.id, 'window')}
             />
           ))}
+
+          {/* Furniture */}
+          {furniture.map(piece => (
+            <Group
+              key={piece.id}
+              x={piece.x}
+              y={piece.y}
+              rotation={piece.rotation}
+              draggable
+              onClick={(e) => handleFurnitureClick(piece.id, e)}
+              onTap={(e) => handleFurnitureClick(piece.id, e)}
+              onDragEnd={(e) => handleFurnitureDragEnd(piece.id, e)}
+            >
+              <Rect
+                width={piece.width}
+                height={piece.height}
+                fill={selectedFurnitureId === piece.id ? `${piece.color}dd` : piece.color}
+                stroke={selectedFurnitureId === piece.id ? '#3b82f6' : '#333'}
+                strokeWidth={selectedFurnitureId === piece.id ? 2 / scale : 1 / scale}
+                cornerRadius={3 / scale}
+                shadowColor="rgba(0,0,0,0.3)"
+                shadowBlur={selectedFurnitureId === piece.id ? 10 : 5}
+                shadowOffset={{ x: 2 / scale, y: 2 / scale }}
+              />
+              <Text
+                text={piece.name}
+                x={0}
+                y={piece.height / 2 - 7 / scale}
+                width={piece.width}
+                align="center"
+                fontSize={10 / scale}
+                fill="#fff"
+                fontStyle="bold"
+                shadowColor="rgba(0,0,0,0.5)"
+                shadowBlur={2 / scale}
+              />
+              {/* Selection handles */}
+              {selectedFurnitureId === piece.id && (
+                <>
+                  {/* Rotation handle */}
+                  <Group
+                    x={piece.width / 2}
+                    y={-20 / scale}
+                    onClick={(e) => {
+                      e.cancelBubble = true;
+                      onFurnitureRotate?.(piece.id);
+                    }}
+                    onTap={(e) => {
+                      e.cancelBubble = true;
+                      onFurnitureRotate?.(piece.id);
+                    }}
+                  >
+                    <Line points={[0, 0, 0, 15 / scale]} stroke="#8b5cf6" strokeWidth={2 / scale} />
+                    <Rect x={-6 / scale} y={-6 / scale} width={12 / scale} height={12 / scale} fill="#8b5cf6" cornerRadius={6 / scale} />
+                    <Text text="↻" x={-5 / scale} y={-5 / scale} fontSize={10 / scale} fill="#fff" />
+                  </Group>
+                  {/* Delete button */}
+                  <Group
+                    x={piece.width + 5 / scale}
+                    y={0}
+                    onClick={(e) => {
+                      e.cancelBubble = true;
+                      onFurnitureDelete?.(piece.id);
+                    }}
+                    onTap={(e) => {
+                      e.cancelBubble = true;
+                      onFurnitureDelete?.(piece.id);
+                    }}
+                  >
+                    <Rect x={0} y={0} width={16 / scale} height={16 / scale} fill="#ef4444" cornerRadius={8 / scale} />
+                    <Text text="✕" x={4 / scale} y={2 / scale} fontSize={12 / scale} fill="#fff" />
+                  </Group>
+                </>
+              )}
+            </Group>
+          ))}
         </Layer>
       </Stage>
-      
+
       {/* Scale indicator */}
       <div className="absolute bottom-4 left-4 bg-white/90 px-3 py-1.5 rounded shadow text-xs font-mono">
         Scale 1:{Math.round(50 / scale)} | {Math.round(scale * 100)}%
