@@ -275,7 +275,9 @@ export const useTemporalStore = <T>(
 export const useFloorPlanUndo = () => {
   const temporalState = useFloorPlanStore.temporal.getState();
   const { undo, redo, clear } = temporalState;
-  const canUndo = (temporalState as any).past.length > 0;
-  const canRedo = (temporalState as any).future.length > 0;
+  const past = (temporalState as any).past || [];
+  const future = (temporalState as any).future || [];
+  const canUndo = past.length > 0;
+  const canRedo = future.length > 0;
   return { undo, redo, clear, canUndo, canRedo };
 };
