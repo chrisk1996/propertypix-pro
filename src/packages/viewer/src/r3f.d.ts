@@ -15,10 +15,11 @@
 
 export {}
 
-interface ThreeJSXElements {
+type ThreeJSXElements = {
   // Containers
   group: any
   scene: any
+
   // Geometries
   boxGeometry: any
   planeGeometry: any
@@ -30,6 +31,7 @@ interface ThreeJSXElements {
   bufferGeometry: any
   edgesGeometry: any
   ringGeometry: any
+
   // Meshes & lines
   mesh: any
   instancedMesh: any
@@ -37,6 +39,7 @@ interface ThreeJSXElements {
   lineSegments: any
   lineLoop: any
   points: any
+
   // Materials
   meshStandardMaterial: any
   meshBasicMaterial: any
@@ -51,6 +54,7 @@ interface ThreeJSXElements {
   shaderMaterial: any
   rawShaderMaterial: any
   spriteMaterial: any
+
   // Lights
   ambientLight: any
   directionalLight: any
@@ -58,39 +62,47 @@ interface ThreeJSXElements {
   spotLight: any
   hemisphereLight: any
   rectAreaLight: any
+
   // Cameras
   perspectiveCamera: any
   orthographicCamera: any
+
   // Helpers
   gridHelper: any
   axesHelper: any
   arrowHelper: any
+
   // Misc
   sprite: any
   lOD: any
   fog: any
   color: any
+
   // Buffer attribute
   bufferAttribute: any
   instancedBufferAttribute: any
+
   // Primitive (R3F-specific)
   primitive: any
 }
 
 declare module 'react' {
   namespace JSX {
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
     interface IntrinsicElements extends ThreeJSXElements {}
   }
 }
 
 declare module 'react/jsx-runtime' {
   namespace JSX {
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
     interface IntrinsicElements extends ThreeJSXElements {}
   }
 }
 
 declare module 'react/jsx-dev-runtime' {
   namespace JSX {
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
     interface IntrinsicElements extends ThreeJSXElements {}
   }
 }

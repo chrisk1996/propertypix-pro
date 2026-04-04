@@ -6,7 +6,7 @@ type AnyContainerNode = AnyNode & { children: string[] }
 
 // Track pending RAF for updateNodesAction to prevent multiple queued callbacks
 let pendingRafId: number | null = null
-let pendingUpdates: Set<AnyNodeId> = new Set()
+const pendingUpdates: Set<AnyNodeId> = new Set()
 
 export const createNodesAction = (
   set: (fn: (state: SceneState) => Partial<SceneState>) => void,

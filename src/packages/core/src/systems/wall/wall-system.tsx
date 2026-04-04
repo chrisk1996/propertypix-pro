@@ -213,7 +213,7 @@ export function generateExtrudedWall(
   // Create wall brush from geometry
   // Pre-compute BVH with new API to avoid deprecation warning
   geometry.computeBoundsTree = computeBoundsTree
-  geometry.computeBoundsTree({ maxLeafSize: 10 })
+  geometry.computeBoundsTree({})
 
   const wallBrush = new Brush(geometry)
   wallBrush.updateMatrixWorld()
@@ -307,7 +307,7 @@ function collectCutoutBrushes(
 
     // Pre-compute BVH with new API to avoid deprecation warning
     boxGeo.computeBoundsTree = computeBoundsTree
-    boxGeo.computeBoundsTree({ maxLeafSize: 10 })
+    boxGeo.computeBoundsTree({})
 
     const brush = new Brush(boxGeo)
     brushes.push(brush)

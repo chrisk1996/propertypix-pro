@@ -12,7 +12,6 @@ const Y_OFFSET = 0.01
  */
 const createBoundaryLineGeometry = (points: Array<[number, number]>): BufferGeometry => {
   const geometry = new BufferGeometry()
-
   if (points.length < 2) return geometry
 
   const positions: number[] = []
@@ -21,17 +20,16 @@ const createBoundaryLineGeometry = (points: Array<[number, number]>): BufferGeom
   for (const [x, z] of points) {
     positions.push(x ?? 0, Y_OFFSET, z ?? 0)
   }
+
   // Close the loop
   positions.push(points[0]?.[0] ?? 0, Y_OFFSET, points[0]?.[1] ?? 0)
 
   geometry.setAttribute('position', new Float32BufferAttribute(positions, 3))
-
   return geometry
 }
 
 export const SiteRenderer = ({ node }: { node: SiteNode }) => {
   const ref = useRef<Group>(null!)
-
   useRegistry(node.id, 'site', ref)
 
   // Create floor shape from polygon points
@@ -43,13 +41,11 @@ export const SiteRenderer = ({ node }: { node: SiteNode }) => {
     // Shape is in X-Y plane, we rotate it to X-Z plane
     // Negate Y (which becomes Z) to get correct orientation
     shape.moveTo(firstPt[0]!, -firstPt[1]!)
-
     for (let i = 1; i < node.polygon.points.length; i++) {
       const pt = node.polygon.points[i]!
       shape.lineTo(pt[0]!, -pt[1]!)
     }
     shape.closePath()
-
     return shape
   }, [node?.polygon?.points])
 
@@ -82,7 +78,7 @@ export const SiteRenderer = ({ node }: { node: SiteNode }) => {
       </mesh>
 
       {/* Simple boundary line */}
-      {/* @ts-ignore */}
+      {/* @ts-expect-error - lineBasicMaterial linewidth is deprecated but still works */}
       <line frustumCulled={false} geometry={lineGeometry} renderOrder={9}>
         <lineBasicMaterial color="#f59e0b" linewidth={2} opacity={0.6} transparent />
       </line>

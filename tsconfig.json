@@ -16,6 +16,7 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+    "downlevelIteration": true,
     "plugins": [
       {
         "name": "next"
@@ -24,6 +25,12 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@pascal-app/core": [
+        "./src/packages/core/src"
+      ],
+      "@pascal-app/viewer": [
+        "./src/packages/viewer/src"
       ]
     }
   },

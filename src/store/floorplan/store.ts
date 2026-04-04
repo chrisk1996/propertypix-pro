@@ -268,13 +268,14 @@ export const useTemporalStore = <T>(
   selector: (state: FloorPlanState) => T
 ) => {
   const temporalStore = useFloorPlanStore.temporal;
-  return selector(temporalStore.getState() as FloorPlanState);
+  return selector(temporalStore.getState() as unknown as FloorPlanState);
 };
 
 // Undo/Redo helpers
 export const useFloorPlanUndo = () => {
-  const { undo, redo, clear } = useFloorPlanStore.temporal.getState();
-  const canUndo = useFloorPlanStore.temporal.getState().past.length > 0;
-  const canRedo = useFloorPlanStore.temporal.getState().future.length > 0;
+  const temporalState = useFloorPlanStore.temporal.getState();
+  const { undo, redo, clear } = temporalState;
+  const canUndo = (temporalState as any).past.length > 0;
+  const canRedo = (temporalState as any).future.length > 0;
   return { undo, redo, clear, canUndo, canRedo };
 };
