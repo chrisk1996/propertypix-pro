@@ -287,7 +287,7 @@ export default function FloorPlanPage() {
       />
 
       {/* Main layout: Tools | Canvas Area + Furniture Bar | Properties */}
-      <div className="flex h-[calc(100vh-5rem)] overflow-hidden">
+      <div className="flex h-[calc(100vh-5rem)]">
         {/* Tool Palette (left sidebar) */}
         <div data-tutorial="tools">
           <ToolPalette activeTool={tool} onToolChange={setTool} onZoomIn={() => {/* TODO: implement zoom */}} onZoomOut={() => {/* TODO: implement zoom */}} />
