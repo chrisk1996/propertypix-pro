@@ -43,9 +43,57 @@ export const SSGI_PARAMS = {
 
 const MAX_PIPELINE_RETRIES = 3
 const RETRY_DELAY_MS = 500
-
 const DARK_BG = '#1f2433'
 const LIGHT_BG = '#ffffff'
+
+// Helper functions moved outside component to avoid ES5 block-scoped function error
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const generateSelectedOutlinePass = (scene: any, camera: any) => {
+  const edgeStrength = uniform(3)
+  const edgeGlow = uniform(0)
+  const edgeThickness = uniform(1)
+  const visibleEdgeColor = uniform(new Color(0xff_ff_ff))
+  const hiddenEdgeColor = uniform(new Color(0xf3_ff_47))
+
+  const outlinePass = outline(scene, camera, {
+    selectedObjects: useViewer.getState().outliner.selectedObjects,
+    edgeGlow,
+    edgeThickness,
+  })
+  const { visibleEdge, hiddenEdge } = outlinePass
+  const outlineColor = visibleEdge
+    .mul(visibleEdgeColor)
+    .add(hiddenEdge.mul(hiddenEdgeColor))
+    .mul(edgeStrength)
+
+  return outlineColor
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const generateHoverOutlinePass = (scene: any, camera: any) => {
+  const edgeStrength = uniform(5)
+  const edgeGlow = uniform(0.5)
+  const edgeThickness = uniform(1.5)
+  const pulsePeriod = uniform(3)
+  const visibleEdgeColor = uniform(new Color(0x00_aa_ff))
+  const hiddenEdgeColor = uniform(new Color(0xf3_ff_47))
+
+  const outlinePass = outline(scene, camera, {
+    selectedObjects: useViewer.getState().outliner.hoveredObjects,
+    edgeGlow,
+    edgeThickness,
+  })
+  const { visibleEdge, hiddenEdge } = outlinePass
+  const period = time.div(pulsePeriod).mul(2)
+  const osc = oscSine(period).mul(0.5).add(0.5) // osc [ 0.5, 1.0 ]
+  const outlineColor = visibleEdge
+    .mul(visibleEdgeColor)
+    .add(hiddenEdge.mul(hiddenEdgeColor))
+    .mul(edgeStrength)
+  const outlinePulse = pulsePeriod.greaterThan(0).select(outlineColor.mul(osc), outlineColor)
+
+  return outlinePulse
+}
 
 const PostProcessingPasses = () => {
   const { gl: renderer, scene, camera } = useThree()
@@ -73,22 +121,18 @@ const PostProcessingPasses = () => {
 
   // Bump this to force a pipeline rebuild (used by retry logic)
   const [pipelineVersion, setPipelineVersion] = useState(0)
-
   const requestPipelineRebuild = useCallback(() => {
     setPipelineVersion((v) => v + 1)
   }, [])
 
   // Renderer initialization
-
   useEffect(() => {
     let mounted = true
-
     const initRenderer = async () => {
       try {
         if (renderer && (renderer as any).init) {
           await (renderer as any).init()
         }
-
         if (mounted) {
           setIsInitialized(true)
         }
@@ -99,9 +143,7 @@ const PostProcessingPasses = () => {
         }
       }
     }
-
     initRenderer()
-
     return () => {
       mounted = false
     }
@@ -117,7 +159,6 @@ const PostProcessingPasses = () => {
     if (!(renderer && scene && camera && isInitialized)) {
       return
     }
-
     hasPipelineErrorRef.current = false
 
     // Clear outliner arrays synchronously to prevent stale Object3D refs
@@ -130,7 +171,6 @@ const PostProcessingPasses = () => {
       const scenePass = pass(scene, camera)
       const zonePass = pass(scene, camera)
       zonePass.setLayers(zoneLayers)
-
       const scenePassColor = scenePass.getTextureNode('output')
 
       // Background detection via alpha: renderer clears with alpha=0 (setClearAlpha(0) in useFrame),
@@ -151,7 +191,6 @@ const PostProcessingPasses = () => {
             normal: directionToColor(normalView),
           }),
         )
-
         const scenePassDiffuse = scenePass.getTextureNode('diffuseColor')
         const scenePassDepth = scenePass.getTextureNode('depth')
         const scenePassNormal = scenePass.getTextureNode('normal')
@@ -179,7 +218,6 @@ const PostProcessingPasses = () => {
         giPass.useTemporalFiltering = SSGI_PARAMS.useTemporalFiltering
 
         const giTexture = (giPass as any).getTextureNode()
-
         // DenoiseNode only denoises RGB — alpha is passed through unchanged.
         // SSGI packs AO into alpha, so we remap it into RGB before denoising.
         const aoAsRgb = vec4(giTexture.a, giTexture.a, giTexture.a, float(1))
@@ -197,57 +235,8 @@ const PostProcessingPasses = () => {
         )
       }
 
-      function generateSelectedOutlinePass() {
-        const edgeStrength = uniform(3)
-        const edgeGlow = uniform(0)
-        const edgeThickness = uniform(1)
-        const visibleEdgeColor = uniform(new Color(0xff_ff_ff))
-        const hiddenEdgeColor = uniform(new Color(0xf3_ff_47))
-
-        const outlinePass = outline(scene, camera, {
-          selectedObjects: useViewer.getState().outliner.selectedObjects,
-          edgeGlow,
-          edgeThickness,
-        })
-        const { visibleEdge, hiddenEdge } = outlinePass
-
-        const outlineColor = visibleEdge
-          .mul(visibleEdgeColor)
-          .add(hiddenEdge.mul(hiddenEdgeColor))
-          .mul(edgeStrength)
-
-        return outlineColor
-      }
-
-      function generateHoverOutlinePass() {
-        const edgeStrength = uniform(5)
-        const edgeGlow = uniform(0.5)
-        const edgeThickness = uniform(1.5)
-        const pulsePeriod = uniform(3)
-        const visibleEdgeColor = uniform(new Color(0x00_aa_ff))
-        const hiddenEdgeColor = uniform(new Color(0xf3_ff_47))
-
-        const outlinePass = outline(scene, camera, {
-          selectedObjects: useViewer.getState().outliner.hoveredObjects,
-          edgeGlow,
-          edgeThickness,
-        })
-        const { visibleEdge, hiddenEdge } = outlinePass
-
-        const period = time.div(pulsePeriod).mul(2)
-        const osc = oscSine(period).mul(0.5).add(0.5) // osc [ 0.5, 1.0 ]
-
-        const outlineColor = visibleEdge
-          .mul(visibleEdgeColor)
-          .add(hiddenEdge.mul(hiddenEdgeColor))
-          .mul(edgeStrength)
-        const outlinePulse = pulsePeriod.greaterThan(0).select(outlineColor.mul(osc), outlineColor)
-
-        return outlinePulse
-      }
-
-      const selectedOutlinePass = generateSelectedOutlinePass()
-      const hoverOutlinePass = generateHoverOutlinePass()
+      const selectedOutlinePass = generateSelectedOutlinePass(scene, camera)
+      const hoverOutlinePass = generateHoverOutlinePass(scene, camera)
 
       const compositeWithOutlines = vec4(
         add(sceneColor.rgb, selectedOutlinePass.add(hoverOutlinePass)),

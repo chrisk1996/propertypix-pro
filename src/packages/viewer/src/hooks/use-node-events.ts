@@ -58,11 +58,11 @@ export function useNodeEvents<T extends NodeType>(node: NodeConfig[T]['node'], t
       stopPropagation: () => e.stopPropagation(),
       nativeEvent: e,
     } as NodeConfig[T]['event']
-
     emitter.emit(eventKey, payload)
   }
 
-  return {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handlers: any = {
     onPointerDown: (e: ThreeEvent<PointerEvent>) => {
       if (useViewer.getState().cameraDragging) return
       if (e.button !== 0) return
@@ -76,7 +76,7 @@ export function useNodeEvents<T extends NodeType>(node: NodeConfig[T]['node'], t
       // which often fails if the mouse moves even 1 pixel.
       emit('click', e)
     },
-    onClick: (e: ThreeEvent<PointerEvent>) => {
+    onClick: (_e: ThreeEvent<PointerEvent>) => {
       // Disable default R3F click since we synthesize it on pointerup
       // This prevents double-clicks from firing twice.
     },
@@ -101,4 +101,6 @@ export function useNodeEvents<T extends NodeType>(node: NodeConfig[T]['node'], t
       emit('context-menu', e)
     },
   }
+
+  return handlers
 }
