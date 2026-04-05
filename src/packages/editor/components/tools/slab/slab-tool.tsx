@@ -273,7 +273,7 @@ export const SlabTool: React.FC = () => {
       )}
 
       {/* Main line */}
-      {/* @ts-ignore */}
+      
       <line
         frustumCulled={false}
         layers={EDITOR_LAYER}
@@ -287,7 +287,7 @@ export const SlabTool: React.FC = () => {
       </line>
 
       {/* Closing line */}
-      {/* @ts-ignore */}
+      
       <line
         frustumCulled={false}
         layers={EDITOR_LAYER}

@@ -314,7 +314,7 @@ export const ZoneTool: React.FC = () => {
       )}
 
       {/* Main line - uses native line element with TSL-compatible material */}
-      {/* @ts-ignore */}
+      
       <line
         frustumCulled={false}
         layers={EDITOR_LAYER}
@@ -328,7 +328,7 @@ export const ZoneTool: React.FC = () => {
       </line>
 
       {/* Closing line - uses native line element with TSL-compatible material */}
-      {/* @ts-ignore */}
+      
       <line
         frustumCulled={false}
         layers={EDITOR_LAYER}

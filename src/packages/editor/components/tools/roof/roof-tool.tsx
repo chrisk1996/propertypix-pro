@@ -268,7 +268,7 @@ export const RoofTool: React.FC = () => {
     <group>
       <CursorSphere ref={cursorRef} />
 
-      {/* @ts-ignore */}
+      
       <line
         frustumCulled={false}
         layers={EDITOR_LAYER}

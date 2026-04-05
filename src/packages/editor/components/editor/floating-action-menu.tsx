@@ -82,7 +82,7 @@ export function FloatingActionMenu() {
       sfxEmitter.emit('sfx:item-pick')
       useScene.temporal.getState().pause()
 
-      let duplicateInfo = structuredClone(node) as any
+      const duplicateInfo = structuredClone(node) as any
       delete duplicateInfo.id
       duplicateInfo.metadata = { ...duplicateInfo.metadata, isNew: true }
 
@@ -124,7 +124,7 @@ export function FloatingActionMenu() {
             for (const childId of node.children) {
               const childNode = nodesState[childId]
               if (childNode && childNode.type === 'roof-segment') {
-                let childDuplicateInfo = structuredClone(childNode) as any
+                const childDuplicateInfo = structuredClone(childNode) as any
                 delete childDuplicateInfo.id
                 childDuplicateInfo.metadata = { ...childDuplicateInfo.metadata, isNew: true }
                 try {

@@ -325,7 +325,7 @@ export const CeilingTool: React.FC = () => {
       </mesh>
 
       {/* Vertical connector: local y=0 at grid, y=H at ceiling; position.y set to gridY on move */}
-      {/* @ts-ignore */}
+      
       <line geometry={verticalGeo} layers={EDITOR_LAYER} ref={verticalLineRef} renderOrder={1}>
         <lineBasicNodeMaterial
           color="#818cf8"
@@ -375,7 +375,7 @@ export const CeilingTool: React.FC = () => {
       )}
 
       {/* Main line */}
-      {/* @ts-ignore */}
+      
       <line
         frustumCulled={false}
         layers={EDITOR_LAYER}
@@ -389,7 +389,7 @@ export const CeilingTool: React.FC = () => {
       </line>
 
       {/* Closing line */}
-      {/* @ts-ignore */}
+      
       <line
         frustumCulled={false}
         layers={EDITOR_LAYER}
@@ -410,7 +410,7 @@ export const CeilingTool: React.FC = () => {
       </line>
 
       {/* Ground main line */}
-      {/* @ts-ignore */}
+      
       <line
         frustumCulled={false}
         layers={EDITOR_LAYER}
@@ -431,7 +431,7 @@ export const CeilingTool: React.FC = () => {
       </line>
 
       {/* Ground closing line */}
-      {/* @ts-ignore */}
+      
       <line
         frustumCulled={false}
         layers={EDITOR_LAYER}
