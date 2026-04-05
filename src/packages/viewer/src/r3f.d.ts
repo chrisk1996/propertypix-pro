@@ -55,6 +55,11 @@ interface ThreeJSXElements {
   rawShaderMaterial: any
   spriteMaterial: any
 
+  // Custom Node Materials (from three/webgpu)
+  lineBasicNodeMaterial: any
+  meshBasicNodeMaterial: any
+  meshStandardNodeMaterial: any
+
   // Lights
   ambientLight: any
   directionalLight: any
