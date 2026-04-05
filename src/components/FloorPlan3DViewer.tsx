@@ -240,7 +240,7 @@ function FloorClickHandler({
 }
 
 // Export handler component
-function ExportHandler({ scene }: { scene: THREE.Scene }) {
+function ExportHandler({ scene }: { scene: THREE.Scene }): JSX.Element | null {
   useEffect(() => {
     const handleExport = () => {
       const exporter = new GLTFExporter();

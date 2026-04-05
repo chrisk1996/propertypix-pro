@@ -83,9 +83,9 @@ export function initSpatialGridSync() {
       if (node.type === 'item' && prev.type === 'item') {
         if (
           !(
-            arraysEqual(node.position, prev.position) &&
-            arraysEqual(node.rotation, prev.rotation) &&
-            arraysEqual(node.scale, prev.scale)
+            arraysEqual(node.position as number[], prev.position as number[]) &&
+            arraysEqual(node.rotation as number[], prev.rotation as number[]) &&
+            arraysEqual(node.scale as number[], prev.scale as number[])
           ) ||
           node.parentId !== prev.parentId ||
           node.side !== prev.side
@@ -93,7 +93,7 @@ export function initSpatialGridSync() {
           const levelId = resolveLevelId(node, state.nodes)
           spatialGridManager.handleNodeUpdated(node, levelId)
           // Scale changes affect footprint size — mark dirty so slab elevation recalculates
-          if (!arraysEqual(node.scale, prev.scale)) {
+          if (!arraysEqual(node.scale as number[], prev.scale as number[])) {
             markDirty(node.id)
           }
         }
@@ -138,10 +138,10 @@ function markNodesOverlappingSlab(
       if (resolveLevelId(node, nodes) !== slabLevelId) continue
       if (
         itemOverlapsPolygon(
-          item.position,
+          item.position as [number, number, number],
           getScaledDimensions(item),
-          item.rotation,
-          slab.polygon,
+          item.rotation as [number, number, number],
+          slab.polygon as [number, number][],
           0.01,
         )
       ) {
@@ -150,7 +150,7 @@ function markNodesOverlappingSlab(
     } else if (node.type === 'wall') {
       const wall = node as WallNode
       if (resolveLevelId(node, nodes) !== slabLevelId) continue
-      if (wallOverlapsPolygon(wall.start, wall.end, slab.polygon)) {
+      if (wallOverlapsPolygon(wall.start as [number, number], wall.end as [number, number], slab.polygon as [number, number][])) {
         markDirty(node.id)
       }
     }

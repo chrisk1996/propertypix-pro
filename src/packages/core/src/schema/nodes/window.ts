@@ -8,8 +8,8 @@ export const WindowNode = BaseNode.extend({
   type: nodeType('window'),
   material: MaterialSchema.optional(),
 
-  position: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
-  rotation: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
+  position: z.array(z.number()).length(3).default([0, 0, 0]),
+  rotation: z.array(z.number()).length(3).default([0, 0, 0]),
   side: z.enum(['front', 'back']).optional(),
 
   // Wall reference

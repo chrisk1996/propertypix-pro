@@ -110,7 +110,7 @@ function updateWallGeometry(wallId: string, miterData: WallMiterData) {
   if (!mesh) return
 
   const levelId = resolveLevelId(node, nodes)
-  const slabElevation = spatialGridManager.getSlabElevationForWall(levelId, node.start, node.end)
+  const slabElevation = spatialGridManager.getSlabElevationForWall(levelId, node.start as [number, number], node.end as [number, number])
 
   const childrenIds = node.children || []
   const childrenNodes = childrenIds

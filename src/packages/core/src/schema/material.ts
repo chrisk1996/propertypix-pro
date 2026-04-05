@@ -30,7 +30,7 @@ export const MaterialSchema = z.object({
   texture: z
     .object({
       url: z.string(),
-      repeat: z.tuple([z.number(), z.number()]).optional(),
+      repeat: z.array(z.number()).length(2).optional(),
       scale: z.number().optional(),
     })
     .optional(),

@@ -1128,15 +1128,16 @@ function snapPolygonDraftPoint({
 }
 
 function pointMatchesWallPlanPoint(
-  point: Point2D | undefined,
+  point: Point2D | number[] | undefined,
   planPoint: WallPlanPoint,
   epsilon = 1e-6,
 ): boolean {
   if (!point) {
     return false
   }
-
-  return Math.abs(point.x - planPoint[0]) <= epsilon && Math.abs(point.y - planPoint[1]) <= epsilon
+  const px = Array.isArray(point) ? point[0] : point.x
+  const py = Array.isArray(point) ? point[1] : point.y
+  return Math.abs(px - planPoint[0]) <= epsilon && Math.abs(py - planPoint[1]) <= epsilon
 }
 
 function getWallHoverSidePaths(polygon: Point2D[], wall: WallNode): [string, string] | null {
@@ -1146,10 +1147,10 @@ function getWallHoverSidePaths(polygon: Point2D[], wall: WallNode): [string, str
 
   const startRight = polygon[0]
   const endRight = polygon[1]
-  const hasEndCenterPoint = pointMatchesWallPlanPoint(polygon[2], wall.end)
+  const hasEndCenterPoint = pointMatchesWallPlanPoint(polygon[2] ? { x: polygon[2][0], y: polygon[2][1] } : undefined, wall.end as [number, number])
   const endLeft = polygon[hasEndCenterPoint ? 3 : 2]
   const lastPoint = polygon[polygon.length - 1]
-  const hasStartCenterPoint = pointMatchesWallPlanPoint(lastPoint, wall.start)
+  const hasStartCenterPoint = pointMatchesWallPlanPoint(lastPoint ? { x: lastPoint[0], y: lastPoint[1] } : undefined, wall.start as [number, number])
   const startLeft = polygon[hasStartCenterPoint ? polygon.length - 2 : polygon.length - 1]
 
   if (!(startRight && endRight && endLeft && startLeft)) {
@@ -4667,7 +4668,7 @@ export function FloorplanPanel() {
           dragState.currentPoint,
         )
         const hasChanged = !(
-          pointsEqual(nextDraft.start, wall.start) && pointsEqual(nextDraft.end, wall.end)
+          pointsEqual(nextDraft.start, wall.start as [number, number]) && pointsEqual(nextDraft.end, wall.end as [number, number])
         )
 
         if (hasChanged && isWallLongEnough(nextDraft.start, nextDraft.end)) {
@@ -5584,7 +5585,7 @@ export function FloorplanPanel() {
       const wallHit = displayWallPolygons.find(
         ({ wall, polygon }) =>
           isPointInsidePolygon(point, polygon) ||
-          getDistanceToWallSegment(point, wall.start, wall.end) <= floorplanWallHitTolerance,
+          getDistanceToWallSegment(point, wall.start, wall.end as [number, number]) <= floorplanWallHitTolerance,
       )
       if (wallHit) {
         return wallHit.wall.id

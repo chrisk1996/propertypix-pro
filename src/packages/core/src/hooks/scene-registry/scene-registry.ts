@@ -29,7 +29,7 @@ export const sceneRegistry = {
   /** Remove all entries. Call when unloading a scene to prevent stale 3D refs. */
   clear() {
     this.nodes.clear()
-    for (const set of Object.values(this.byType)) {
+    for (const set of Object.values(this.byType) as Set<string>[]) {
       set.clear()
     }
   },

@@ -23,8 +23,8 @@ export const DoorNode = BaseNode.extend({
   type: nodeType('door'),
   material: MaterialSchema.optional(),
 
-  position: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
-  rotation: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
+  position: z.array(z.number()).length(3).default([0, 0, 0]),
+  rotation: z.array(z.number()).length(3).default([0, 0, 0]),
   side: z.enum(['front', 'back']).optional(),
   wallId: z.string().optional(),
 
@@ -68,7 +68,7 @@ export const DoorNode = BaseNode.extend({
   handleSide: z.enum(['left', 'right']).default('right'),
 
   // Leaf inner margin — space between leaf edge and segment content area [x, y]
-  contentPadding: z.tuple([z.number(), z.number()]).default([0.04, 0.04]),
+  contentPadding: z.array(z.number()).length(2).default([0.04, 0.04]),
 
   // Emergency / commercial hardware
   doorCloser: z.boolean().default(false),

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { CeilingNode, emitter, type GridEvent, type LevelNode, useScene } from '@pascal-app/core'
 import { useViewer } from '@pascal-app/viewer'
@@ -327,7 +326,7 @@ export const CeilingTool: React.FC = () => {
       </mesh>
 
       {/* Vertical connector: local y=0 at grid, y=H at ceiling; position.y set to gridY on move */}
-      {/* @ts-ignore */}
+      {/* @ts-ignore R3F line element */}
       <line geometry={verticalGeo} layers={EDITOR_LAYER} ref={verticalLineRef as any} renderOrder={1}>
         <lineBasicNodeMaterial
           color="#818cf8"
@@ -377,7 +376,7 @@ export const CeilingTool: React.FC = () => {
       )}
 
       {/* Main line */}
-      {/* @ts-ignore */}
+      {/* @ts-ignore R3F line element */}
       <line
         frustumCulled={false}
         layers={EDITOR_LAYER}
@@ -391,7 +390,7 @@ export const CeilingTool: React.FC = () => {
       </line>
 
       {/* Closing line */}
-      {/* @ts-ignore */}
+      {/* @ts-ignore R3F line element */}
       <line
         frustumCulled={false}
         layers={EDITOR_LAYER}
@@ -412,7 +411,7 @@ export const CeilingTool: React.FC = () => {
       </line>
 
       {/* Ground main line */}
-      {/* @ts-ignore */}
+      {/* @ts-ignore R3F line element */}
       <line
         frustumCulled={false}
         layers={EDITOR_LAYER}
@@ -433,7 +432,7 @@ export const CeilingTool: React.FC = () => {
       </line>
 
       {/* Ground closing line */}
-      {/* @ts-ignore */}
+      {/* @ts-ignore R3F line element */}
       <line
         frustumCulled={false}
         layers={EDITOR_LAYER}

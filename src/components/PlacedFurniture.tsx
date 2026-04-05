@@ -128,16 +128,16 @@ export default function PlacedFurniture({ piece, isSelected, onSelect }: PlacedF
       ref={groupRef}
       position={[position[0], 0, position[2]]}
       rotation={[0, rotation, 0]}
-      onClick={(e) => {
+      onClick={(e: any) => {
         e.stopPropagation();
         onSelect(piece.id);
       }}
-      onPointerOver={(e) => {
+      onPointerOver={(e: any) => {
         e.stopPropagation();
         setIsHovered(true);
         document.body.style.cursor = 'pointer';
       }}
-      onPointerOut={(e) => {
+      onPointerOut={(e: any) => {
         e.stopPropagation();
         setIsHovered(false);
         document.body.style.cursor = 'default';

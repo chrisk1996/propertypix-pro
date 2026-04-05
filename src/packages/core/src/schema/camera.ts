@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-const Vector3Schema = z.tuple([z.number(), z.number(), z.number()])
+const Vector3Schema = z.array(z.number()).length(3)
 
 export const CameraSchema = z.object({
   position: Vector3Schema,

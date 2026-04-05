@@ -102,7 +102,7 @@ function outsetPolygon(polygon: Array<[number, number]>, amount: number): Array<
  * Generates extruded slab geometry from polygon
  */
 export function generateSlabGeometry(slabNode: SlabNode): THREE.BufferGeometry {
-  const polygon = outsetPolygon(slabNode.polygon, SLAB_OUTSET)
+  const polygon = outsetPolygon(slabNode.polygon as [number, number][], SLAB_OUTSET)
   const elevation = slabNode.elevation ?? 0.05
 
   if (polygon.length < 3) {
