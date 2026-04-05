@@ -325,13 +325,13 @@ export const CeilingTool: React.FC = () => {
       </mesh>
 
       {/* Vertical connector: local y=0 at grid, y=H at ceiling; position.y set to gridY on move */}
-      {/* @ts-expect-error R3F Three.js type conflict */}
-      <line geometry={verticalGeo} layers={EDITOR_LAYER} ref={verticalLineRef} renderOrder={1}>
-        <lineBasicMaterial
+      {/* @ts-ignore */}
+      <line geometry={verticalGeo} layers={EDITOR_LAYER} ref={verticalLineRef as any} renderOrder={1}>
+        <lineBasicNodeMaterial
           color="#818cf8"
           depthTest={false}
           depthWrite={false}
-          
+          opacityNode={gradientOpacityNode}
           transparent
         />
       </line>
@@ -375,31 +375,31 @@ export const CeilingTool: React.FC = () => {
       )}
 
       {/* Main line */}
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      {/* @ts-ignore */}
       <line
         frustumCulled={false}
         layers={EDITOR_LAYER}
-        // @ts-expect-error R3F Three.js type conflict
-        ref={mainLineRef}
+        // @ts-expect-error
+        ref={mainLineRef as any}
         renderOrder={1}
         visible={false}
       >
         <bufferGeometry />
-        <lineBasicMaterial color="#818cf8" depthTest={false} depthWrite={false} linewidth={3} />
+        <lineBasicNodeMaterial color="#818cf8" depthTest={false} depthWrite={false} linewidth={3} />
       </line>
 
       {/* Closing line */}
-      {/* @ts-expect-error R3F Three.js type conflict */}
+      {/* @ts-ignore */}
       <line
         frustumCulled={false}
         layers={EDITOR_LAYER}
-        // @ts-expect-error R3F Three.js type conflict
-        ref={closingLineRef}
+        // @ts-expect-error
+        ref={closingLineRef as any}
         renderOrder={1}
         visible={false}
       >
         <bufferGeometry />
-        <lineBasicMaterial
+        <lineBasicNodeMaterial
           color="#818cf8"
           depthTest={false}
           depthWrite={false}
@@ -410,17 +410,17 @@ export const CeilingTool: React.FC = () => {
       </line>
 
       {/* Ground main line */}
-      {/* @ts-expect-error R3F Three.js type conflict */}
+      {/* @ts-ignore */}
       <line
         frustumCulled={false}
         layers={EDITOR_LAYER}
-        // @ts-expect-error R3F Three.js type conflict
-        ref={groundMainLineRef}
+        // @ts-expect-error
+        ref={groundMainLineRef as any}
         renderOrder={1}
         visible={false}
       >
         <bufferGeometry />
-        <lineBasicMaterial
+        <lineBasicNodeMaterial
           color="#818cf8"
           depthTest={false}
           depthWrite={false}
@@ -431,17 +431,17 @@ export const CeilingTool: React.FC = () => {
       </line>
 
       {/* Ground closing line */}
-      {/* @ts-expect-error R3F Three.js type conflict */}
+      {/* @ts-ignore */}
       <line
         frustumCulled={false}
         layers={EDITOR_LAYER}
-        // @ts-expect-error R3F Three.js type conflict
-        ref={groundClosingLineRef}
+        // @ts-expect-error
+        ref={groundClosingLineRef as any}
         renderOrder={1}
         visible={false}
       >
         <bufferGeometry />
-        <lineBasicMaterial
+        <lineBasicNodeMaterial
           color="#818cf8"
           depthTest={false}
           depthWrite={false}
