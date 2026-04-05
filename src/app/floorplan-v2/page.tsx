@@ -1,6 +1,6 @@
 'use client';
 
-import { Editor, type SidebarTab, ViewerToolbarLeft, ViewerToolbarRight } from '@pascal-app/editor';
+import { Editor, type SidebarTab, ViewerToolbarLeft, ViewerToolbarRight, useEditor } from '@pascal-app/editor';
 import { useCallback, useEffect, useState } from 'react';
 
 const SIDEBAR_TABS: (SidebarTab & { component: React.ComponentType })[] = [
@@ -13,6 +13,21 @@ const SIDEBAR_TABS: (SidebarTab & { component: React.ComponentType })[] = [
 
 // Demo scene URL
 const DEMO_SCENE_URL = '/demos/demo_1.json';
+
+// Component to set initial phase after scene loads
+function PhaseSetter({ sceneLoaded }: { sceneLoaded: boolean }) {
+  useEffect(() => {
+    if (sceneLoaded) {
+      // After scene loads, switch to structure phase so tools are visible
+      const timer = setTimeout(() => {
+        useEditor.getState().setPhase('structure');
+        useEditor.getState().setMode('build');
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [sceneLoaded]);
+  return null;
+}
 
 export default function FloorPlanPage() {
   const [sceneData, setSceneData] = useState<any>(null);
@@ -51,6 +66,7 @@ export default function FloorPlanPage() {
 
   return (
     <div className="h-screen w-screen">
+      <PhaseSetter sceneLoaded={!!sceneData} />
       <Editor
         layoutVersion="v2"
         projectId="floorplan-v2"
