@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { AppLayout } from '@/components/layout';
 import { ListingFeatures } from '@/types/listing';
 import { ListingFormPanel } from '@/components/listing-builder/ListingFormPanel';
@@ -19,6 +19,8 @@ interface ListingData {
   district: string;
   country: string;
   price: number;
+  cold_rent?: number;
+  warm_rent?: number;
   living_area: number;
   plot_area: number;
   rooms: number;
@@ -32,6 +34,12 @@ interface ListingData {
   features: ListingFeatures;
   media_ids: string[];
   cover_image_id?: string;
+}
+
+interface ValidationWarning {
+  field: string;
+  message: string;
+  severity: 'error' | 'warning';
 }
 
 const initialData: ListingData = {
@@ -63,10 +71,82 @@ const initialData: ListingData = {
 export default function ListingBuilderPage() {
   const [data, setData] = useState<ListingData>(initialData);
   const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [validationWarnings, setValidationWarnings] = useState<ValidationWarning[]>([]);
+  const [showValidation, setShowValidation] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     createDraft();
   }, []);
+
+  // Auto-save with debounce
+  useEffect(() => {
+    if (!data.id) return;
+    
+    // Clear any pending save
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    setSaveStatus('saving');
+    
+    // Debounce: wait 1.5s after last change
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        await fetch(`/api/listings/${data.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        setLastSaved(new Date());
+        setSaveStatus('saved');
+      } catch (error) {
+        console.error('Auto-save failed:', error);
+        setSaveStatus('error');
+      }
+    }, 1500);
+    
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [data]);
+
+  // Validation
+  useEffect(() => {
+    const warnings: ValidationWarning[] = [];
+    
+    if (!data.title && data.city) {
+      warnings.push({ field: 'title', message: 'Add a title to make your listing stand out', severity: 'warning' });
+    }
+    if (!data.city) {
+      warnings.push({ field: 'city', message: 'Location is required for publishing', severity: 'error' });
+    }
+    if (data.transaction_type === 'sale' && !data.price) {
+      warnings.push({ field: 'price', message: 'Price is required for sale listings', severity: 'error' });
+    }
+    if (data.transaction_type === 'rent' && !data.cold_rent) {
+      warnings.push({ field: 'cold_rent', message: 'Cold rent is required for rental listings', severity: 'error' });
+    }
+    if (!data.living_area) {
+      warnings.push({ field: 'living_area', message: 'Living area helps buyers compare properties', severity: 'warning' });
+    }
+    if (!data.rooms) {
+      warnings.push({ field: 'rooms', message: 'Number of rooms is expected on portals', severity: 'warning' });
+    }
+    if (!data.energy_rating) {
+      warnings.push({ field: 'energy_rating', message: 'Energy rating is legally required in Germany', severity: 'error' });
+    }
+    if (!data.description || data.description.length < 50) {
+      warnings.push({ field: 'description', message: 'Description should be at least 50 characters', severity: 'warning' });
+    }
+    
+    setValidationWarnings(warnings);
+  }, [data]);
 
   const createDraft = async () => {
     try {
@@ -79,6 +159,7 @@ export default function ListingBuilderPage() {
       if (response.ok) {
         const listing = await response.json();
         setData(prev => ({ ...prev, id: listing.listing.id }));
+        setPreviewUrl(`${window.location.origin}/listing/${listing.listing.id}/preview`);
       }
     } catch (error) {
       console.error('Failed to create draft:', error);
@@ -95,6 +176,7 @@ export default function ListingBuilderPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newData),
       });
+      setLastSaved(new Date());
     } catch (error) {
       console.error('Failed to save:', error);
     }
@@ -103,12 +185,18 @@ export default function ListingBuilderPage() {
   const updateData = useCallback((newData: Partial<ListingData>) => {
     setData(prev => {
       const updated = { ...prev, ...newData };
-      saveProgress(updated);
       return updated;
     });
-  }, [saveProgress]);
+  }, []);
 
   const handlePublish = async () => {
+    // Show validation before publish
+    const errors = validationWarnings.filter(w => w.severity === 'error');
+    if (errors.length > 0) {
+      setShowValidation(true);
+      return;
+    }
+    
     if (!data.id) return;
     try {
       const response = await fetch(`/api/listings/${data.id}/publish`, {
@@ -144,6 +232,15 @@ export default function ListingBuilderPage() {
     }
   };
 
+  const copyPreviewLink = () => {
+    if (previewUrl) {
+      navigator.clipboard.writeText(previewUrl);
+    }
+  };
+
+  const errorCount = validationWarnings.filter(w => w.severity === 'error').length;
+  const warningCount = validationWarnings.filter(w => w.severity === 'warning').length;
+
   return (
     <AppLayout title="Listing Builder">
       <div className="min-h-screen bg-background">
@@ -161,6 +258,57 @@ export default function ListingBuilderPage() {
                   Optimize your property for Zillow, ImmobilienScout24, and beyond with comprehensive regional data fields and AI narrative generation.
                 </p>
               </div>
+
+              {/* Auto-save Indicator & Validation */}
+              <div className="flex items-center gap-4 self-start">
+                {/* Save Status */}
+                <div className="flex items-center gap-2 text-xs font-medium">
+                  {saveStatus === 'saving' && (
+                    <span className="text-on-surface-variant animate-pulse">Saving...</span>
+                  )}
+                  {saveStatus === 'saved' && lastSaved && (
+                    <span className="text-secondary flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">check_circle</span>
+                      Saved {lastSaved.toLocaleTimeString()}
+                    </span>
+                  )}
+                  {saveStatus === 'error' && (
+                    <span className="text-error flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">error</span>
+                      Save failed
+                    </span>
+                  )}
+                </div>
+
+                {/* Validation Badge */}
+                {validationWarnings.length > 0 && (
+                  <button
+                    onClick={() => setShowValidation(!showValidation)}
+                    className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-bold ${
+                      errorCount > 0 
+                        ? 'bg-error/10 text-error' 
+                        : 'bg-warning/10 text-warning'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-sm">
+                      {errorCount > 0 ? 'error' : 'warning'}
+                    </span>
+                    {errorCount > 0 ? `${errorCount} error${errorCount > 1 ? 's' : ''}` : `${warningCount} warning${warningCount > 1 ? 's' : ''}`}
+                  </button>
+                )}
+
+                {/* Preview Link */}
+                {previewUrl && (
+                  <button
+                    onClick={copyPreviewLink}
+                    className="flex items-center gap-1 text-xs font-medium text-on-surface-variant hover:text-primary transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-sm">link</span>
+                    Copy Preview Link
+                  </button>
+                )}
+              </div>
+
               {/* Transaction Type Toggle */}
               <div className="bg-surface-container p-1 rounded-lg flex self-start">
                 <button
@@ -184,6 +332,7 @@ export default function ListingBuilderPage() {
                   TO RENT
                 </button>
               </div>
+
               {/* Export Button */}
               <div className="flex gap-2 self-start">
                 <select
@@ -198,22 +347,56 @@ export default function ListingBuilderPage() {
                 </select>
               </div>
             </div>
+
+            {/* Validation Warnings Panel */}
+            {showValidation && validationWarnings.length > 0 && (
+              <div className="mt-4 p-4 bg-surface-container-lowest rounded border border-outline-variant/20">
+                <h4 className="font-bold text-sm mb-3 text-primary">Issues to fix before publishing:</h4>
+                <div className="space-y-2">
+                  {validationWarnings.map((warning, idx) => (
+                    <div 
+                      key={idx} 
+                      className={`flex items-start gap-2 text-sm ${
+                        warning.severity === 'error' ? 'text-error' : 'text-warning'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-sm mt-0.5">
+                        {warning.severity === 'error' ? 'error' : 'warning'}
+                      </span>
+                      <span><strong>{warning.field}:</strong> {warning.message}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </header>
 
           <div className="grid grid-cols-12 gap-10">
             <div className="col-span-12 lg:col-span-7">
-              <ListingFormPanel
-                data={data}
-                updateData={updateData}
-                isSaving={isSaving}
+              <ListingFormPanel 
+                data={data} 
+                updateData={updateData} 
+                isSaving={isSaving} 
               />
             </div>
             <div className="col-span-12 lg:col-span-5">
-              <ListingPreviewPanel
-                data={data}
-                onPublish={handlePublish}
-              />
+              <ListingPreviewPanel data={data} />
             </div>
+          </div>
+
+          {/* Publish Button */}
+          <div className="mt-8 flex justify-end">
+            <button
+              onClick={handlePublish}
+              disabled={errorCount > 0}
+              className={`px-8 py-3 rounded-lg font-bold text-sm uppercase tracking-wider transition-all ${
+                errorCount > 0
+                  ? 'bg-outline-variant/30 text-on-surface-variant/50 cursor-not-allowed'
+                  : 'bg-secondary text-on-secondary hover:bg-secondary/90 shadow-lg'
+              }`}
+            >
+              {errorCount > 0 ? `Fix ${errorCount} error${errorCount > 1 ? 's' : ''} to Publish` : 'Publish Listing'}
+            </button>
           </div>
         </main>
       </div>
