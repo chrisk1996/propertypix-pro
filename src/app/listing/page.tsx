@@ -124,6 +124,26 @@ export default function ListingBuilderPage() {
     }
   };
 
+  const handleExport = async (format: 'json' | 'csv' | 'pdf') => {
+    if (!data.id) return;
+    try {
+      const response = await fetch(`/api/listings/${data.id}/export?format=${format}`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `listing-${data.id}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+      }
+    } catch (error) {
+      console.error('Failed to export:', error);
+    }
+  };
+
   return (
     <AppLayout title="Listing Builder">
       <div className="min-h-screen bg-background">
@@ -145,10 +165,10 @@ export default function ListingBuilderPage() {
               <div className="bg-surface-container p-1 rounded-lg flex self-start">
                 <button
                   onClick={() => updateData({ transaction_type: 'sale' })}
-                  className={`px-6 py-2 rounded font-bold text-sm transition-all shadow-sm ${
+                  className={`px-6 py-2 rounded font-bold text-sm transition-all ${
                     data.transaction_type === 'sale'
-                      ? 'bg-primary text-on-primary'
-                      : 'text-on-surface-variant hover:text-primary'
+                      ? 'bg-secondary text-on-secondary shadow-sm'
+                      : 'text-on-surface-variant hover:bg-surface-container-highest'
                   }`}
                 >
                   FOR SALE
@@ -157,12 +177,25 @@ export default function ListingBuilderPage() {
                   onClick={() => updateData({ transaction_type: 'rent' })}
                   className={`px-6 py-2 rounded font-bold text-sm transition-all ${
                     data.transaction_type === 'rent'
-                      ? 'bg-primary text-on-primary'
-                      : 'text-on-surface-variant hover:text-primary'
+                      ? 'bg-secondary text-on-secondary shadow-sm'
+                      : 'text-on-surface-variant hover:bg-surface-container-highest'
                   }`}
                 >
                   TO RENT
                 </button>
+              </div>
+              {/* Export Button */}
+              <div className="flex gap-2 self-start">
+                <select
+                  onChange={e => handleExport(e.target.value as 'json' | 'csv' | 'pdf')}
+                  className="bg-surface-container border border-outline-variant/30 rounded px-3 py-2 text-sm font-medium text-primary cursor-pointer"
+                  defaultValue=""
+                >
+                  <option value="" disabled>Export as...</option>
+                  <option value="json">JSON</option>
+                  <option value="csv">CSV</option>
+                  <option value="pdf">PDF</option>
+                </select>
               </div>
             </div>
           </header>
