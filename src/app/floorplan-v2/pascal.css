@@ -100,19 +100,6 @@
   height: 100% !important;
 }
 
-/* Fix canvas sizing in EditorLayoutV2 */
-/* The canvas is inside: .relative.flex-1.overflow-hidden */
-.relative.flex-1.overflow-hidden canvas {
-  width: 100% !important;
-  height: 100% !important;
-}
-
-/* Also target the canvas parent container */
-.relative.flex-1.overflow-hidden > div {
-  width: 100% !important;
-  height: 100% !important;
-}
-
 /* Fix floating panel positioning */
 .floating-panel {
   position: absolute;
