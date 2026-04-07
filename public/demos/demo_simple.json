@@ -1,10 +1,19 @@
 {
   "nodes": {
+    "site_default": {
+      "object": "node",
+      "id": "site_default",
+      "type": "site",
+      "parentId": null,
+      "visible": true,
+      "metadata": {},
+      "children": ["building_default"]
+    },
     "building_default": {
       "object": "node",
       "id": "building_default",
       "type": "building",
-      "parentId": null,
+      "parentId": "site_default",
       "visible": true,
       "metadata": {},
       "children": ["level_0", "level_1"],
@@ -142,5 +151,5 @@
       "end": [0, 0]
     }
   },
-  "rootNodeIds": ["building_default"]
+  "rootNodeIds": ["site_default"]
 }
