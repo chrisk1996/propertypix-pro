@@ -12,7 +12,7 @@ const SIDEBAR_TABS: (SidebarTab & { component: React.ComponentType })[] = [
 ];
 
 // Demo scene URL
-const DEMO_SCENE_URL = '/demos/demo_1.json';
+const DEMO_SCENE_URL = '/demos/demo_simple.json';
 
 // Component to set initial phase after scene loads
 function PhaseSetter({ sceneLoaded }: { sceneLoaded: boolean }) {

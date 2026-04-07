@@ -1,0 +1,86 @@
+{
+  "nodes": {
+    "building_1": {
+      "object": "node",
+      "id": "building_1",
+      "type": "building",
+      "parentId": null,
+      "visible": true,
+      "metadata": {},
+      "children": ["level_1"],
+      "position": [0, 0, 0],
+      "rotation": [0, 0, 0]
+    },
+    "level_1": {
+      "object": "node",
+      "id": "level_1",
+      "type": "level",
+      "parentId": "building_1",
+      "visible": true,
+      "metadata": {},
+      "children": ["slab_1", "wall_1", "wall_2", "wall_3", "wall_4"],
+      "level": 0,
+      "camera": {
+        "position": [10, 10, 10],
+        "target": [2, 0, 1.5],
+        "mode": "perspective"
+      }
+    },
+    "slab_1": {
+      "object": "node",
+      "id": "slab_1",
+      "type": "slab",
+      "name": "Floor",
+      "parentId": "level_1",
+      "visible": true,
+      "metadata": {},
+      "polygon": [[0, 0], [4, 0], [4, 3], [0, 3]],
+      "elevation": 0.05
+    },
+    "wall_1": {
+      "object": "node",
+      "id": "wall_1",
+      "type": "wall",
+      "parentId": "level_1",
+      "visible": true,
+      "metadata": {},
+      "children": [],
+      "start": [0, 0],
+      "end": [4, 0]
+    },
+    "wall_2": {
+      "object": "node",
+      "id": "wall_2",
+      "type": "wall",
+      "parentId": "level_1",
+      "visible": true,
+      "metadata": {},
+      "children": [],
+      "start": [4, 0],
+      "end": [4, 3]
+    },
+    "wall_3": {
+      "object": "node",
+      "id": "wall_3",
+      "type": "wall",
+      "parentId": "level_1",
+      "visible": true,
+      "metadata": {},
+      "children": [],
+      "start": [4, 3],
+      "end": [0, 3]
+    },
+    "wall_4": {
+      "object": "node",
+      "id": "wall_4",
+      "type": "wall",
+      "parentId": "level_1",
+      "visible": true,
+      "metadata": {},
+      "children": [],
+      "start": [0, 3],
+      "end": [0, 0]
+    }
+  },
+  "rootNodeIds": ["building_1"]
+}
