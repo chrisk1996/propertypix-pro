@@ -28,7 +28,12 @@
       "visible": true,
       "metadata": {},
       "children": ["slab_0", "wall_0", "wall_1", "wall_2", "wall_3"],
-      "level": 0
+      "level": 0,
+      "camera": {
+        "position": [10, 10, 10],
+        "target": [2, 0, 1.5],
+        "mode": "perspective"
+      }
     },
     "level_1": {
       "object": "node",
@@ -38,7 +43,12 @@
       "visible": true,
       "metadata": {},
       "children": ["slab_1", "wall_4", "wall_5", "wall_6", "wall_7"],
-      "level": 1
+      "level": 1,
+      "camera": {
+        "position": [10, 15, 10],
+        "target": [2, 3, 1.5],
+        "mode": "perspective"
+      }
     },
     "slab_0": {
       "object": "node",
