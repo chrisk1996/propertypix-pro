@@ -1,30 +1,24 @@
 'use client';
-
 import { Editor, type SidebarTab, ViewerToolbarLeft, ViewerToolbarRight, useEditor } from '@pascal-app/editor';
+import { useViewer } from '@pascal-app/viewer';
 import { useCallback, useEffect, useState } from 'react';
 
 const SIDEBAR_TABS: (SidebarTab & { component: React.ComponentType })[] = [
-  {
-    id: 'site',
-    label: 'Scene',
-    component: () => null, // Built-in SitePanel handles this
-  },
+  { id: 'site', label: 'Scene', component: () => null },
 ];
 
-// Demo scene URL
 const DEMO_SCENE_URL = '/demos/demo_simple.json';
 
 // Component to set initial phase after scene loads
 function PhaseSetter({ sceneLoaded }: { sceneLoaded: boolean }) {
   useEffect(() => {
     if (sceneLoaded) {
-      // After scene loads, switch to structure phase and select the level
       const timer = setTimeout(() => {
         const editorState = useEditor.getState();
         editorState.setPhase('structure');
         editorState.setMode('build');
-        // Select the first level so it's visible in 3D view
-        editorState.setLevelId('level_0');
+        // Select the first level using setSelection
+        useViewer.getState().setSelection({ levelId: 'level_0', buildingId: 'building_1' });
       }, 500);
       return () => clearTimeout(timer);
     }
@@ -35,7 +29,6 @@ function PhaseSetter({ sceneLoaded }: { sceneLoaded: boolean }) {
 export default function FloorPlanPage() {
   const [sceneData, setSceneData] = useState<any>(null);
 
-  // Load demo scene on mount
   useEffect(() => {
     fetch(DEMO_SCENE_URL)
       .then((res) => res.json())
@@ -47,12 +40,10 @@ export default function FloorPlanPage() {
       });
   }, []);
 
-  // Callback to provide scene data to editor
   const onLoad = useCallback(async () => {
     if (sceneData) {
       return sceneData;
     }
-    // Return null to try loading from localStorage or show empty scene
     return null;
   }, [sceneData]);
 
