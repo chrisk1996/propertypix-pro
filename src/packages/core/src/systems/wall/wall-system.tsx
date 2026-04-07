@@ -35,6 +35,7 @@ export const WallSystem = () => {
     const dirtyWallsByLevel = new Map<string, Set<string>>()
 
     dirtyNodes.forEach((id) => {
+    console.log("[WallSystem] Processing dirty nodes:", dirtyNodes.size)
       const node = nodes[id]
       if (!node || node.type !== 'wall') return
 
@@ -49,6 +50,7 @@ export const WallSystem = () => {
 
     // Process each level that has dirty walls
     for (const [levelId, dirtyWallIds] of dirtyWallsByLevel) {
+    console.log("[WallSystem] Dirty walls by level:", dirtyWallsByLevel)
       const levelWalls = getLevelWalls(levelId)
       const miterData = calculateLevelMiters(levelWalls)
 
@@ -56,6 +58,7 @@ export const WallSystem = () => {
       for (const wallId of dirtyWallIds) {
         const mesh = sceneRegistry.nodes.get(wallId) as THREE.Mesh
         if (mesh) {
+        console.log("[WallSystem] Wall", wallId, "mesh found:", !!mesh)
           updateWallGeometry(wallId, miterData)
           clearDirty(wallId as AnyNodeId)
         }
