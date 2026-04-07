@@ -18,7 +18,7 @@ function PhaseSetter({ sceneLoaded }: { sceneLoaded: boolean }) {
         editorState.setPhase('structure');
         editorState.setMode('build');
         // Select the first level using setSelection
-        useViewer.getState().setSelection({ levelId: 'level_0', buildingId: 'building_1' });
+        useViewer.getState().setSelection({ levelId: 'level_0', buildingId: 'building_default' });
       }, 500);
       return () => clearTimeout(timer);
     }

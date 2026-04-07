@@ -1,8 +1,8 @@
 {
   "nodes": {
-    "building_1": {
+    "building_default": {
       "object": "node",
-      "id": "building_1",
+      "id": "building_default",
       "type": "building",
       "parentId": null,
       "visible": true,
@@ -15,31 +15,21 @@
       "object": "node",
       "id": "level_0",
       "type": "level",
-      "parentId": "building_1",
+      "parentId": "building_default",
       "visible": true,
       "metadata": {},
       "children": ["slab_0", "wall_0", "wall_1", "wall_2", "wall_3"],
-      "level": 0,
-      "camera": {
-        "position": [10, 10, 10],
-        "target": [2, 0, 1.5],
-        "mode": "perspective"
-      }
+      "level": 0
     },
     "level_1": {
       "object": "node",
       "id": "level_1",
       "type": "level",
-      "parentId": "building_1",
+      "parentId": "building_default",
       "visible": true,
       "metadata": {},
       "children": ["slab_1", "wall_4", "wall_5", "wall_6", "wall_7"],
-      "level": 1,
-      "camera": {
-        "position": [10, 15, 10],
-        "target": [2, 3, 1.5],
-        "mode": "perspective"
-      }
+      "level": 1
     },
     "slab_0": {
       "object": "node",
@@ -152,5 +142,5 @@
       "end": [0, 0]
     }
   },
-  "rootNodeIds": ["building_1"]
+  "rootNodeIds": ["building_default"]
 }
