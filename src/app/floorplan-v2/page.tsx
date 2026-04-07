@@ -2,6 +2,7 @@
 import { Editor, type SidebarTab, ViewerToolbarLeft, ViewerToolbarRight, useEditor } from '@pascal-app/editor';
 import { useViewer } from '@pascal-app/viewer';
 import { useCallback, useEffect, useState } from 'react';
+import './pascal.css';
 
 const SIDEBAR_TABS: (SidebarTab & { component: React.ComponentType })[] = [
   { id: 'site', label: 'Scene', component: () => null },
@@ -59,7 +60,7 @@ export default function FloorPlanPage() {
   }
 
   return (
-    <div className="h-screen w-screen">
+    <div className="h-screen w-screen overflow-hidden">
       <PhaseSetter sceneLoaded={!!sceneData} />
       <Editor
         layoutVersion="v2"
