@@ -3,9 +3,21 @@
 import dynamic from 'next/dynamic';
 import { useState, useEffect } from 'react';
 
-// Dynamic import to prevent SSR
+// Dynamic imports to prevent SSR
 const Editor = dynamic(
   () => import('@pascal-app/editor').then((mod) => mod.Editor),
+  { ssr: false }
+);
+const ViewerToolbarLeft = dynamic(
+  () => import('@pascal-app/editor').then((mod) => mod.ViewerToolbarLeft),
+  { ssr: false }
+);
+const ViewerToolbarRight = dynamic(
+  () => import('@pascal-app/editor').then((mod) => mod.ViewerToolbarRight),
+  { ssr: false }
+);
+const ScenePanel = dynamic(
+  () => import('@pascal-app/editor').then((mod) => mod.ScenePanel),
   { ssr: false }
 );
 
@@ -37,7 +49,11 @@ export default function FloorPlanPage() {
       <Editor
         layoutVersion="v2"
         projectId="floorplan-v2"
-        sidebarTabs={[{ id: 'site', label: 'Scene', component: () => null }]}
+        sidebarTabs={[
+          { id: 'scene', label: 'Scene', component: ScenePanel },
+        ]}
+        viewerToolbarLeft={<ViewerToolbarLeft />}
+        viewerToolbarRight={<ViewerToolbarRight />}
         onLoad={onLoad}
       />
     </div>
