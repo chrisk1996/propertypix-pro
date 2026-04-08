@@ -135,7 +135,7 @@ export default function FloorPlanPage() {
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-gray-900">
+    <div className="dark fixed inset-0 flex h-screen w-screen">
       <Editor
         layoutVersion="v2"
         projectId={projectId || 'floorplan-v2'}
