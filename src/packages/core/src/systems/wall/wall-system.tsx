@@ -135,7 +135,7 @@ function updateWallGeometry(wallId: string, miterData: WallMiterData) {
   mesh.position.set(node.start[0], slabElevation, node.start[1])
   const angle = Math.atan2(node.end[1] - node.start[1], node.end[0] - node.start[0])
   mesh.rotation.y = -angle
-	console.log("[WallSystem] Wall", wallId, "inScene:", !!mesh.parent, "parent:", mesh.parent?.type)
+	console.log("[WallSystem] Wall", wallId, "inScene:", !!mesh.parent, "parent:", mesh.parent?.type, "visible:", mesh.visible, "geometry.boundingBox:", mesh.geometry.boundingBox)
 	console.log("[WallSystem] Wall", wallId, "position:", mesh.position.toArray(), "rotation:", mesh.rotation.y, "node.start:", node.start, "node.end:", node.end)
 }
 
