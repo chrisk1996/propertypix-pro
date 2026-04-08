@@ -133,6 +133,7 @@ function updateWallGeometry(wallId: string, miterData: WallMiterData) {
   }
 
   mesh.position.set(node.start[0], slabElevation, node.start[1])
+	console.log("[WallSystem] Wall", wallId, "position:", mesh.position.toArray(), "rotation:", mesh.rotation.y, "slabElevation:", slabElevation)
   const angle = Math.atan2(node.end[1] - node.start[1], node.end[0] - node.start[0])
   mesh.rotation.y = -angle
 }
