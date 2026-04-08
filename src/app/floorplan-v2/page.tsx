@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { SceneGraph } from '@pascal-app/editor';
+import { FloorplanNavbar } from './navbar';
 
 // Dynamic imports to prevent SSR
 const Editor = dynamic(
@@ -139,9 +140,9 @@ export default function FloorPlanPage() {
       <Editor
         layoutVersion="v2"
         projectId={projectId || 'floorplan-v2'}
+        navbarSlot={<FloorplanNavbar />}
         sidebarTabs={[
           { id: 'site', label: 'Scene', component: () => null },
-          { id: 'settings', label: 'Settings', component: () => null },
         ]}
         viewerToolbarLeft={<ViewerToolbarLeft />}
         viewerToolbarRight={<ViewerToolbarRight />}
