@@ -34,6 +34,7 @@ function FloorPlanEditor() {
   const [projectName, setProjectName] = useState<string>('Untitled Project');
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Initialize: Load or create project
   useEffect(() => {
@@ -41,21 +42,26 @@ function FloorPlanEditor() {
       try {
         // If "new=true", create a blank project
         if (isNewProject) {
-          // Create new project in Supabase
-          const { data, error } = await supabase
-            ?.from('floorplan_projects')
+          console.log('[FloorPlan] Creating new project...');
+          
+          const { data, error: insertError } = await supabase
+            .from('floorplan_projects')
             .insert({ 
               name: `Floor Plan ${new Date().toLocaleDateString()}`,
               scene_data: null 
             })
             .select('id, name')
-            .single() || { data: null, error: { message: 'Supabase not configured' } };
-          
+            .single();
+
+          if (insertError) {
+            console.error('[FloorPlan] Insert error:', insertError);
+            setError('Failed to create project: ' + insertError.message);
+            setIsLoading(false);
+            return;
+          }
+
           if (data?.id) {
-            setProjectId(data.id);
-            setProjectName(data.name || 'Untitled Project');
-            localStorage.setItem('floorplan-v2-project-id', data.id);
-            
+            console.log('[FloorPlan] Project created:', data.id);
             // Redirect to project URL (removes ?new=true)
             router.replace(`/floorplan-v2?project=${data.id}`);
             return;
@@ -64,11 +70,18 @@ function FloorPlanEditor() {
 
         // If project ID is in URL, load that project
         if (projectIdParam) {
-          const { data, error } = await supabase
-            ?.from('floorplan_projects')
+          const { data, error: fetchError } = await supabase
+            .from('floorplan_projects')
             .select('id, name, scene_data')
             .eq('id', projectIdParam)
-            .single() || { data: null, error: { message: 'Supabase not configured' } };
+            .single();
+
+          if (fetchError) {
+            console.error('[FloorPlan] Fetch error:', fetchError);
+            setError('Project not found');
+            setIsLoading(false);
+            return;
+          }
 
           if (data) {
             setProjectId(data.id);
@@ -82,13 +95,12 @@ function FloorPlanEditor() {
 
         // Check for existing project in localStorage
         const storedProjectId = localStorage.getItem('floorplan-v2-project-id');
-        if (storedProjectId && !projectIdParam) {
-          // Try to load from Supabase
-          const { data, error } = await supabase
-            ?.from('floorplan_projects')
+        if (storedProjectId && !projectIdParam && !isNewProject) {
+          const { data } = await supabase
+            .from('floorplan_projects')
             .select('id, name, scene_data')
             .eq('id', storedProjectId)
-            .single() || { data: null, error: { message: 'Supabase not configured' } };
+            .single();
 
           if (data?.scene_data) {
             setProjectId(data.id);
@@ -99,21 +111,16 @@ function FloorPlanEditor() {
           }
         }
 
-        // No existing project - load demo scene
-        const res = await fetch('/demos/demo_simple.json');
-        const demoData = await res.json();
-        setSceneData(demoData);
-        setIsLoading(false);
-      } catch (err) {
-        console.error('[FloorPlan] Init error:', err);
-        // Fallback to demo
-        try {
+        // No project - load demo scene
+        if (!isNewProject) {
           const res = await fetch('/demos/demo_simple.json');
           const demoData = await res.json();
           setSceneData(demoData);
-        } catch (e) {
-          console.error('[FloorPlan] Failed to load demo:', e);
         }
+        setIsLoading(false);
+      } catch (err) {
+        console.error('[FloorPlan] Init error:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load');
         setIsLoading(false);
       }
     }
@@ -131,23 +138,21 @@ function FloorPlanEditor() {
 
     try {
       if (projectId) {
-        // Update existing project
-        const { error } = await supabase
-          ?.from('floorplan_projects')
+        const { error: updateError } = await supabase
+          .from('floorplan_projects')
           .update({ scene_data: scene, updated_at: new Date().toISOString() })
-          .eq('id', projectId) || { error: { message: 'Supabase not configured' } };
+          .eq('id', projectId);
 
-        if (error) throw error;
+        if (updateError) throw updateError;
         console.log('[FloorPlan] Scene updated');
       } else {
-        // Create new project
-        const { data, error } = await supabase
-          ?.from('floorplan_projects')
+        const { data, error: insertError } = await supabase
+          .from('floorplan_projects')
           .insert({ scene_data: scene, name: `Floor Plan ${new Date().toLocaleDateString()}` })
           .select('id')
-          .single() || { data: null, error: { message: 'Supabase not configured' } };
+          .single();
 
-        if (error) throw error;
+        if (insertError) throw insertError;
 
         if (data?.id) {
           setProjectId(data.id);
@@ -157,14 +162,31 @@ function FloorPlanEditor() {
       }
     } catch (err) {
       console.error('[FloorPlan] Save error:', err);
-      // Fallback to localStorage
       localStorage.setItem('floorplan-v2-backup', JSON.stringify(scene));
-      console.log('[FloorPlan] Saved to localStorage backup');
     }
   }, [projectId]);
 
+  // Error state
+  if (error) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-gray-900 text-white">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold mb-2">Error</h2>
+          <p className="text-gray-400 mb-4">{error}</p>
+          <button 
+            onClick={() => router.push('/floorplan')} 
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg"
+          >
+            Back to Projects
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Loading state
-  if (isLoading || !sceneData) {
+  if (isLoading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-gray-900 text-white">
         <div className="text-center">
