@@ -222,7 +222,7 @@ function FloorPlanEditor() {
       <Editor
         layoutVersion="v2"
         projectId={projectId || 'floorplan-v2'}
-        navbarSlot={<FloorplanNavbar projectId={projectId} />}
+        navbarSlot={<FloorplanNavbar projectId={projectId} projectName={projectName} />}
         sidebarTabs={[
           { id: 'site', label: 'Scene', component: () => null },
         ]}
