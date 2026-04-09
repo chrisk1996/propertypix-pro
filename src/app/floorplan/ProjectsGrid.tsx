@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { createClient } from '@/utils/supabase/client';
 
 interface Project {
@@ -10,6 +11,7 @@ interface Project {
   scene_data: any;
   created_at: string;
   updated_at: string;
+  thumbnail_url?: string;
 }
 
 export default function ProjectsGrid() {
@@ -130,10 +132,19 @@ export default function ProjectsGrid() {
           {projects.map((project) => (
             <div key={project.id} className="group flex flex-col">
               <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-slate-100 mb-4">
-                {/* Project thumbnail placeholder */}
-                <div className="w-full h-full bg-slate-200 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-5xl text-slate-400">floor_plan</span>
-                </div>
+                {/* Project thumbnail */}
+                {project.thumbnail_url ? (
+                  <Image
+                    src={project.thumbnail_url}
+                    alt={project.name || 'Floor plan'}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-slate-200 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-5xl text-slate-400">floor_plan</span>
+                  </div>
+                )}
 
                 {/* Status Badge */}
                 <div className="absolute top-3 right-3 backdrop-blur-sm px-2 py-1 rounded-md bg-white/90 text-slate-600 text-[10px] font-bold uppercase tracking-wider">

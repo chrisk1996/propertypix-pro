@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
+import { emitter } from '@pascal-app/core';
 import type { SceneGraph } from '@pascal-app/editor';
 import { FloorplanNavbar } from './navbar';
 
@@ -137,6 +138,60 @@ function FloorPlanEditor() {
     }
     initializeProject();
   }, [projectIdParam, isNewProject, router, supabase]);
+
+  // Listen for thumbnail generation events
+  useEffect(() => {
+    const handleThumbnail = async (event: { projectId: string; canvas?: HTMLCanvasElement }) => {
+      if (!projectId || event.projectId !== projectId) return;
+
+      try {
+        // Get the WebGL canvas
+        const canvas = document.querySelector('canvas');
+        if (!canvas) {
+          console.error('[FloorPlan] No canvas found');
+          return;
+        }
+
+        // Convert canvas to blob
+        const blob = await new Promise<Blob>((resolve, reject) => {
+          canvas.toBlob((b) => {
+            if (b) resolve(b);
+            else reject(new Error('Failed to create blob'));
+          }, 'image/png');
+        });
+
+        // Upload to Supabase Storage
+        const path = `floorplan-thumbnails/${projectId}.png`;
+        const { error: uploadError } = await supabase.storage
+          .from('user-uploads')
+          .upload(path, blob, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('user-uploads')
+          .getPublicUrl(path);
+
+        // Update project with thumbnail URL
+        const { error: updateError } = await supabase
+          .from('floorplan_projects')
+          .update({ thumbnail_url: urlData.publicUrl })
+          .eq('id', projectId);
+
+        if (updateError) throw updateError;
+
+        console.log('[FloorPlan] Thumbnail saved:', urlData.publicUrl);
+      } catch (err) {
+        console.error('[FloorPlan] Thumbnail error:', err);
+      }
+    };
+
+    emitter.on('camera-controls:generate-thumbnail', handleThumbnail);
+    return () => {
+      emitter.off('camera-controls:generate-thumbnail', handleThumbnail);
+    };
+  }, [projectId, supabase]);
 
   // Load scene handler
   const onLoad = useCallback(async (): Promise<SceneGraph | null> => {
