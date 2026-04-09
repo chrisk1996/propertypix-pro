@@ -53,10 +53,6 @@ export default function SideNavBar() {
 
         {/* Bottom Actions */}
         <div className="mt-auto pt-6 border-t border-slate-200 space-y-1">
-          <Link href="/floorplan-v2?new=true" className="w-full mb-4 py-3 bg-blue-600 text-white rounded-lg font-bold text-sm hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-            <span className="material-symbols-outlined text-sm">add</span>
-            New Project
-          </Link>
           <Link href="/settings" className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-900 transition-all">
             <span className="material-symbols-outlined">settings</span>
             <span>Settings</span>

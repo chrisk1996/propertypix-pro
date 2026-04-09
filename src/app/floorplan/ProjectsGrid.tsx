@@ -76,7 +76,7 @@ export default function ProjectsGrid() {
           <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Floor Plan Projects</h2>
         </div>
         <Link
-          href="/floorplan-v2"
+          href="/floorplan-v2?new=true"
           className="bg-blue-600 text-white px-6 py-3 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors"
         >
           <span className="material-symbols-outlined">add</span>
@@ -120,7 +120,7 @@ export default function ProjectsGrid() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {/* Add New Project Card */}
           <Link
-            href="/floorplan-v2"
+            href="/floorplan-v2?new=true"
             className="group relative aspect-[4/5] border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center gap-4 hover:border-blue-500 hover:bg-blue-50/50 transition-all"
           >
             <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center group-hover:scale-110 transition-transform">
