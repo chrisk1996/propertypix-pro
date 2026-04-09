@@ -190,6 +190,22 @@ CREATE POLICY "Users can insert their own history"
 -- INSERT INTO storage.buckets (id, name, public) VALUES ('user-uploads', 'user-uploads', false);
 -- INSERT INTO storage.buckets (id, name, public) VALUES ('enhancement-results', 'enhancement-results', true);
 
+-- Job Assets bucket for video pipeline
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('job-assets', 'job-assets', false)
+ON CONFLICT (id) DO NOTHING;
+
+-- Storage policy for job assets (users can access their own assets)
+CREATE POLICY "Users can access their own job assets" ON storage.objects
+  FOR SELECT USING (
+    bucket_id = 'job-assets'
+    AND EXISTS (
+      SELECT 1 FROM video_jobs vj
+      WHERE vj.id::text = (storage.foldername(name))[1]
+      AND vj.user_id = auth.uid()
+    )
+  );
+
 -- ============================================
 -- Indexes for performance
 -- ============================================

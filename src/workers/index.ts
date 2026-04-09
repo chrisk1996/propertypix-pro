@@ -5,10 +5,13 @@
 import { Worker, Job } from 'bullmq';
 import Redis from 'ioredis';
 import { createClient } from '@supabase/supabase-js';
+
 import { QUEUES, SyndicationJob, VideoJob, StagingJob } from '../lib/queue';
+import { VIDEO_PIPELINE_QUEUE, VideoPipelineJob } from '../lib/video-pipeline-queue';
 import { processSyndication } from './processors/syndication';
 import { processVideo } from './processors/video';
 import { processStaging } from './processors/staging';
+import { processVideoPipeline } from './processors/video-pipeline';
 
 // Redis connection for workers
 const redisConnection = new Redis({
@@ -73,16 +76,32 @@ const stagingWorker = new Worker<StagingJob>(
   }
 );
 
+// Video Pipeline Worker
+// Handles the 4-stage property renovation video generation pipeline
+const videoPipelineWorker = new Worker<VideoPipelineJob>(
+  VIDEO_PIPELINE_QUEUE,
+  async (job: Job<VideoPipelineJob>) => {
+    console.log(`[VideoPipeline] Processing job ${job.id}:`, job.data);
+    return processVideoPipeline(job);
+  },
+  {
+    connection: redisConnection,
+    concurrency: 2, // Process 2 video pipelines concurrently
+    limiter: {
+      max: 5,
+      duration: 60000, // 5 jobs per minute
+    },
+  }
+);
+
 // Worker event handlers
 function setupWorkerHandlers(worker: Worker, name: string) {
   worker.on('completed', (job: Job) => {
     console.log(`[${name}] Job ${job.id} completed successfully`);
   });
-
   worker.on('failed', (job: Job | undefined, err: Error) => {
     console.error(`[${name}] Job ${job?.id} failed:`, err.message);
   });
-
   worker.on('error', (err: Error) => {
     console.error(`[${name}] Worker error:`, err);
   });
@@ -91,6 +110,7 @@ function setupWorkerHandlers(worker: Worker, name: string) {
 setupWorkerHandlers(syndicationWorker, 'Syndication');
 setupWorkerHandlers(videoWorker, 'Video');
 setupWorkerHandlers(stagingWorker, 'Staging');
+setupWorkerHandlers(videoPipelineWorker, 'VideoPipeline');
 
 // Graceful shutdown
 async function shutdown() {
@@ -99,6 +119,7 @@ async function shutdown() {
     syndicationWorker.close(),
     videoWorker.close(),
     stagingWorker.close(),
+    videoPipelineWorker.close(),
   ]);
   await redisConnection.quit();
   process.exit(0);
@@ -108,6 +129,7 @@ process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
 
 console.log('🚀 Workers started and listening for jobs...');
-console.log('   - Syndication: concurrency=3');
-console.log('   - Video: concurrency=1');
-console.log('   - Staging: concurrency=5');
+console.log(' - Syndication: concurrency=3');
+console.log(' - Video: concurrency=1');
+console.log(' - Staging: concurrency=5');
+console.log(' - VideoPipeline: concurrency=2');
