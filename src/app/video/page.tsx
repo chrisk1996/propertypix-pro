@@ -1,30 +1,110 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { AppLayout } from '@/components/layout';
+import { VideoModeToggle } from '@/components/VideoModeToggle';
+import { VideoPipelineProgress } from '@/components/VideoPipelineProgress';
+import { VideoJobCard, VideoJobCardSkeleton, VideoJobCardEmpty } from '@/components/VideoJobCard';
+import { useVideoJob, useVideoJobs } from '@/hooks/useVideoJob';
+import { createClient } from '@/utils/supabase/client';
+import { cn } from '@/utils/cn';
+import type { VideoJob } from '@/types/video-job';
+import { 
+  PLATFORM_CONFIG, 
+  VIDEO_STATUS_CONFIG,
+  RENOVATION_STYLES, 
+  MUSIC_GENRES,
+  detectPlatform,
+  statusToStage,
+  type RenovationStyle,
+  type MusicGenre,
+  type VideoPlatform,
+} from '@/types/video-job';
 
-const videoStyles = [
-  { id: 'cinematic', name: 'Cinematic Tour', icon: 'movie', description: 'Hollywood-style property showcase' },
-  { id: 'drone', name: 'Drone Flyover', icon: 'flight', description: 'Aerial exterior footage' },
-  { id: 'walkthrough', name: 'Walkthrough', icon: 'directions_walk', description: 'Room-by-room interior tour' },
-  { id: 'lifestyle', name: 'Lifestyle', icon: 'wb_sunny', description: 'Living experience focus' },
-];
+type Mode = 'url' | 'manual';
 
-const durationOptions = [
-  { id: '30s', label: '30 sec' },
-  { id: '60s', label: '60 sec' },
-  { id: '90s', label: '90 sec' },
-  { id: '2m', label: '2 min' },
-];
+function CreditDisplay({ credits, used }: { credits: number; used: number }) {
+  const remaining = credits - used;
+  const percentage = credits > 0 ? (remaining / credits) * 100 : 0;
+  
+  return (
+    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm font-medium text-slate-700">Credits Available</span>
+        <span className="text-lg font-bold text-purple-600">{remaining}</span>
+      </div>
+      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+        <div
+          className={cn(
+            'h-full rounded-full transition-all',
+            percentage > 50 ? 'bg-purple-500' : percentage > 25 ? 'bg-yellow-500' : 'bg-red-500'
+          )}
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
+      <p className="text-xs text-slate-500 mt-1">{used} of {credits} used</p>
+    </div>
+  );
+}
+
+function PlatformBadge({ platform }: { platform: VideoPlatform }) {
+  const config = PLATFORM_CONFIG[platform];
+  return (
+    <span className={cn('inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-semibold text-sm', config.bgColor, config.color, config.borderColor)}>
+      <span className="material-symbols-outlined text-lg">language</span>
+      {config.label}
+    </span>
+  );
+}
 
 export default function VideoPage() {
+  const [mode, setMode] = useState<Mode>('url');
+  const [listingUrl, setListingUrl] = useState('');
+  const [detectedPlatform, setDetectedPlatform] = useState<VideoPlatform | null>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
-  const [selectedStyle, setSelectedStyle] = useState('cinematic');
-  const [duration, setDuration] = useState('60s');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [progress, setProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const [renovationStyle, setRenovationStyle] = useState<RenovationStyle>('modern');
+  const [musicGenre, setMusicGenre] = useState<MusicGenre>('cinematic');
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [credits, setCredits] = useState({ total: 0, used: 0 });
+  const [isLoadingCredits, setIsLoadingCredits] = useState(true);
+  
+  const { job: activeJob } = useVideoJob({ jobId: activeJobId ?? undefined, autoSubscribe: true });
+  const { jobs: recentJobs, isLoading: isLoadingJobs, refetch: refetchJobs } = useVideoJobs({ limit: 5 });
+  const supabase = createClient();
+  
+  useEffect(() => {
+    async function fetchCredits() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data: creditsData } = await supabase.from('enhancement_credits').select('credits_total, credits_used').eq('user_id', user.id).single();
+        if (creditsData) {
+          setCredits({ total: creditsData.credits_total ?? 0, used: creditsData.credits_used ?? 0 });
+        } else {
+          const { data: userData } = await supabase.from('propertypix_users').select('credits, used_credits').eq('id', user.id).single();
+          if (userData) setCredits({ total: userData.credits ?? 0, used: userData.used_credits ?? 0 });
+        }
+      } catch (err) {
+        console.error('Failed to fetch credits:', err);
+      } finally {
+        setIsLoadingCredits(false);
+      }
+    }
+    fetchCredits();
+  }, [supabase]);
+  
+  useEffect(() => {
+    if (listingUrl && mode === 'url') {
+      const platform = detectPlatform(listingUrl);
+      setDetectedPlatform(platform !== 'other' ? platform : null);
+    } else {
+      setDetectedPlatform(null);
+    }
+  }, [listingUrl, mode]);
+  
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
@@ -32,231 +112,180 @@ export default function VideoPage() {
       setUploadedImages(prev => [...prev, ...newImages]);
     }
   };
-
-  const removeImage = (index: number) => {
-    setUploadedImages(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleGenerate = async () => {
-    if (uploadedImages.length < 5) {
-      alert('Please upload at least 5 images');
-      return;
-    }
-    setIsGenerating(true);
-    setProgress(10);
+  
+  const removeImage = (index: number) => setUploadedImages(prev => prev.filter((_, i) => i !== index));
+  
+  const handleCreateJob = useCallback(async () => {
+    if (mode === 'url' && !listingUrl) return;
+    if (mode === 'manual' && uploadedImages.length < 5) return;
+    if (credits.total - credits.used < 1) return;
+    
+    setIsCreating(true);
+    setCreateError(null);
+    
     try {
-      // Use first image for video generation
-      const response = await fetch('/api/video', {
+      const response = await fetch('/api/video-jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          image: uploadedImages[0], 
-          motionType: 'orbit' 
+        body: JSON.stringify({
+          listing_url: mode === 'url' ? listingUrl : undefined,
+          renovation_style: renovationStyle,
+          music_genre: musicGenre,
+          ...(mode === 'manual' && { manual_images: uploadedImages.length }),
         }),
       });
-      setProgress(50);
+      
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Video generation failed');
-      setProgress(100);
-      // Could show video result here
-      console.log('Video generated:', data.output);
+      if (!response.ok) throw new Error(data.error || 'Failed to create video job');
+      
+      setActiveJobId(data.job_id);
+      setListingUrl('');
+      setUploadedImages([]);
+      refetchJobs();
+      setCredits(prev => ({ ...prev, used: prev.used + 1 }));
     } catch (err) {
-      console.error('Video generation error:', err);
-      alert(err instanceof Error ? err.message : 'Failed to generate video');
+      setCreateError(err instanceof Error ? err.message : 'Failed to create video job');
     } finally {
-      setIsGenerating(false);
+      setIsCreating(false);
     }
+  }, [mode, listingUrl, uploadedImages, renovationStyle, musicGenre, credits, refetchJobs]);
+  
+  const handleCreateAnother = () => {
+    setActiveJobId(null);
+    setListingUrl('');
+    setUploadedImages([]);
+    setCreateError(null);
   };
+  
+  const remainingCredits = credits.total - credits.used;
+  const canSubmit = remainingCredits >= 1 && ((mode === 'url' && listingUrl.length > 0) || (mode === 'manual' && uploadedImages.length >= 5));
+  const currentStageInfo = activeJob ? statusToStage(activeJob.status) : null;
+  const isJobComplete = activeJob?.status === 'done';
+  const isJobFailed = activeJob?.status === 'failed';
 
   return (
     <AppLayout title="Video Creator">
-      <div className="max-w-[1400px] mx-auto p-12">
-        {/* Header */}
-        <header className="mb-12">
+      <div className="max-w-[1600px] mx-auto p-8">
+        <header className="mb-8">
           <span className="text-purple-600 font-bold tracking-widest uppercase text-xs mb-2 block">AI Video Production</span>
-          <h1 className="font-['Plus_Jakarta_Sans'] text-5xl text-slate-900 font-bold tracking-tighter leading-none mb-4">Video Creator</h1>
-          <p className="max-w-xl text-slate-600 leading-relaxed">
-            Generate cinematic drone-style tours and walkthrough videos from your property images automatically.
-          </p>
+          <h1 className="font-['Plus_Jakarta_Sans'] text-4xl text-slate-900 font-bold tracking-tighter mb-3">Video Creator</h1>
+          <p className="max-w-xl text-slate-600 leading-relaxed">Generate cinematic property tour videos from listing URLs or uploaded images. AI-powered virtual renovation included.</p>
         </header>
-
-        <div className="grid grid-cols-12 gap-10">
-          {/* Left Column */}
-          <div className="col-span-12 lg:col-span-7 space-y-8">
-            {/* Upload Section */}
-            <section className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-              <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-lg text-slate-900 mb-6">Upload Images</h3>
-              
-              {/* Upload Area */}
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full aspect-video bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-purple-500 hover:bg-purple-50/50 transition-all mb-6"
-              >
-                <span className="material-symbols-outlined text-5xl text-slate-400">add_photo_alternate</span>
-                <div className="text-center">
-                  <p className="font-semibold text-slate-700">Drop your property images here</p>
-                  <p className="text-sm text-slate-500">or click to browse (min 5 images)</p>
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleUpload}
-                  className="hidden"
-                />
-              </div>
-
-              {/* Uploaded Images Grid */}
-              {uploadedImages.length > 0 && (
-                <div className="grid grid-cols-4 gap-3">
-                  {uploadedImages.map((img, idx) => (
-                    <div key={idx} className="relative aspect-square rounded-lg overflow-hidden group">
-                      <img src={img} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover" />
-                      <button
-                        onClick={() => removeImage(idx)}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <span className="material-symbols-outlined text-sm">close</span>
+        
+        <div className="grid grid-cols-12 gap-8">
+          <aside className="col-span-12 lg:col-span-3 space-y-4">
+            <h3 className="font-bold text-slate-900 text-sm">Recent Jobs</h3>
+            {!isLoadingCredits && <CreditDisplay credits={credits.total} used={credits.used} />}
+            <div className="space-y-3">
+              {isLoadingJobs ? (<><VideoJobCardSkeleton /><VideoJobCardSkeleton /><VideoJobCardSkeleton /></>) 
+               : recentJobs.length === 0 ? <VideoJobCardEmpty />
+               : recentJobs.map(job => <VideoJobCard key={job.id} job={job} isActive={job.id === activeJobId} onClick={() => setActiveJobId(job.id)} />)}
+            </div>
+          </aside>
+          
+          <main className="col-span-12 lg:col-span-9">
+            {activeJob ? (
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                {isJobComplete && activeJob.output_video_url ? (
+                  <div className="aspect-video bg-slate-900">
+                    <video src={activeJob.output_video_url} controls className="w-full h-full object-contain" poster={activeJob.thumbnail_url} />
+                  </div>
+                ) : (
+                  <div className="aspect-video bg-gradient-to-br from-slate-800 to-slate-900 flex flex-col items-center justify-center p-8">
+                    {activeJob.platform && activeJob.platform !== 'other' && <PlatformBadge platform={activeJob.platform} />}
+                    <div className="w-full max-w-2xl mt-8">
+                      <VideoPipelineProgress currentStage={currentStageInfo?.stage ?? 'scrape'} stageStatus={currentStageInfo?.stageStatus ?? 'pending'} />
+                    </div>
+                    <div className="mt-8 text-center">
+                      <span className={cn('inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium', VIDEO_STATUS_CONFIG[activeJob.status]?.bgColor, VIDEO_STATUS_CONFIG[activeJob.status]?.color)}>
+                        <span className={cn('material-symbols-outlined text-lg', !isJobFailed && 'animate-spin')}>{VIDEO_STATUS_CONFIG[activeJob.status]?.icon}</span>
+                        {VIDEO_STATUS_CONFIG[activeJob.status]?.label}
+                      </span>
+                      <p className="text-slate-400 text-sm mt-2">{isJobFailed && activeJob.error_message ? activeJob.error_message : 'Processing your video...'}</p>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="p-6 border-t border-slate-200 bg-slate-50">
+                  {isJobComplete ? (
+                    <div className="flex gap-4">
+                      <a href={activeJob.output_video_url} download className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-colors">
+                        <span className="material-symbols-outlined">download</span> Download Video
+                      </a>
+                      <button type="button" className="flex items-center justify-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 transition-colors">
+                        <span className="material-symbols-outlined">share</span> Share
+                      </button>
+                      <button type="button" onClick={handleCreateAnother} className="flex items-center justify-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 transition-colors">
+                        <span className="material-symbols-outlined">add</span> Create Another
                       </button>
                     </div>
-                  ))}
-                </div>
-              )}
-            </section>
-
-            {/* Video Style */}
-            <section className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-              <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-lg text-slate-900 mb-6">Video Style</h3>
-              <div className="grid grid-cols-2 gap-4">
-                {videoStyles.map((style) => (
-                  <button
-                    key={style.id}
-                    onClick={() => setSelectedStyle(style.id)}
-                    className={`p-6 rounded-xl border-2 transition-all text-left ${
-                      selectedStyle === style.id
-                        ? 'border-purple-600 bg-purple-50'
-                        : 'border-slate-200 hover:border-purple-300'
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-3xl text-purple-600 mb-3">{style.icon}</span>
-                    <h4 className="font-bold text-slate-900">{style.name}</h4>
-                    <p className="text-sm text-slate-500 mt-1">{style.description}</p>
-                  </button>
-                ))}
-              </div>
-            </section>
-
-            {/* Duration */}
-            <section className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
-              <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-lg text-slate-900 mb-6">Duration</h3>
-              <div className="flex gap-3">
-                {durationOptions.map((opt) => (
-                  <button
-                    key={opt.id}
-                    onClick={() => setDuration(opt.id)}
-                    className={`px-6 py-3 rounded-xl font-bold text-sm transition-all ${
-                      duration === opt.id
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </section>
-          </div>
-
-          {/* Right Column - Preview */}
-          <div className="col-span-12 lg:col-span-5">
-            <div className="sticky top-24">
-              {/* Preview Card */}
-              <div className="bg-slate-900 rounded-2xl overflow-hidden shadow-2xl">
-                {/* Video Preview Area */}
-                <div className="aspect-video bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center relative">
-                  {uploadedImages.length > 0 ? (
-                    <div className="absolute inset-0 grid grid-cols-2 gap-1 p-2 opacity-50">
-                      {uploadedImages.slice(0, 4).map((img, idx) => (
-                        <img key={idx} src={img} alt="" className="w-full h-full object-cover rounded" />
-                      ))}
-                    </div>
-                  ) : null}
-                  
-                  <div className="relative z-10 flex flex-col items-center">
-                    <span className="material-symbols-outlined text-6xl text-white/80">play_circle</span>
-                    <span className="text-white/60 text-sm mt-2">Preview</span>
-                  </div>
-
-                  {/* Progress Overlay */}
-                  {isGenerating && (
-                    <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center">
-                      <div className="w-48 h-2 bg-slate-700 rounded-full overflow-hidden mb-4">
-                        <div
-                          className="h-full bg-purple-500 transition-all duration-200"
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
-                      <span className="text-white text-sm">Generating video... {progress}%</span>
-                    </div>
+                  ) : isJobFailed ? (
+                    <button type="button" onClick={handleCreateAnother} className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors">
+                      <span className="material-symbols-outlined">refresh</span> Try Again
+                    </button>
+                  ) : (
+                    <p className="text-center text-sm text-slate-500">You can close this page. We&apos;ll notify you when your video is ready.</p>
                   )}
                 </div>
-
-                {/* Video Info */}
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-bold text-white">Property Tour</h4>
-                    <span className="text-sm text-slate-400">{duration}</span>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                  <h3 className="font-bold text-slate-900 mb-4">Input Method</h3>
+                  <VideoModeToggle mode={mode} onChange={setMode} />
+                </div>
+                
+                {mode === 'url' && (
+                  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 className="font-bold text-slate-900 mb-4">Listing URL</h3>
+                    <div className="space-y-4">
+                      <div className="relative">
+                        <input type="url" value={listingUrl} onChange={(e) => setListingUrl(e.target.value)} placeholder="Paste Zillow, IS24, Redfin, or Rightmove URL..." className="w-full px-4 py-3 pr-12 rounded-xl border border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all" />
+                        <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">link</span>
+                      </div>
+                      {detectedPlatform && (<div className="flex items-center gap-2"><span className="text-sm text-slate-600">Detected:</span><PlatformBadge platform={detectedPlatform} /></div>)}
+                      {!listingUrl && (<div className="flex flex-wrap gap-2"><span className="text-xs text-slate-500">Supported:</span>{(['zillow', 'immobilienscout24', 'redfin', 'rightmove'] as VideoPlatform[]).map(p => (<span key={p} className={cn('text-xs px-2 py-0.5 rounded', PLATFORM_CONFIG[p].bgColor, PLATFORM_CONFIG[p].color)}>{PLATFORM_CONFIG[p].label}</span>))}</div>)}
+                    </div>
                   </div>
-                  <div className="flex gap-4 text-sm text-slate-400">
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-sm">videocam</span>
-                      4K Cinematic
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-sm">graphic_eq</span>
-                      AI Voice
-                    </span>
+                )}
+                
+                {mode === 'manual' && (
+                  <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 className="font-bold text-slate-900 mb-4">Upload Images</h3>
+                    <div onClick={() => fileInputRef.current?.click()} className="w-full aspect-video bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-purple-500 hover:bg-purple-50/50 transition-all mb-4">
+                      <span className="material-symbols-outlined text-5xl text-slate-400">add_photo_alternate</span>
+                      <div className="text-center"><p className="font-semibold text-slate-700">Drop your property images here</p><p className="text-sm text-slate-500">or click to browse (min 5 images)</p></div>
+                      <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleUpload} className="hidden" />
+                    </div>
+                    {uploadedImages.length > 0 && (<div className="grid grid-cols-5 gap-2 mb-4">{uploadedImages.map((img, idx) => (<div key={idx} className="relative aspect-square rounded-lg overflow-hidden group"><img src={img} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover" /><button type="button" onClick={() => removeImage(idx)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"><span className="material-symbols-outlined text-sm">close</span></button></div>))}</div>)}
+                    <p className="text-sm text-slate-500">{uploadedImages.length}/5 minimum images uploaded</p>
+                  </div>
+                )}
+                
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                  <h3 className="font-bold text-slate-900 mb-4">Renovation Style</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {RENOVATION_STYLES.map(style => (<button key={style} type="button" onClick={() => setRenovationStyle(style)} className={cn('px-4 py-3 rounded-xl font-semibold text-sm capitalize transition-all', renovationStyle === style ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200')}>{style}</button>))}
                   </div>
                 </div>
-              </div>
-
-              {/* Generate Button */}
-              <button
-                onClick={handleGenerate}
-                disabled={uploadedImages.length < 5 || isGenerating}
-                className="w-full mt-6 py-5 bg-purple-600 text-white rounded-xl font-bold text-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-lg shadow-purple-600/20"
-              >
-                <span className="material-symbols-outlined">auto_awesome</span>
-                {isGenerating ? 'Generating...' : 'Generate Video'}
-              </button>
-
-              {uploadedImages.length < 5 && (
-                <p className="text-center text-sm text-slate-500 mt-3">
-                  Upload at least {5 - uploadedImages.length} more images to generate
-                </p>
-              )}
-
-              {/* Export Options */}
-              <div className="mt-8 p-6 bg-slate-100 rounded-xl border border-slate-200">
-                <h4 className="font-bold text-slate-900 mb-4">Export Options</h4>
-                <div className="space-y-3">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" defaultChecked className="text-purple-600 focus:ring-purple-600 rounded" />
-                    <span className="text-sm text-slate-700">Include background music</span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" defaultChecked className="text-purple-600 focus:ring-purple-600 rounded" />
-                    <span className="text-sm text-slate-700">Add property branding</span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" className="text-purple-600 focus:ring-purple-600 rounded" />
-                    <span className="text-sm text-slate-700">Include contact overlay</span>
-                  </label>
+                
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                  <h3 className="font-bold text-slate-900 mb-4">Background Music</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {MUSIC_GENRES.map(genre => (<button key={genre} type="button" onClick={() => setMusicGenre(genre)} className={cn('px-4 py-3 rounded-xl font-semibold text-sm capitalize transition-all', musicGenre === genre ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200')}>{genre}</button>))}
+                  </div>
                 </div>
+                
+                {createError && (<div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3"><span className="material-symbols-outlined text-red-600">error</span><div><p className="font-semibold text-red-900">Failed to create video</p><p className="text-sm text-red-700 mt-1">{createError}</p></div></div>)}
+                
+                <button type="button" onClick={handleCreateJob} disabled={!canSubmit || isCreating} className="w-full py-4 bg-purple-600 text-white rounded-xl font-bold text-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-lg shadow-purple-600/20">
+                  <span className="material-symbols-outlined">auto_awesome</span>{isCreating ? 'Creating...' : 'Generate Video'}
+                </button>
+                
+                {remainingCredits < 1 && (<p className="text-center text-sm text-red-600">You need at least 1 credit to generate a video. Please purchase more credits.</p>)}
               </div>
-            </div>
-          </div>
+            )}
+          </main>
         </div>
       </div>
     </AppLayout>
