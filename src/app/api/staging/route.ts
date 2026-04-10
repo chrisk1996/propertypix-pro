@@ -58,15 +58,15 @@ const STYLE_PROMPTS: Record<string, string> = {
 };
 
 /**
- * Generate depth map from input image using Depth Anything
+ * Generate depth map from input image using Depth Anything V2
+ * V2 has better fine-grained details and robustness than V1
  */
 async function generateDepthMap(imageUrl: string): Promise<string> {
   console.log('Generating depth map from image...');
 
-  // Use latest version of Depth Anything for best results
-  // Pinned versions can produce different depth maps
+  // Use Depth Anything V2 - better quality than V1
   const result = await replicate.run(
-    "cjwbw/depth-anything",
+    "chenxwh/depth-anything-v2",
     {
       input: {
         image: imageUrl,
