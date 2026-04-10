@@ -63,8 +63,10 @@ const STYLE_PROMPTS: Record<string, string> = {
 async function generateDepthMap(imageUrl: string): Promise<string> {
   console.log('Generating depth map from image...');
 
+  // Use latest version of Depth Anything for best results
+  // Pinned versions can produce different depth maps
   const result = await replicate.run(
-    "cjwbw/depth-anything:e5b0454205013708df48492a13a8ee4b3c412173362fc56c6b5558eb54e527e5",
+    "cjwbw/depth-anything",
     {
       input: {
         image: imageUrl,
@@ -200,14 +202,16 @@ export async function POST(request: NextRequest) {
       // FLUX Depth Pro requires:
       // - control_image: must be a valid URI (we have depthMapUrl)
       // - output_format: must be 'jpg' or 'png' (not 'webp')
+      // Lower guidance_scale = more adherence to depth map structure
+      // Higher steps = better structure preservation
       const result = await replicate.run(
         "black-forest-labs/flux-depth-pro",
         {
           input: {
             control_image: depthMapUrl,
             prompt: prompt,
-            num_inference_steps: 28,
-            guidance_scale: 3.5,
+            num_inference_steps: 30,
+            guidance_scale: 2.5,
             output_format: 'jpg',
             output_quality: 90,
           },
