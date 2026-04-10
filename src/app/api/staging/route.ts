@@ -72,18 +72,39 @@ async function generateDepthMap(imageUrl: string): Promise<string> {
     }
   );
 
-  // Handle output - ensure we return a proper URL
+  console.log('Depth Anything raw result:', JSON.stringify(result, null, 2));
+
+  // Replicate returns output in various formats depending on the model
+  // Depth Anything returns a URL string directly or an array
   if (typeof result === 'string') {
     return result;
-  } else if (Array.isArray(result) && result.length > 0) {
-    return String(result[0]);
-  } else if (result && typeof result === 'object') {
+  }
+  
+  if (Array.isArray(result)) {
+    // Some models return [url] array
+    if (result.length > 0 && typeof result[0] === 'string') {
+      return result[0];
+    }
+    // Some return array of objects
+    if (result[0] && typeof result[0] === 'object') {
+      const first = result[0] as Record<string, unknown>;
+      if (first.url) return String(first.url);
+    }
+  }
+  
+  if (result && typeof result === 'object') {
     const out = result as Record<string, unknown>;
-    const url = out.url || out.output;
+    // Try various common output fields
+    const url = out.output || out.url || out.image || out.depth_map;
     if (typeof url === 'string') {
       return url;
     }
+    // Sometimes output is nested
+    if (Array.isArray(out.output) && out.output.length > 0) {
+      return String(out.output[0]);
+    }
   }
+  
   throw new Error('Failed to generate depth map - no valid URL returned');
 }
 
