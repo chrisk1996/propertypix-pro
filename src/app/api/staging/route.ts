@@ -57,6 +57,34 @@ const STYLE_PROMPTS: Record<string, string> = {
   industrial: 'industrial style, metal and wood, exposed elements, urban loft aesthetic, leather furniture',
 };
 
+/**
+ * Generate depth map from input image using Depth Anything
+ */
+async function generateDepthMap(imageUrl: string): Promise<string> {
+  console.log('Generating depth map from image...');
+
+  const result = await replicate.run(
+    "cjwbw/depth-anything",
+    {
+      input: {
+        image: imageUrl,
+      },
+    }
+  );
+
+  // Handle output
+  if (typeof result === 'string') {
+    return result;
+  } else if (Array.isArray(result) && result.length > 0) {
+    return String(result[0]);
+  } else if (result && typeof result === 'object') {
+    const out = result as Record<string, unknown>;
+    return String(out.url || out.output);
+  }
+
+  throw new Error('Failed to generate depth map');
+}
+
 export async function POST(request: NextRequest) {
   try {
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
@@ -83,6 +111,7 @@ export async function POST(request: NextRequest) {
 
     if (model === 'decor8') {
       // Use Decor8 AI API for premium staging (best structure preservation)
+      // Decor8 handles depth/structure internally - no manual depth map needed
       creditsUsed = 3;
 
       const roomTypeDecor8 = ROOM_TYPES[roomType] || 'livingroom';
@@ -90,7 +119,6 @@ export async function POST(request: NextRequest) {
 
       console.log('Calling Decor8 AI for virtual staging:', { roomType: roomTypeDecor8, designStyle });
 
-      // Call Decor8 API
       const decor8Response = await fetch('https://api.decor8.ai/generate_designs_for_room', {
         method: 'POST',
         headers: {
@@ -119,26 +147,32 @@ export async function POST(request: NextRequest) {
       }
 
     } else if (model === 'flux-depth') {
-      // Use FLUX Depth Pro with proper depth conditioning
+      // FLUX Depth Pro workflow:
+      // 1. Generate depth map from input image using Depth Anything
+      // 2. Use depth map as control_image for FLUX Depth Pro
       creditsUsed = 2;
 
       const roomPrompt = ROOM_PROMPTS[roomType] || ROOM_PROMPTS.living;
       const stylePrompt = STYLE_PROMPTS[furnitureStyle] || STYLE_PROMPTS.modern;
       const prompt = `${roomPrompt}, ${stylePrompt}, professional real estate photography, well-lit, high quality, interior design magazine, bright and clean`;
 
-      console.log('Calling FLUX Depth Pro for virtual staging:', { roomType, furnitureStyle });
+      console.log('FLUX Depth Pro workflow:', { roomType, furnitureStyle });
 
-      // FLUX Depth Pro uses depth map to preserve structure
-      // First generate depth map from input, then use ControlNet conditioning
+      // Step 1: Generate depth map
+      console.log('Step 1: Generating depth map...');
+      const depthMapUrl = await generateDepthMap(image);
+      console.log('Depth map generated:', depthMapUrl.substring(0, 50) + '...');
+
+      // Step 2: Use depth map with FLUX Depth Pro
+      console.log('Step 2: Running FLUX Depth Pro with depth conditioning...');
       const result = await replicate.run(
         "black-forest-labs/flux-depth-pro",
         {
           input: {
-            image: image,
+            control_image: depthMapUrl,  // Depth map for structure preservation
             prompt: prompt,
             num_inference_steps: 28,
             guidance_scale: 3.5,
-            strength: 0.75, // Balance between preserving structure and adding furniture
             output_format: 'webp',
             output_quality: 90,
           },
@@ -163,6 +197,7 @@ export async function POST(request: NextRequest) {
 
     } else {
       // Fallback to SDXL for other models
+      // Note: SDXL doesn't preserve structure as well as depth-based models
       creditsUsed = 2;
 
       const roomPrompt = ROOM_PROMPTS[roomType] || ROOM_PROMPTS.living;
