@@ -84,7 +84,9 @@ async function generateDepthMap(imageUrl: string): Promise<string> {
     const first = result[0];
     // FileOutput object has .url() method
     if (first && typeof first.url === 'function') {
-      return first.url();
+      const urlResult = first.url();
+      // .url() might return URL object or string
+      return typeof urlResult === 'string' ? urlResult : urlResult.toString();
     }
     // Plain string URL
     if (typeof first === 'string') {
@@ -96,7 +98,8 @@ async function generateDepthMap(imageUrl: string): Promise<string> {
   if (result && typeof result === 'object') {
     // FileOutput has .url() method
     if (typeof (result as any).url === 'function') {
-      return (result as any).url();
+      const urlResult = (result as any).url();
+      return typeof urlResult === 'string' ? urlResult : urlResult.toString();
     }
     // Fallback: try common output fields
     const out = result as Record<string, unknown>;
