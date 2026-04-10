@@ -4,6 +4,48 @@ Reusable UI components located in `src/components/`.
 
 ---
 
+## AI Model Selector
+
+### AIModelSelector
+
+**Location:** `src/components/AIModelSelector.tsx`
+
+Model selector for choosing AI model based on task type.
+
+```tsx
+import { AIModelSelector, AI_MODELS } from '@/components/AIModelSelector';
+
+<AIModelSelector
+  taskType="staging"
+  selectedModel="flux-depth"
+  onModelChange={(model) => setSelectedModel(model)}
+/>
+```
+
+**Props:**
+| Prop | Type | Description |
+|------|------|-------------|
+| `taskType` | `'enhance' \| 'staging' \| 'floorplan'` | Type of task |
+| `selectedModel` | `string` | Currently selected model ID |
+| `onModelChange` | `(model: string) => void` | Model change callback |
+
+**Available Models by Task:**
+
+**Enhance:**
+| ID | Name | Quality | Speed | Best For |
+|----|------|---------|-------|----------|
+| `auto` | Auto (SDXL) | ⭐⭐⭐ | ⚡⚡⚡ | General enhancement |
+| `flux-kontext` | FLUX Kontext Pro | ⭐⭐⭐⭐ | ⚡⚡ | Instruction edits |
+| `ideogram` | Ideogram v2 | ⭐⭐⭐⭐ | ⚡⚡ | Text/logos |
+
+**Staging:**
+| ID | Name | Quality | Speed | Best For |
+|----|------|---------|-------|----------|
+| `flux-depth` | FLUX Depth Pro | ⭐⭐⭐ | ⚡⚡⚡ | Budget staging |
+| `decor8` | Decor8 AI | ⭐⭐⭐⭐⭐ | ⚡⚡ | Premium staging |
+
+---
+
 ## Layout Components
 
 ### AppLayout
@@ -85,7 +127,42 @@ Comparison slider for before/after images.
 
 ---
 
+## Virtual Staging Components
+
+### StagingResultDisplay
+
+**Location:** `src/components/staging/StagingResultDisplay.tsx`
+
+Display staging results with before/after comparison.
+
+```tsx
+<StagingResultDisplay
+  originalImage={originalUrl}
+  stagedImage={stagedUrl}
+  roomType="living"
+  furnitureStyle="modern"
+/>
+```
+
+---
+
 ## Floor Planner Components
+
+### FloorPlanEditor
+
+**Location:** `src/app/floorplan/[projectId]/page.tsx`
+
+Main floor plan editor with 2D/3D split view.
+
+```tsx
+<FloorPlanEditor
+  projectId={projectId}
+  initialScene={sceneData}
+  onSave={handleSave}
+/>
+```
+
+---
 
 ### FloorPlanCanvas2D
 
@@ -213,6 +290,83 @@ Right sidebar for editing selected element properties.
 
 ---
 
+### FloorPlanNavbar
+
+**Location:** `src/components/floorplan/FloorPlanNavbar.tsx`
+
+Navbar for floor plan editor with project name, settings, and actions.
+
+```tsx
+<FloorPlanNavbar
+  projectId={projectId}
+  projectName="Apartment 3BR"
+  onProjectNameChange={updateProjectName}
+  onShare={handleShare}
+  onExport={handleExport}
+/>
+```
+
+**Features:**
+- Editable project name
+- Share button (visibility toggle)
+- Settings panel (grid, lighting, etc.)
+- Export options
+
+---
+
+### FloorPlanDashboard
+
+**Location:** `src/app/floorplan/page.tsx`
+
+Dashboard showing all floor plan projects.
+
+```tsx
+<FloorPlanDashboard
+  projects={projects}
+  onNewProject={handleNewProject}
+  onDeleteProject={handleDelete}
+/>
+```
+
+---
+
+## Video Components
+
+### VideoGenerator
+
+**Location:** `src/app/video/page.tsx`
+
+Video generation interface with URL or image upload mode.
+
+```tsx
+<VideoGenerator
+  mode="url" // or "images"
+  onGenerate={handleGenerate}
+/>
+```
+
+**Modes:**
+- `url`: Paste property listing URL
+- `images`: Upload images manually
+
+---
+
+### VideoProgress
+
+**Location:** `src/components/video/VideoProgress.tsx`
+
+Real-time progress display for video generation.
+
+```tsx
+<VideoProgress
+  progress={75}
+  status="processing"
+  estimatedTime={30}
+/>
+```
+
+---
+
 ## UI Components
 
 ### QuickActions
@@ -258,6 +412,28 @@ Export options dialog.
 
 ---
 
+### SettingsPanel
+
+**Location:** `src/components/floorplan/SettingsPanel.tsx`
+
+Settings overlay for floor plan editor.
+
+```tsx
+<SettingsPanel
+  isOpen={showSettings}
+  onClose={() => setShowSettings(false)}
+  settings={{
+    showGrid: true,
+    snapToGrid: true,
+    gridSize: 20,
+    lightingMode: 'day'
+  }}
+  onSettingsChange={updateSettings}
+/>
+```
+
+---
+
 ## Form Components
 
 ### Input
@@ -285,4 +461,42 @@ Standard text input with label and validation.
 
 ---
 
-*Last updated: April 2026*
+## Utility Components
+
+### CreditsDisplay
+
+**Location:** `src/components/CreditsDisplay.tsx`
+
+Show user's remaining credits.
+
+```tsx
+<CreditsDisplay
+  credits={85}
+  plan="pro"
+/>
+```
+
+---
+
+### LoadingSpinner
+
+```tsx
+<LoadingSpinner size="lg" />
+```
+
+---
+
+### Toast
+
+Toast notifications for success/error messages.
+
+```tsx
+import { toast } from '@/components/Toast';
+
+toast.success('Image enhanced successfully!');
+toast.error('Processing failed. Please try again.');
+```
+
+---
+
+*Last updated: April 10, 2026*

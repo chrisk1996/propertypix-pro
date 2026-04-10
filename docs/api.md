@@ -30,37 +30,42 @@ Cookie: sb-access-token=<token>; sb-refresh-token=<token>
 
 #### `POST /api/enhance`
 
-Enhance a property image.
+Enhance a property image with AI models.
 
 **Request:**
 ```json
 {
   "image": "data:image/jpeg;base64,...",
-  "type": "sky",
-  "options": {
-    "skyType": "sunset",
-    "intensity": 80
-  }
+  "enhancementType": "auto",
+  "model": "auto"
 }
 ```
 
 **Response:**
 ```json
 {
-  "id": "enhance_abc123",
-  "originalUrl": "https://storage.supabase.co/.../original.jpg",
-  "enhancedUrl": "https://storage.supabase.co/.../enhanced.jpg",
-  "status": "completed"
+  "success": true,
+  "output": "https://replicate.delivery/.../enhanced.webp",
+  "jobId": "abc123",
+  "creditsUsed": 1,
+  "model": "sdxl"
 }
 ```
 
 **Enhancement Types:**
-| Type | Description | Options |
-|------|-------------|---------|
-| `sky` | Sky replacement | `skyType`: 'clear' \| 'sunset' \| 'dramatic' |
-| `twilight` | Virtual twilight | `intensity`: 0-100 |
-| `enhance` | General enhancement | `intensity`: 0-100 |
-| `denoise` | Noise reduction | `strength`: 'light' \| 'medium' \| 'strong' |
+| Type | Description |
+|------|-------------|
+| `auto` | Automatic enhancement (default) |
+| `staging` | Add furniture to empty rooms |
+| `sky` | Sky replacement |
+| `object_removal` | Remove objects from image |
+
+**AI Models (Enhance):**
+| Model | Credits | Best For |
+|-------|---------|----------|
+| `auto` | 1 | General enhancement (SDXL) |
+| `flux-kontext` | 2 | Instruction-based edits |
+| `ideogram` | 2 | Text/logos in images |
 
 ---
 
@@ -68,32 +73,73 @@ Enhance a property image.
 
 #### `POST /api/staging`
 
-Virtually stage an empty room.
+Virtually stage an empty room with AI.
 
 **Request:**
 ```json
 {
   "image": "data:image/jpeg;base64,...",
   "roomType": "living",
-  "style": "modern"
+  "furnitureStyle": "modern",
+  "model": "flux-depth"
 }
 ```
 
 **Response:**
 ```json
 {
-  "id": "staging_xyz789",
-  "originalUrl": "https://storage.supabase.co/.../original.jpg",
-  "stagedUrl": "https://storage.supabase.co/.../staged.jpg",
+  "success": true,
+  "output": "https://replicate.delivery/.../staged.webp",
   "roomType": "living",
-  "style": "modern",
-  "status": "completed"
+  "furnitureStyle": "modern",
+  "model": "flux-depth",
+  "creditsUsed": 2
 }
 ```
 
-**Room Types:** `living`, `bedroom`, `dining`, `office`, `kitchen`
+**Room Types:**
+`living`, `bedroom`, `dining`, `office`, `kitchen`
 
-**Styles:** `modern`, `scandinavian`, `luxury`, `minimalist`, `industrial`
+**Styles:**
+`modern`, `scandinavian`, `luxury`, `minimalist`, `industrial`
+
+**AI Models (Staging):**
+
+| Model | Credits | Cost | Quality | Description |
+|-------|---------|------|---------|-------------|
+| `flux-depth` | 2 | ~$0.02 | ⭐⭐⭐ | Budget staging with depth preservation |
+| `decor8` | 3 | $0.20 | ⭐⭐⭐⭐⭐ | Premium staging, best structure preservation |
+
+---
+
+### How Depth Conditioning Works (FLUX Depth Pro)
+
+For the `flux-depth` model, the API implements a two-step workflow:
+
+#### Step 1: Generate Depth Map
+```
+Input Image → Depth Anything (cjwbw model) → Grayscale Depth Map
+```
+- Extracts 3D structure from the photo
+- Bright = close, Dark = far
+- Cost: ~$0.001
+
+#### Step 2: FLUX Depth Pro
+```
+Depth Map + Prompt → FLUX Depth Pro → Staged Image
+```
+- Uses depth map as `control_image`
+- Preserves walls, floor, windows, doors
+- Adds furniture that fits the actual room structure
+
+**What Gets Preserved:**
+| Element | Benefit |
+|---------|---------|
+| Walls | Furniture can't appear through walls |
+| Floor/Ceiling | Correct vertical placement |
+| Windows | Light sources remain consistent |
+| Doors | Clear boundaries, furniture placed around them |
+| Room depth | Furniture scaled by distance |
 
 ---
 
@@ -115,14 +161,34 @@ Extract walls and rooms from a floor plan image.
 ```json
 {
   "walls": [
-    { "start": [0.1, 0.2], "end": [0.5, 0.2], "type": "exterior" },
-    { "start": [0.1, 0.2], "end": [0.1, 0.6], "type": "exterior" }
+    { "start": [0.1, 0.2], "end": [0.5, 0.2], "type": "exterior" }
   ],
   "rooms": [
     { "name": "Living Room", "type": "living", "x": 0.1, "y": 0.2, "width": 0.4, "height": 0.4 }
   ]
 }
 ```
+
+---
+
+### Video Generation
+
+#### `POST /api/video`
+
+Generate property video from images.
+
+**Request:**
+```json
+{
+  "images": ["url1", "url2", "url3"],
+  "mode": "property_renovation",
+  "transition": "fade"
+}
+```
+
+**Modes:**
+- `property_renovation` — Renovation progress video
+- `property_tour` — Walkthrough video
 
 ---
 
@@ -164,12 +230,58 @@ Create a new listing.
 ```
 
 #### `PUT /api/listings/[id]`
-
 Update a listing.
 
 #### `DELETE /api/listings/[id]`
-
 Delete a listing.
+
+---
+
+### Floor Plan Projects
+
+#### `GET /api/floorplan/projects`
+
+Get all floor plan projects for authenticated user.
+
+**Response:**
+```json
+{
+  "projects": [
+    {
+      "id": "proj_123",
+      "name": "Apartment 3BR",
+      "thumbnail_url": "https://storage.supabase.co/.../thumb.png",
+      "visibility": "private",
+      "created_at": "2026-04-01T00:00:00Z",
+      "updated_at": "2026-04-05T00:00:00Z"
+    }
+  ]
+}
+```
+
+#### `POST /api/floorplan/projects`
+
+Create a new floor plan project.
+
+**Request:**
+```json
+{
+  "name": "New Project",
+  "scene_data": { "walls": [], "rooms": [], "furniture": [] }
+}
+```
+
+#### `PUT /api/floorplan/projects/[id]`
+
+Update project (auto-save).
+
+**Request:**
+```json
+{
+  "name": "Renamed Project",
+  "scene_data": { "walls": [...], "rooms": [...], "furniture": [...] }
+}
+```
 
 ---
 
@@ -218,10 +330,22 @@ Get current user profile.
 
 ---
 
+## Credit System
+
+| Feature | Credits | API Cost |
+|---------|---------|----------|
+| Photo Enhancement (SDXL) | 1 | ~$0.005 |
+| Photo Enhancement (Flux) | 2 | ~$0.02 |
+| Virtual Staging (Budget) | 2 | ~$0.02 |
+| Virtual Staging (Premium) | 3 | $0.20 |
+| 3D Floor Plan | 0 | Free |
+| Video Generation | 5 | ~$0.10 |
+
+---
+
 ## Error Handling
 
 All errors follow this format:
-
 ```json
 {
   "error": {
@@ -245,9 +369,9 @@ All errors follow this format:
 
 ## Rate Limiting
 
-- **Public endpoints:** 10 requests/minute
-- **Authenticated endpoints:** 100 requests/minute
-- **Pro subscribers:** 500 requests/minute
+- **Public endpoints:** 10 requests/hour
+- **Authenticated endpoints:** 100 requests/hour
+- **Pro subscribers:** 500 requests/hour
 
 Rate limit headers included in response:
 ```
@@ -258,4 +382,25 @@ X-RateLimit-Reset: 1712197200
 
 ---
 
-*Last updated: April 2026*
+## Environment Variables
+
+```bash
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# Replicate
+REPLICATE_API_TOKEN=
+
+# Decor8 AI (Premium Staging)
+DECOR8_API_KEY=
+
+# App
+NEXT_PUBLIC_APP_URL=
+NODE_ENV=
+```
+
+---
+
+*Last updated: April 10, 2026*
