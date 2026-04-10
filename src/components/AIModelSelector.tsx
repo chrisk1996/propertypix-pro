@@ -22,8 +22,8 @@ export const AI_MODELS: Record<string, AIModelOption[]> = {
     { id: 'ideogram', name: 'Ideogram v2', description: 'Best for text in images', cost: '$0.02', quality: '⭐⭐⭐⭐', speed: '⚡⚡', bestFor: 'Text/logos' },
   ],
   staging: [
-    { id: 'flux-depth', name: 'FLUX Depth Pro', description: 'Good depth preservation', cost: '$0.02', quality: '⭐⭐⭐⭐', speed: '⚡⚡⚡', bestFor: 'Virtual staging' },
-    { id: 'flux-kontext', name: 'FLUX Kontext Pro', description: 'Instruction-based editing', cost: '$0.02', quality: '⭐⭐⭐⭐', speed: '⚡⚡', bestFor: 'Creative staging' },
+    { id: 'flux-depth', name: 'FLUX Depth Pro', description: 'Budget virtual staging', cost: '$0.02', quality: '⭐⭐⭐', speed: '⚡⚡⚡', bestFor: 'Budget staging' },
+    { id: 'decor8', name: 'Decor8 AI (Premium)', description: 'Professional staging, preserves structure', cost: '$0.20', quality: '⭐⭐⭐⭐⭐', speed: '⚡⚡', bestFor: 'Premium staging' },
   ],
   floorplan: [
     { id: 'llama-vision', name: 'Llama 3.2 Vision 90B', description: 'Best accuracy for floor plans', cost: '$0.01', quality: '⭐⭐⭐⭐⭐', speed: '⚡⚡', bestFor: 'Complex layouts' },

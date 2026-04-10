@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Replicate from 'replicate';
-
 export const dynamic = 'force-dynamic';
-
 import { createClient } from '@/utils/supabase/server';
 
-const replicate = new Replicate({
-  auth: process.env.REPLICATE_API_TOKEN!,
-});
+const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN! });
 
 // Rate limiting
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -26,7 +22,25 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
-// Map room types to prompt keywords
+// Map room types to Decor8 room_type values
+const ROOM_TYPES: Record<string, string> = {
+  living: 'livingroom',
+  bedroom: 'bedroom',
+  dining: 'dining',
+  office: 'office',
+  kitchen: 'kitchen',
+};
+
+// Map styles to Decor8 design_style values
+const DESIGN_STYLES: Record<string, string> = {
+  modern: 'modern',
+  scandinavian: 'scandinavian',
+  luxury: 'luxury',
+  minimalist: 'minimalist',
+  industrial: 'industrial',
+};
+
+// Map room types to Flux prompts
 const ROOM_PROMPTS: Record<string, string> = {
   living: 'furnished living room with comfortable sofa, coffee table, entertainment center, rug, lamps, professional interior design',
   bedroom: 'furnished bedroom with bed, nightstands, dresser, lamp, cozy bedding, window treatments, professional interior design',
@@ -35,7 +49,6 @@ const ROOM_PROMPTS: Record<string, string> = {
   kitchen: 'furnished kitchen with countertops, appliances, dining area, modern fixtures, professional interior design',
 };
 
-// Map styles to prompt keywords
 const STYLE_PROMPTS: Record<string, string> = {
   modern: 'modern contemporary furniture, clean lines, neutral colors, sleek design, minimalist decor',
   scandinavian: 'scandinavian style, light wood, white and beige, minimalist, cozy hygge, natural textures',
@@ -59,56 +72,132 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { image, roomType, furnitureStyle, model } = body;
+    const { image, roomType, furnitureStyle, model = 'flux-depth' } = body;
 
     if (!image || !roomType || !furnitureStyle) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Build the staging prompt
-    const roomPrompt = ROOM_PROMPTS[roomType] || ROOM_PROMPTS.living;
-    const stylePrompt = STYLE_PROMPTS[furnitureStyle] || STYLE_PROMPTS.modern;
-    
-    const prompt = `${roomPrompt}, ${stylePrompt}, professional real estate photography, well-lit, high quality, interior design magazine, bright and clean`;
-    const negativePrompt = 'empty room, unfurnished, blurry, low quality, distorted, overexposed, underexposed, noisy, pixelated, watermark, text, dark, cluttered';
-
-    console.log('Calling Replicate for virtual staging:', { roomType, furnitureStyle, model });
-
-    // Use SDXL for image-to-image transformation (similar to enhance API)
-    // This works better for virtual staging as it preserves the room structure
-    const result = await replicate.run(
-      "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
-      {
-        input: {
-          image: image,
-          prompt: prompt,
-          negative_prompt: negativePrompt,
-          num_inference_steps: 30,
-          prompt_strength: 0.7, // Higher strength for more furniture changes
-          guidance_scale: 7.5,
-          refine: "expert_ensemble_refiner",
-        },
-      }
-    );
-
-    // Handle different output formats from Replicate
     let resultUrl: string;
-    if (typeof result === 'string') {
-      resultUrl = result;
-    } else if (Array.isArray(result) && result.length > 0) {
-      resultUrl = String(result[0]);
-    } else if (result && typeof result === 'object') {
-      const out = result as Record<string, unknown>;
-      resultUrl = String(out.url || out.output || JSON.stringify(result));
+    let creditsUsed: number;
+
+    if (model === 'decor8') {
+      // Use Decor8 AI API for premium staging (best structure preservation)
+      creditsUsed = 3;
+
+      const roomTypeDecor8 = ROOM_TYPES[roomType] || 'livingroom';
+      const designStyle = DESIGN_STYLES[furnitureStyle] || 'modern';
+
+      console.log('Calling Decor8 AI for virtual staging:', { roomType: roomTypeDecor8, designStyle });
+
+      // Call Decor8 API
+      const decor8Response = await fetch('https://api.decor8.ai/generate_designs_for_room', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.DECOR8_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          input_image_url: image,
+          room_type: roomTypeDecor8,
+          design_style: designStyle,
+          num_images: 1,
+        }),
+      });
+
+      if (!decor8Response.ok) {
+        const errorText = await decor8Response.text();
+        console.error('Decor8 API error:', errorText);
+        throw new Error(`Decor8 staging failed: ${decor8Response.status}`);
+      }
+
+      const decor8Data = await decor8Response.json();
+      resultUrl = decor8Data?.info?.images?.[0]?.url;
+
+      if (!resultUrl) {
+        throw new Error('No output from Decor8 API');
+      }
+
+    } else if (model === 'flux-depth') {
+      // Use FLUX Depth Pro with proper depth conditioning
+      creditsUsed = 2;
+
+      const roomPrompt = ROOM_PROMPTS[roomType] || ROOM_PROMPTS.living;
+      const stylePrompt = STYLE_PROMPTS[furnitureStyle] || STYLE_PROMPTS.modern;
+      const prompt = `${roomPrompt}, ${stylePrompt}, professional real estate photography, well-lit, high quality, interior design magazine, bright and clean`;
+
+      console.log('Calling FLUX Depth Pro for virtual staging:', { roomType, furnitureStyle });
+
+      // FLUX Depth Pro uses depth map to preserve structure
+      // First generate depth map from input, then use ControlNet conditioning
+      const result = await replicate.run(
+        "black-forest-labs/flux-depth-pro",
+        {
+          input: {
+            image: image,
+            prompt: prompt,
+            num_inference_steps: 28,
+            guidance_scale: 3.5,
+            strength: 0.75, // Balance between preserving structure and adding furniture
+            output_format: 'webp',
+            output_quality: 90,
+          },
+        }
+      );
+
+      // Handle output
+      if (typeof result === 'string') {
+        resultUrl = result;
+      } else if (Array.isArray(result) && result.length > 0) {
+        resultUrl = String(result[0]);
+      } else if (result && typeof result === 'object') {
+        const out = result as Record<string, unknown>;
+        resultUrl = String(out.url || out.output || JSON.stringify(result));
+      } else {
+        resultUrl = String(result);
+      }
+
+      if (!resultUrl || resultUrl === '[object Object]') {
+        throw new Error('No output from FLUX Depth Pro');
+      }
+
     } else {
-      resultUrl = String(result);
+      // Fallback to SDXL for other models
+      creditsUsed = 2;
+
+      const roomPrompt = ROOM_PROMPTS[roomType] || ROOM_PROMPTS.living;
+      const stylePrompt = STYLE_PROMPTS[furnitureStyle] || STYLE_PROMPTS.modern;
+      const prompt = `${roomPrompt}, ${stylePrompt}, professional real estate photography, well-lit, high quality, interior design magazine, bright and clean`;
+      const negativePrompt = 'empty room, unfurnished, blurry, low quality, distorted, overexposed, underexposed, noisy, pixelated, watermark, text, dark, cluttered';
+
+      const result = await replicate.run(
+        "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
+        {
+          input: {
+            image: image,
+            prompt: prompt,
+            negative_prompt: negativePrompt,
+            num_inference_steps: 30,
+            prompt_strength: 0.7,
+            guidance_scale: 7.5,
+            refine: "expert_ensemble_refiner",
+          },
+        }
+      );
+
+      if (typeof result === 'string') {
+        resultUrl = result;
+      } else if (Array.isArray(result) && result.length > 0) {
+        resultUrl = String(result[0]);
+      } else if (result && typeof result === 'object') {
+        const out = result as Record<string, unknown>;
+        resultUrl = String(out.url || out.output || JSON.stringify(result));
+      } else {
+        resultUrl = String(result);
+      }
     }
 
-    if (!resultUrl || resultUrl === '[object Object]') {
-      throw new Error('No output from virtual staging service');
-    }
-
-    // Deduct credits (2 credits for virtual staging)
+    // Deduct credits
     const { data: userData } = await supabase
       .from('propertypix_users')
       .select('credits, used_credits')
@@ -119,8 +208,8 @@ export async function POST(request: NextRequest) {
       await supabase
         .from('propertypix_users')
         .update({
-          credits: Math.max(0, userData.credits - 2),
-          used_credits: userData.used_credits + 2,
+          credits: Math.max(0, userData.credits - creditsUsed),
+          used_credits: userData.used_credits + creditsUsed,
         })
         .eq('id', user.id);
     }
@@ -130,8 +219,10 @@ export async function POST(request: NextRequest) {
       output: resultUrl,
       roomType,
       furnitureStyle,
-      creditsUsed: 2,
+      model,
+      creditsUsed,
     });
+
   } catch (error) {
     console.error('Virtual staging error:', error);
     return NextResponse.json(
