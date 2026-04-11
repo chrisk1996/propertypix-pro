@@ -7,7 +7,7 @@ export const ZoneNode = BaseNode.extend({
   type: nodeType('zone'),
   name: z.string(),
   // Polygon boundary - array of [x, z] coordinates defining the zone
-  polygon: z.array(z.array(z.number()).length(2)),
+  polygon: z.array(z.tuple([z.number(), z.number()])),
   // Visual styling
   color: z.string().default('#3b82f6'), // Default blue
   metadata: z.json().optional().default({}),

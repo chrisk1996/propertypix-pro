@@ -9,13 +9,13 @@ import { ItemNode } from './item'
 // 2D Polygon
 const PropertyLineData = z.object({
   type: z.literal('polygon'),
-  points: z.array(z.array(z.number()).length(2)),
+  points: z.array(z.tuple([z.number(), z.number()])),
 })
 
 // 3D Polygon/Mesh
 // const TerrainData = z.object({
 //   type: z.literal('terrain'),
-//   points: z.array(z.array(z.number()).length(3)),
+//   points: z.array(z.tuple([z.number(), z.number(), z.number()])),
 // })
 
 export const SiteNode = BaseNode.extend({

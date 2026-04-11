@@ -34,8 +34,10 @@ export function resolveLevelId(node: AnyNode, nodes: Record<string, AnyNode>): s
   return 'default' // fallback for orphaned items
 }
 
-// Call this once at app initialization
-export function initSpatialGridSync() {
+// Call this once at app initialization. Returns an unsubscribe function that
+// detaches the scene-store listener (useful when the editor is unmounted so
+// the spatial grid singleton does not hold stale references to old scenes).
+export function initSpatialGridSync(): () => void {
   const store = useScene
   // 1. Initial sync - process all existing nodes
   const state = store.getState()
@@ -48,7 +50,7 @@ export function initSpatialGridSync() {
   const markDirty = (id: AnyNodeId) => store.getState().markDirty(id)
 
   // Subscribe to all changes
-  store.subscribe((state, prevState) => {
+  const unsubscribe = store.subscribe((state, prevState) => {
     // Detect added nodes
     for (const [id, node] of Object.entries(state.nodes)) {
       if (!prevState.nodes[id as AnyNode['id']]) {
@@ -83,9 +85,9 @@ export function initSpatialGridSync() {
       if (node.type === 'item' && prev.type === 'item') {
         if (
           !(
-            arraysEqual(node.position as number[], prev.position as number[]) &&
-            arraysEqual(node.rotation as number[], prev.rotation as number[]) &&
-            arraysEqual(node.scale as number[], prev.scale as number[])
+            arraysEqual(node.position, prev.position) &&
+            arraysEqual(node.rotation, prev.rotation) &&
+            arraysEqual(node.scale, prev.scale)
           ) ||
           node.parentId !== prev.parentId ||
           node.side !== prev.side
@@ -93,7 +95,7 @@ export function initSpatialGridSync() {
           const levelId = resolveLevelId(node, state.nodes)
           spatialGridManager.handleNodeUpdated(node, levelId)
           // Scale changes affect footprint size — mark dirty so slab elevation recalculates
-          if (!arraysEqual(node.scale as number[], prev.scale as number[])) {
+          if (!arraysEqual(node.scale, prev.scale)) {
             markDirty(node.id)
           }
         }
@@ -113,6 +115,8 @@ export function initSpatialGridSync() {
       }
     }
   })
+
+  return unsubscribe
 }
 
 function arraysEqual(a: number[], b: number[]): boolean {
@@ -120,7 +124,7 @@ function arraysEqual(a: number[], b: number[]): boolean {
 }
 
 /**
- * Mark all floor items and walls that overlap a slab polygon as dirty.
+ * Mark all floor items, walls, and stairs that may be affected by a slab change as dirty.
  */
 function markNodesOverlappingSlab(
   slab: SlabNode,
@@ -138,10 +142,10 @@ function markNodesOverlappingSlab(
       if (resolveLevelId(node, nodes) !== slabLevelId) continue
       if (
         itemOverlapsPolygon(
-          item.position as [number, number, number],
+          item.position,
           getScaledDimensions(item),
-          item.rotation as [number, number, number],
-          slab.polygon as [number, number][],
+          item.rotation,
+          slab.polygon,
           0.01,
         )
       ) {
@@ -150,9 +154,12 @@ function markNodesOverlappingSlab(
     } else if (node.type === 'wall') {
       const wall = node as WallNode
       if (resolveLevelId(node, nodes) !== slabLevelId) continue
-      if (wallOverlapsPolygon(wall.start as [number, number], wall.end as [number, number], slab.polygon as [number, number][])) {
+      if (wallOverlapsPolygon(wall.start, wall.end, slab.polygon)) {
         markDirty(node.id)
       }
+    } else if (node.type === 'stair') {
+      if (resolveLevelId(node, nodes) !== slabLevelId) continue
+      markDirty(node.id)
     }
   }
 }

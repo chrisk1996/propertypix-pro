@@ -18,7 +18,7 @@ import {
   DialogTrigger,
 } from './../../../../../components/ui/primitives/dialog'
 import { Switch } from './../../../../../components/ui/primitives/switch'
-import useEditor from './../../../../../store/use-editor'
+import useEditor, { selectDefaultBuildingAndLevel } from './../../../../../store/use-editor'
 import { AudioSettingsDialog } from './audio-settings-dialog'
 import { KeyboardShortcutsDialog } from './keyboard-shortcuts-dialog'
 
@@ -58,16 +58,20 @@ const getChildIdsFromNode = (node: SceneNode): string[] => {
   if (!Array.isArray(node.children)) {
     return []
   }
+
   const childIds = new Set<string>()
+
   for (const child of node.children) {
     if (typeof child === 'string') {
       childIds.add(child)
       continue
     }
+
     if (isSceneNode(child)) {
       childIds.add(child.id as string)
     }
   }
+
   return Array.from(childIds)
 }
 
@@ -76,21 +80,26 @@ const buildSceneGraphValue = (
   rootNodeIds: string[],
 ): SceneGraphValue => {
   const childIdsByParent = new Map<string, Set<string>>()
+
   for (const [id, node] of Object.entries(nodes)) {
     const childIds = getChildIdsFromNode(node)
     if (childIds.length > 0) {
       childIdsByParent.set(id, new Set(childIds))
     }
   }
+
   for (const [id, node] of Object.entries(nodes)) {
     if (typeof node.parentId !== 'string') {
       continue
     }
+
     const siblings = childIdsByParent.get(node.parentId) ?? new Set<string>()
     siblings.add(id)
     childIdsByParent.set(node.parentId, siblings)
   }
+
   const visited = new Set<string>()
+
   const buildNode = (id: string, path: Set<string>): SceneGraphNode => {
     const node = nodes[id]
     if (!node) {
@@ -103,9 +112,11 @@ const buildSceneGraphValue = (
         children: [],
       }
     }
+
     const nodeType = typeof node.type === 'string' ? node.type : 'unknown'
     const nodeName = typeof node.name === 'string' ? node.name : null
     const parentId = typeof node.parentId === 'string' ? node.parentId : null
+
     if (path.has(id)) {
       return {
         id,
@@ -116,9 +127,11 @@ const buildSceneGraphValue = (
         children: [],
       }
     }
+
     visited.add(id)
     const nextPath = new Set(path)
     nextPath.add(id)
+
     const childIds = Array.from(childIdsByParent.get(id) ?? [])
     return {
       id,
@@ -128,11 +141,14 @@ const buildSceneGraphValue = (
       children: childIds.map((childId) => buildNode(childId, nextPath)),
     }
   }
+
   const roots = rootNodeIds.map((id) => buildNode(id, new Set()))
   const detachedNodeIds = Object.keys(nodes).filter((id) => !visited.has(id))
+
   if (detachedNodeIds.length === 0) {
     return { roots }
   }
+
   return {
     roots,
     detachedNodes: detachedNodeIds.map((id) => buildNode(id, new Set())),
@@ -177,21 +193,15 @@ export function SettingsPanel({
     event.preventDefault()
     event.stopPropagation()
   }, [])
-  const blockSceneGraphDeletion = useCallback(
-    (event: KeyboardEvent<HTMLDivElement>) => {
-      if (event.key === 'Delete' || event.key === 'Backspace') {
-        event.preventDefault()
-        event.stopPropagation()
-      }
-    },
-    [],
-  )
-  const isLocalProject = false // Props-based; only show cloud sections when projectId provided
-  const handleExport = async (format: 'glb' | 'stl' | 'obj' = 'glb') => {
-    if (exportScene) {
-      await exportScene(format)
+  const blockSceneGraphDeletion = useCallback((event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Delete' || event.key === 'Backspace') {
+      event.preventDefault()
+      event.stopPropagation()
     }
-  }
+  }, [])
+
+  const isLocalProject = false // Props-based; only show cloud sections when projectId provided
+
   const handleSaveBuild = () => {
     const sceneData = { nodes, rootNodeIds }
     const json = JSON.stringify(sceneData, null, 2)
@@ -204,9 +214,11 @@ export function SettingsPanel({
     link.click()
     URL.revokeObjectURL(url)
   }
+
   const handleFileLoad = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+
     const reader = new FileReader()
     reader.onload = (event) => {
       try {
@@ -221,26 +233,32 @@ export function SettingsPanel({
       }
     }
     reader.readAsText(file)
+
     // Reset input so the same file can be loaded again
     e.target.value = ''
   }
+
   const handleResetToDefault = () => {
     clearScene()
     resetSelection()
-    setPhase('site')
+    setPhase('structure')
+    selectDefaultBuildingAndLevel()
   }
+
   const handleGenerateThumbnail = () => {
     if (!projectId) return
     setIsGeneratingThumbnail(true)
     emitter.emit('camera-controls:generate-thumbnail', { projectId })
     setTimeout(() => setIsGeneratingThumbnail(false), 3000)
   }
+
   const handleVisibilityChange = async (
     field: 'isPrivate' | 'showScansPublic' | 'showGuidesPublic',
     value: boolean,
   ) => {
     await onVisibilityChange?.(field, value)
   }
+
   return (
     <div className="flex flex-col gap-6 p-3">
       {/* Visibility Section (only for cloud projects) */}
@@ -279,50 +297,48 @@ export function SettingsPanel({
               onCheckedChange={(checked) => handleVisibilityChange('showGuidesPublic', checked)}
             />
           </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="font-medium text-sm">Show Grid</div>
+              <div className="text-muted-foreground text-xs">Visible only in the editor</div>
+            </div>
+            <Switch
+              checked={showGrid}
+              onCheckedChange={(checked) => useViewer.getState().setShowGrid(checked)}
+            />
+          </div>
         </div>
       )}
-      {/* Editor Section */}
-      <div className="space-y-3">
-        <label className="font-medium text-muted-foreground text-xs uppercase">Editor</label>
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="font-medium text-sm">Show Grid</div>
-            <div className="text-muted-foreground text-xs">Visible only in the editor</div>
-          </div>
-          <Switch
-            checked={showGrid}
-            onCheckedChange={(checked) => useViewer.getState().setShowGrid(checked)}
-          />
-        </div>
-      </div>
+
       {/* Export Section */}
       <div className="space-y-2">
         <label className="font-medium text-muted-foreground text-xs uppercase">Export</label>
         <Button
           className="w-full justify-start gap-2"
-          onClick={() => handleExport('glb')}
+          onClick={() => exportScene?.('glb')}
           variant="outline"
         >
           <Download className="size-4" />
-          Export as GLB
+          Export GLB
         </Button>
         <Button
           className="w-full justify-start gap-2"
-          onClick={() => handleExport('stl')}
+          onClick={() => exportScene?.('stl')}
           variant="outline"
         >
           <Download className="size-4" />
-          Export as STL
+          Export STL
         </Button>
         <Button
           className="w-full justify-start gap-2"
-          onClick={() => handleExport('obj')}
+          onClick={() => exportScene?.('obj')}
           variant="outline"
         >
           <Download className="size-4" />
-          Export as OBJ
+          Export OBJ
         </Button>
       </div>
+
       {/* Thumbnail Section (only for cloud projects) */}
       {projectId && !isLocalProject && (
         <div className="space-y-2">
@@ -338,13 +354,16 @@ export function SettingsPanel({
           </Button>
         </div>
       )}
+
       {/* Save/Load Section */}
       <div className="space-y-2">
         <label className="font-medium text-muted-foreground text-xs uppercase">Save & Load</label>
+
         <Button className="w-full justify-start gap-2" onClick={handleSaveBuild} variant="outline">
           <Save className="size-4" />
           Save Build
         </Button>
+
         <Button
           className="w-full justify-start gap-2"
           onClick={() => fileInputRef.current?.click()}
@@ -353,6 +372,7 @@ export function SettingsPanel({
           <Upload className="size-4" />
           Load Build
         </Button>
+
         <input
           accept="application/json"
           className="hidden"
@@ -361,16 +381,19 @@ export function SettingsPanel({
           type="file"
         />
       </div>
+
       {/* Audio Section */}
       <div className="space-y-2">
         <label className="font-medium text-muted-foreground text-xs uppercase">Audio</label>
         <AudioSettingsDialog />
       </div>
+
       {/* Keyboard Section */}
       <div className="space-y-2">
         <label className="font-medium text-muted-foreground text-xs uppercase">Keyboard</label>
         <KeyboardShortcutsDialog />
       </div>
+
       {/* Scene Graph */}
       <div className="space-y-1">
         <label className="font-medium text-muted-foreground text-xs uppercase">Scene Graph</label>
@@ -396,9 +419,11 @@ export function SettingsPanel({
           </DialogContent>
         </Dialog>
       </div>
+
       {/* Danger Zone */}
       <div className="space-y-2">
         <label className="font-medium text-destructive text-xs uppercase">Danger Zone</label>
+
         <Button
           className="w-full justify-start gap-2"
           onClick={handleResetToDefault}
