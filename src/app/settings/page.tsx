@@ -4,20 +4,25 @@ import { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout';
 import { Loader2, AlertCircle, User, Bell, Globe, Moon, Shield, LogOut } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
+import { locales, localeNames, localeFlags, type Locale } from '@/i18n/config';
 
 interface UserData {
   email: string;
   full_name?: string;
   avatar_url?: string;
+  language?: Locale;
 }
 
 export default function SettingsPage() {
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingLanguage, setSavingLanguage] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [name, setName] = useState('');
+  const [language, setLanguage] = useState<Locale>('de');
+
   const supabase = createClient();
 
   useEffect(() => {
@@ -39,18 +44,52 @@ export default function SettingsPage() {
         .single();
 
       if (fetchError) throw fetchError;
-      
+
       setUser({
         email: authUser.email || '',
         full_name: data?.full_name || '',
         avatar_url: data?.avatar_url || '',
+        language: data?.language || 'de',
       });
       setName(data?.full_name || '');
+      setLanguage(data?.language || 'de');
     } catch (err) {
       console.error('Error loading user:', err);
       setError('Failed to load settings');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLanguageChange = async (newLanguage: Locale) => {
+    setSavingLanguage(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+
+      const { error: updateError } = await supabase
+        .from('propertypix_users')
+        .update({ language: newLanguage })
+        .eq('id', authUser.id);
+
+      if (updateError) throw updateError;
+
+      setLanguage(newLanguage);
+      setSuccess('Language updated successfully');
+      
+      // Store in localStorage for immediate use
+      localStorage.setItem('locale', newLanguage);
+      
+      // Reload page to apply new language
+      setTimeout(() => window.location.reload(), 500);
+    } catch (err) {
+      console.error('Error updating language:', err);
+      setError('Failed to update language');
+    } finally {
+      setSavingLanguage(false);
     }
   };
 
@@ -69,6 +108,7 @@ export default function SettingsPage() {
         .eq('id', authUser.id);
 
       if (updateError) throw updateError;
+
       setSuccess('Profile updated successfully');
     } catch (err) {
       console.error('Error saving profile:', err);
@@ -177,11 +217,23 @@ export default function SettingsPage() {
                 <p className="font-medium text-gray-900">Language</p>
                 <p className="text-sm text-gray-500">Choose your preferred language</p>
               </div>
-              <select className="px-4 py-2 border border-gray-200 rounded-lg bg-white">
-                <option>English</option>
-                <option>German</option>
-                <option>French</option>
-              </select>
+              <div className="relative">
+                <select
+                  value={language}
+                  onChange={(e) => handleLanguageChange(e.target.value as Locale)}
+                  disabled={savingLanguage}
+                  className="px-4 py-2 pr-10 border border-gray-200 rounded-lg bg-white appearance-none cursor-pointer disabled:opacity-50 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 min-w-[160px]"
+                >
+                  {locales.map((loc) => (
+                    <option key={loc} value={loc}>
+                      {localeFlags[loc]} {localeNames[loc]}
+                    </option>
+                  ))}
+                </select>
+                {savingLanguage && (
+                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-indigo-600" />
+                )}
+              </div>
             </div>
 
             {/* Theme */}

@@ -75,6 +75,8 @@ export default function BillingPage() {
 
       if (profileError) {
         console.error('Profile fetch error:', profileError);
+        console.log('Auth user ID:', authUser.id);
+        console.log('Auth user email:', authUser.email);
         // Set defaults if user record doesn't exist yet
         setUser({
           email: authUser.email || '',
@@ -85,6 +87,8 @@ export default function BillingPage() {
         });
         return;
       }
+
+      console.log('Profile loaded:', { id: profile?.id, credits: profile?.credits, used: profile?.used_credits });
 
       const creditsTotal = profile?.credits ?? 5;
       const creditsUsed = profile?.used_credits ?? 0;
