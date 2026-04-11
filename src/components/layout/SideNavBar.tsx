@@ -53,7 +53,25 @@ export default function SideNavBar() {
 
         {/* Bottom Actions */}
         <div className="mt-auto pt-6 border-t border-slate-200 space-y-1">
-          <Link href="/settings" className="flex items-center gap-3 px-4 py-2 text-slate-500 hover:text-slate-900 transition-all">
+          <Link
+            href="/billing"
+            className={`flex items-center gap-3 px-4 py-2 transition-all ${
+              pathname === '/billing'
+                ? 'text-blue-600 bg-blue-50'
+                : 'text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            <span className="material-symbols-outlined">account_balance_wallet</span>
+            <span>Billing</span>
+          </Link>
+          <Link
+            href="/settings"
+            className={`flex items-center gap-3 px-4 py-2 transition-all ${
+              pathname === '/settings'
+                ? 'text-blue-600 bg-blue-50'
+                : 'text-slate-500 hover:text-slate-900'
+            }`}
+          >
             <span className="material-symbols-outlined">settings</span>
             <span>Settings</span>
           </Link>
