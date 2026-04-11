@@ -127,7 +127,7 @@ export default function HistoryPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-8">
         {/* Header */}
         <div className="mb-8">
           <Link href="/dashboard" className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4">

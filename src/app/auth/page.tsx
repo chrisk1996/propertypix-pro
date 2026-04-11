@@ -83,7 +83,7 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <main className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <main className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
             <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center">

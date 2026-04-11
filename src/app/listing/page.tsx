@@ -248,7 +248,7 @@ export default function ListingBuilderPage() {
   return (
     <AppLayout title="Listing Builder">
       <div className="min-h-screen bg-background">
-        <main className="max-w-[1600px] mx-auto p-8">
+        <main className="max-w-[1600px] mx-auto pt-28 pb-8 px-8">
           <header className="mb-12">
             <span className="text-secondary font-bold tracking-widest uppercase text-xs mb-2 block">
               Global Listing Suite
