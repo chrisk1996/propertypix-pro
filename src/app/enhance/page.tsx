@@ -180,8 +180,8 @@ export default function EnhancePage() {
         </div>
         <div className="flex-1 bg-slate-100 flex items-center justify-center p-8">
           {!uploadedImage ? (
-            <div onClick={() => fileInputRef.current?.click()} className="w-full max-w-4xl aspect-[4/3] bg-white rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-blue-500 hover:bg-blue-50/50 transition-all">
-              <span className="material-symbols-outlined text-6xl text-slate-400">add_photo_alternate</span>
+            <div onClick={() => fileInputRef.current?.click()} className="w-full max-w-2xl bg-white rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-blue-500 hover:bg-blue-50/50 transition-all py-12">
+              <span className="material-symbols-outlined text-5xl text-slate-400">add_photo_alternate</span>
               <div className="text-center"><p className="font-semibold text-slate-700 text-lg">Drop your image here</p><p className="text-sm text-slate-500">or click to browse</p></div>
               <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
             </div>
