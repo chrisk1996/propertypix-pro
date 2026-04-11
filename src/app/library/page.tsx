@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
-import { History, Image, Download, Trash2, Clock, ChevronLeft } from 'lucide-react';
+import { Library, Image, Download, Trash2, Clock, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 
@@ -136,11 +136,11 @@ export default function HistoryPage() {
           </Link>
           <div className="flex items-center gap-3">
             <div className="p-2 bg-indigo-100 rounded-lg">
-              <History className="w-6 h-6 text-indigo-600" />
+              <Library className="w-6 h-6 text-indigo-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Enhancement History</h1>
-              <p className="text-gray-600">View and manage your past enhancements</p>
+              <h1 className="text-2xl font-bold text-gray-900">Image Library</h1>
+              <p className="text-gray-600">View and manage your enhanced images</p>
             </div>
           </div>
         </div>
