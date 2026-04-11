@@ -282,7 +282,7 @@ export default function LandingPage() {
             <ul className="space-y-3">
               <li><Link href="/enhance" className="font-manrope text-xs uppercase tracking-widest text-[#1d2832]/60 hover:text-[#006c4d] transition-colors">Products</Link></li>
               <li><Link href="/pricing" className="font-manrope text-xs uppercase tracking-widest text-[#1d2832]/60 hover:text-[#006c4d] transition-colors">Pricing</Link></li>
-              <li><Link href="/help" className="font-manro              className="font-manrope text-xs uppercase tracking-widest text-[#1d2832]/60 hover:text-[#006c4d] transition-colors">Help</Link></li>
+              <li><Link href="/help" className="font-manrope text-xs uppercase tracking-widest text-[#1d2832]/60 hover:text-[#006c4d] transition-colors">Help</Link></li>
             </ul>
           </div>
           <div className="space-y-6">
