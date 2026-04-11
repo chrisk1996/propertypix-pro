@@ -99,7 +99,7 @@ export default function LandingPage() {
                   <img
                     alt="Staged modern living room"
                     className="w-full h-full object-cover"
-                    src="https://images.unsplash.com/photo-1586023492125-27b2c05da4c5?w=600&q=80"
+                    src="https://images.unsplash.com/photo-1600607687939-380e8a2a0c16?w=600&q=80"
                   />
                   <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1.5 rounded-sm">
                     <span className="font-manrope text-[10px] uppercase tracking-widest text-[#1d2832]">
@@ -201,7 +201,7 @@ export default function LandingPage() {
                   <img
                     alt="Luxury real estate"
                     className="w-full h-full object-cover"
-                    src="https://images.unsplash.com/photo-1560448204-e02d13a5a5a3?w=600&q=80"
+                    src="https://images.unsplash.com/photo-1600585154526-31d2ee637d49?w=600&q=80"
                   />
                   <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1.5 rounded-sm">
                     <span className="font-manrope text-[10px] uppercase tracking-widest text-[#1d2832]">
