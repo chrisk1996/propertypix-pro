@@ -132,7 +132,11 @@ export function ListingWizard({ editId }: ListingWizardProps) {
       });
       if (res.ok) {
         const result = await res.json();
-        setData(prev => ({ ...prev, id: result.id }));
+        console.log('Draft created:', result);
+        setData(prev => ({ ...prev, id: result.listing?.id || result.id }));
+      } else {
+        const error = await res.json();
+        console.error('Draft creation failed:', res.status, error);
       }
     } catch (e) {
       console.error('Error creating draft:', e);
@@ -146,7 +150,7 @@ export function ListingWizard({ editId }: ListingWizardProps) {
     setIsSaving(true);
     try {
       await fetch(`/api/listings/${data.id}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
