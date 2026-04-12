@@ -25,7 +25,6 @@ export function AddressStep({ data, updateData, onNext }: AddressStepProps) {
 
   const geocodeAddress = async () => {
     if (!data.city || data.city.length < 2) return;
-    
     setIsGeocoding(true);
     try {
       const res = await fetch('/api/listings/geocode', {
@@ -39,7 +38,6 @@ export function AddressStep({ data, updateData, onNext }: AddressStepProps) {
           country: data.country || 'Germany',
         }),
       });
-
       if (res.ok) {
         const result = await res.json();
         updateData({
@@ -65,25 +63,23 @@ export function AddressStep({ data, updateData, onNext }: AddressStepProps) {
     return () => clearTimeout(timer);
   }, [data.city, data.street, data.postal_code]);
 
-  const renderProximityGroup = (
-    label: string,
-    items: ProximityPOI[] | undefined,
-    icon: React.ReactNode
-  ) => {
-    if (!items || items.length === 0) return null;
-    
-    return (
-      <div className="flex items-center gap-2 text-sm">
-        <span className="text-gray-400">{icon}</span>
-        <span className="font-medium text-gray-700">{label}:</span>
-        <span className="text-gray-600">
-          {items[0]?.name} · {items[0]?.walking_minutes} min walk
-        </span>
-      </div>
-    );
-  };
-
   const proximity = data.proximity_data as Record<string, ProximityPOI[]> | undefined;
+
+  // POI display configuration
+  const poiConfig = [
+    { key: 'hospital', label: 'Hospital', icon: <Hospital className="w-4 h-4 text-red-500" />, showName: true },
+    { key: 'doctor', label: 'Doctor', icon: <Hospital className="w-4 h-4 text-blue-400" />, showName: false },
+    { key: 'pharmacy', label: 'Pharmacy', icon: <span className="material-symbols-outlined text-green-500 text-base">medication</span>, showName: false },
+    { key: 'primary_school', label: 'School', icon: <School className="w-4 h-4 text-blue-500" />, showName: false },
+    { key: 'secondary_school', label: 'High School', icon: <School className="w-4 h-4 text-indigo-500" />, showName: false },
+    { key: 'kindergarten', label: 'Kindergarten', icon: <School className="w-4 h-4 text-pink-400" />, showName: false },
+    { key: 'supermarket', label: 'Supermarket', icon: <ShoppingBag className="w-4 h-4 text-orange-500" />, showName: true },
+    { key: 'public_transport', label: 'Transit', icon: <Train className="w-4 h-4 text-purple-500" />, showName: false },
+    { key: 'park', label: 'Park', icon: <Trees className="w-4 h-4 text-green-600" />, showName: false },
+    { key: 'gym', label: 'Gym', icon: <Bike className="w-4 h-4 text-indigo-500" />, showName: false },
+    { key: 'restaurant', label: 'Restaurant', icon: <span className="material-symbols-outlined text-amber-600 text-base">restaurant</span>, showName: false },
+    { key: 'cafe', label: 'Café', icon: <span className="material-symbols-outlined text-amber-500 text-base">local_cafe</span>, showName: false },
+  ];
 
   return (
     <div className="space-y-8">
@@ -189,51 +185,23 @@ export function AddressStep({ data, updateData, onNext }: AddressStepProps) {
 
           {/* POI Grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {proximity?.hospital?.[0] && (
-              <div className="flex items-center gap-2">
-                <Hospital className="w-4 h-4 text-red-500" />
-                <div className="text-sm">
-                  <span className="font-medium text-gray-700">Hospital:</span>{' '}
-                  <span className="text-gray-600">{proximity.hospital[0].walking_minutes} min</span>
+            {poiConfig.map(({ key, label, icon, showName }) => {
+              const items = proximity?.[key];
+              if (!items || items.length === 0) return null;
+              const item = items[0];
+              return (
+                <div key={key} className="flex items-center gap-2">
+                  {icon}
+                  <div className="text-sm">
+                    <span className="font-medium text-gray-700">{label}:</span>{' '}
+                    <span className="text-gray-600">
+                      {showName && item.name ? `${item.name} · ` : ''}
+                      {item.walking_minutes} min walk
+                    </span>
+                  </div>
                 </div>
-              </div>
-            )}
-            {proximity?.primary_school?.[0] && (
-              <div className="flex items-center gap-2">
-                <School className="w-4 h-4 text-blue-500" />
-                <div className="text-sm">
-                  <span className="font-medium text-gray-700">School:</span>{' '}
-                  <span className="text-gray-600">{proximity.primary_school[0].walking_minutes} min</span>
-                </div>
-              </div>
-            )}
-            {proximity?.supermarket?.[0] && (
-              <div className="flex items-center gap-2">
-                <ShoppingBag className="w-4 h-4 text-orange-500" />
-                <div className="text-sm">
-                  <span className="font-medium text-gray-700">Supermarket:</span>{' '}
-                  <span className="text-gray-600">{proximity.supermarket[0].walking_minutes} min</span>
-                </div>
-              </div>
-            )}
-            {proximity?.public_transport?.[0] && (
-              <div className="flex items-center gap-2">
-                <Train className="w-4 h-4 text-purple-500" />
-                <div className="text-sm">
-                  <span className="font-medium text-gray-700">Transit:</span>{' '}
-                  <span className="text-gray-600">{proximity.public_transport[0].walking_minutes} min</span>
-                </div>
-              </div>
-            )}
-            {proximity?.park?.[0] && (
-              <div className="flex items-center gap-2">
-                <Trees className="w-4 h-4 text-green-600" />
-                <div className="text-sm">
-                  <span className="font-medium text-gray-700">Park:</span>{' '}
-                  <span className="text-gray-600">{proximity.park[0].walking_minutes} min</span>
-                </div>
-              </div>
-            )}
+              );
+            })}
           </div>
 
           {/* Map Preview */}
