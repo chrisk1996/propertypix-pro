@@ -1,6 +1,7 @@
 'use client';
 
 import { use } from 'react';
+import { AppLayout } from '@/components/layout';
 import { ListingWizard } from '@/components/listing-wizard/ListingWizard';
 
 interface PageProps {
@@ -10,8 +11,8 @@ interface PageProps {
 export default function EditListingPage({ params }: PageProps) {
   const { id } = use(params);
   return (
-    <div className="ml-64">
+    <AppLayout hideTopNav>
       <ListingWizard editId={id} />
-    </div>
+    </AppLayout>
   );
 }
