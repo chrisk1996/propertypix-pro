@@ -113,9 +113,11 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     const { transaction_type, property_type, city } = body;
-    if (!transaction_type || !property_type || !city) {
+    
+    // city can be empty for drafts - use placeholder
+    if (!transaction_type || !property_type) {
       return NextResponse.json(
-        { error: 'transaction_type, property_type, and city are required' },
+        { error: 'transaction_type and property_type are required' },
         { status: 400 }
       );
     }
@@ -143,7 +145,7 @@ export async function POST(request: NextRequest) {
       agent_id: user.id,
       transaction_type,
       property_type,
-      city,
+      city: city || 'Draft', // Use placeholder if empty for drafts
       title: body.title || null,
       description: body.description || null,
       street: body.street || null,
