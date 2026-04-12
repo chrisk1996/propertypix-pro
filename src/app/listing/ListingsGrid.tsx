@@ -32,7 +32,7 @@ export default function ListingsGrid() {
 
   const fetchListings = async () => {
     const { data, error } = await supabase
-      .from('propertypix_listings')
+      .from('listings')
       .select('*')
       .order('updated_at', { ascending: false });
 
@@ -66,7 +66,7 @@ export default function ListingsGrid() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this listing?')) return;
     const { error } = await supabase
-      .from('propertypix_listings')
+      .from('listings')
       .delete()
       .eq('id', id);
     if (!error) {
