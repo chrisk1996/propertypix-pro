@@ -10,7 +10,7 @@ interface PageProps {
 export default function EditListingPage({ params }: PageProps) {
   const { id } = use(params);
   return (
-    <div className="ml-64 pt-20">
+    <div className="ml-64">
       <ListingWizard editId={id} />
     </div>
   );
