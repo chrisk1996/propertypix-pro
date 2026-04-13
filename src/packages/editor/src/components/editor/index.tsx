@@ -772,7 +772,7 @@ export default function Editor({
           onPointerEnter={handleViewerPointerMove}
           onPointerLeave={handleViewerPointerLeave}
           onPointerMove={handleViewerPointerMove}
-          style={{ display: show3d ? undefined : 'none' }}
+          style={{ display: show3d ? undefined : 'none', cursor: "url('/cursor.svg') 4 2, crosshair" }}
         >
           {showDeleteCursorBadge && viewerCursorPosition ? (
             <DeleteCursorBadge position={viewerCursorPosition} />
