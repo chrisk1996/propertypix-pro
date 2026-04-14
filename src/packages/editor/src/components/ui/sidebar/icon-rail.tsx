@@ -1,6 +1,9 @@
 'use client'
 
-import type { ComponentType, ReactNode } from 'react'
+import { useViewer } from '@pascal-app/viewer'
+import { Moon, Ruler, Sun } from 'lucide-react'
+import { motion } from 'motion/react'
+import { type ReactNode, useEffect, useState } from 'react'
 import {
   Tooltip,
   TooltipContent,
@@ -8,39 +11,31 @@ import {
 } from './../../../components/ui/primitives/tooltip'
 import { cn } from './../../../lib/utils'
 
-export type PanelId = string
-
-export type ExtraPanel = { id: string; icon: ReactNode; label: string; component: ComponentType }
+export type PanelId = 'site' | 'settings'
 
 interface IconRailProps {
   activePanel: PanelId
   onPanelChange: (panel: PanelId) => void
   appMenuButton?: ReactNode
-  extraPanels?: ExtraPanel[]
   className?: string
 }
 
-const sitePanel: { id: PanelId; iconSrc: string; label: string } = {
-  id: 'site',
-  iconSrc: '/icons/level.png',
-  label: 'Site',
-}
+const panels: { id: PanelId; iconSrc: string; label: string }[] = [
+  { id: 'site', iconSrc: '/icons/level.png', label: 'Site' },
+  { id: 'settings', iconSrc: '/icons/settings.png', label: 'Settings' },
+]
 
-const settingsPanel: { id: PanelId; iconSrc: string; label: string } = {
-  id: 'settings',
-  iconSrc: '/icons/settings.png',
-  label: 'Settings',
-}
+export function IconRail({ activePanel, onPanelChange, appMenuButton, className }: IconRailProps) {
+  const theme = useViewer((state) => state.theme)
+  const setTheme = useViewer((state) => state.setTheme)
+  const unit = useViewer((state) => state.unit)
+  const setUnit = useViewer((state) => state.setUnit)
+  const [mounted, setMounted] = useState(false)
 
-const panels: { id: PanelId; iconSrc: string; label: string }[] = [sitePanel, settingsPanel]
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
-export function IconRail({
-  activePanel,
-  onPanelChange,
-  appMenuButton,
-  extraPanels,
-  className,
-}: IconRailProps) {
   return (
     <div
       className={cn(
@@ -54,8 +49,7 @@ export function IconRail({
       {/* Divider */}
       <div className="mb-1 h-px w-8 bg-border/50" />
 
-      {/* Site panel */}
-      {[sitePanel].map((panel) => {
+      {panels.map((panel) => {
         const isActive = activePanel === panel.id
         return (
           <Tooltip key={panel.id}>
@@ -83,63 +77,49 @@ export function IconRail({
         )
       })}
 
-      {/* Extra panels (injected between site and settings) */}
-      {extraPanels?.map((panel) => {
-        const isActive = activePanel === panel.id
-        return (
-          <Tooltip key={panel.id}>
-            <TooltipTrigger asChild>
-              <button
-                className={cn(
-                  'flex h-9 w-9 items-center justify-center rounded-lg transition-all',
-                  isActive ? 'bg-accent' : 'hover:bg-accent',
-                )}
-                onClick={() => onPanelChange(panel.id)}
-                type="button"
-              >
-                <span
-                  className={cn(
-                    'flex h-6 w-6 items-center justify-center transition-all',
-                    !isActive && 'opacity-50',
-                  )}
-                >
-                  {panel.icon}
-                </span>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right">{panel.label}</TooltipContent>
-          </Tooltip>
-        )
-      })}
+      {/* Spacer */}
+      <div className="flex-1" />
 
-      {/* Settings panel */}
-      {[settingsPanel].map((panel) => {
-        const isActive = activePanel === panel.id
-        return (
-          <Tooltip key={panel.id}>
-            <TooltipTrigger asChild>
-              <button
-                className={cn(
-                  'flex h-9 w-9 items-center justify-center rounded-lg transition-all',
-                  isActive ? 'bg-accent' : 'hover:bg-accent',
-                )}
-                onClick={() => onPanelChange(panel.id)}
-                type="button"
+      {/* Unit Toggle */}
+      {mounted && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              className="mb-1 flex h-9 w-9 items-center justify-center rounded-lg border border-border/50 bg-accent/40 text-foreground transition-all hover:bg-accent"
+              onClick={() => setUnit(unit === 'metric' ? 'imperial' : 'metric')}
+              type="button"
+            >
+              <div className="flex h-full w-full flex-col items-center justify-center gap-0.5 font-medium text-[10px] leading-none">
+                {unit === 'metric' ? 'm' : 'ft'}
+              </div>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">Toggle units (metric/imperial)</TooltipContent>
+        </Tooltip>
+      )}
+
+      {/* Theme Toggle */}
+      {mounted && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg border border-border/50 bg-accent/40 text-foreground transition-all hover:bg-accent"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              type="button"
+            >
+              <motion.div
+                animate={{ rotate: 0, opacity: 1 }}
+                initial={{ rotate: -90, opacity: 0 }}
+                key={theme}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
               >
-                <img
-                  alt={panel.label}
-                  className={cn(
-                    'h-6 w-6 object-contain transition-all',
-                    !isActive && 'opacity-50 saturate-0',
-                  )}
-                  src={panel.iconSrc}
-                />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right">{panel.label}</TooltipContent>
-          </Tooltip>
-        )
-      })}
+                {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </motion.div>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right">Toggle theme</TooltipContent>
+        </Tooltip>
+      )}
     </div>
   )
 }

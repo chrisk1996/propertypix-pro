@@ -51,9 +51,9 @@ const animationEffectSchema = z.object({
 const lightEffectSchema = z.object({
   kind: z.literal('light'),
   color: z.string().default('#ffffff'),
-  intensityRange: z.tuple([z.number(), z.number()]),
+  intensityRange: z.array(z.number()).length(2),
   distance: z.number().optional(),
-  offset: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
+  offset: z.array(z.number()).length(3).default([0, 0, 0]),
 })
 
 const effectSchema = z.discriminatedUnion('kind', [animationEffectSchema, lightEffectSchema])
@@ -80,13 +80,13 @@ const assetSchema = z.object({
   name: z.string(),
   thumbnail: z.string(),
   src: z.string(),
-  dimensions: z.tuple([z.number(), z.number(), z.number()]).default([1, 1, 1]), // [w, h, d]
+  dimensions: z.array(z.number()).length(3).default([1, 1, 1]), // [w, h, d]
   attachTo: z.enum(['wall', 'wall-side', 'ceiling']).optional(),
   tags: z.array(z.string()).optional(),
   // These are "Corrective" transforms to normalize the GLB
-  offset: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
-  rotation: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
-  scale: z.tuple([z.number(), z.number(), z.number()]).default([1, 1, 1]),
+  offset: z.array(z.number()).length(3).default([0, 0, 0]),
+  rotation: z.array(z.number()).length(3).default([0, 0, 0]),
+  scale: z.array(z.number()).length(3).default([1, 1, 1]),
   surface: z
     .object({
       height: z.number(), // where things rest
@@ -101,9 +101,9 @@ export type Asset = z.infer<typeof assetSchema>
 export const ItemNode = BaseNode.extend({
   id: objectId('item'),
   type: nodeType('item'),
-  position: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
-  rotation: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
-  scale: z.tuple([z.number(), z.number(), z.number()]).default([1, 1, 1]),
+  position: z.array(z.number()).length(3).default([0, 0, 0]),
+  rotation: z.array(z.number()).length(3).default([0, 0, 0]),
+  scale: z.array(z.number()).length(3).default([1, 1, 1]),
   side: z.enum(['front', 'back']).optional(),
   children: z.array(objectId('item')).default([]),
 

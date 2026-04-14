@@ -1,10 +1,11 @@
+// Store
+
 export type {
   BuildingEvent,
   CameraControlEvent,
   CeilingEvent,
   DoorEvent,
   EventSuffix,
-  FenceEvent,
   GridEvent,
   ItemEvent,
   LevelEvent,
@@ -19,7 +20,9 @@ export type {
   WindowEvent,
   ZoneEvent,
 } from './events/bus'
+// Events
 export { emitter, eventSuffixes } from './events/bus'
+// Hooks
 export {
   sceneRegistry,
   useRegistry,
@@ -30,23 +33,24 @@ export {
   resolveLevelId,
 } from './hooks/spatial-grid/spatial-grid-sync'
 export { useSpatialQuery } from './hooks/spatial-grid/use-spatial-query'
+// Asset storage
 export { loadAssetUrl, saveAsset } from './lib/asset-storage'
+// Space detection
 export {
   detectSpacesForLevel,
   initSpaceDetectionSync,
   type Space,
   wallTouchesOthers,
 } from './lib/space-detection'
-export { baseMaterial, glassMaterial } from './materials'
+// Schema
 export * from './schema'
 export {
   type ControlValue,
   type ItemInteractiveState,
   useInteractive,
 } from './store/use-interactive'
-export { default as useLiveTransforms, type LiveTransform } from './store/use-live-transforms'
-export { FenceSystem } from './systems/fence/fence-system'
 export { clearSceneHistory, default as useScene } from './store/use-scene'
+// Systems
 export { CeilingSystem } from './systems/ceiling/ceiling-system'
 export { DoorSystem } from './systems/door/door-system'
 export { ItemSystem } from './systems/item/item-system'
@@ -67,6 +71,5 @@ export {
 } from './systems/wall/wall-mitering'
 export { WallSystem } from './systems/wall/wall-system'
 export { WindowSystem } from './systems/window/window-system'
-export type { SceneGraph } from './utils/clone-scene-graph'
 export { cloneLevelSubtree, cloneSceneGraph, forkSceneGraph } from './utils/clone-scene-graph'
 export { isObject } from './utils/types'

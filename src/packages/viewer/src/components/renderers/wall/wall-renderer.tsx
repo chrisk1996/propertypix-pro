@@ -23,7 +23,7 @@ export const WallRenderer = ({ node }: { node: WallNode }) => {
   }, [node.material, node.material?.preset, node.material?.properties, node.material?.texture])
 
   return (
-    <mesh castShadow material={material} receiveShadow ref={ref} visible={node.visible}>
+    <mesh castShadow receiveShadow ref={ref} visible={node.visible} material={material}>
       <boxGeometry args={[0, 0, 0]} />
       <mesh name="collision-mesh" visible={false} {...handlers}>
         <boxGeometry args={[0, 0, 0]} />

@@ -21,8 +21,8 @@ function extractIdPrefix(id: string): string {
  * parent-child relationships and other internal references.
  *
  * This is useful for:
- * - Duplicating a project (host app creates a new project record, then loads the cloned scene)
  * - Copying nodes between different projects
+ * - Duplicating a subset of a scene within the same project
  * - Multi-scene in-memory scenarios
  */
 export function cloneSceneGraph(sceneGraph: SceneGraph): SceneGraph {
@@ -42,6 +42,7 @@ export function cloneSceneGraph(sceneGraph: SceneGraph): SceneGraph {
 
   for (const [oldId, node] of Object.entries(nodes)) {
     const newId = idMap.get(oldId)! as AnyNodeId
+    // structuredClone to avoid shared references between original and clone
     const clonedNode = structuredClone({ ...node, id: newId }) as AnyNode
 
     // Remap parentId
@@ -49,23 +50,10 @@ export function cloneSceneGraph(sceneGraph: SceneGraph): SceneGraph {
       clonedNode.parentId = (idMap.get(clonedNode.parentId) ?? null) as AnyNodeId | null
     }
 
-    // Remap children array (buildings, levels, walls, items, etc.)
-    // Children can be either string IDs or embedded node objects (with an `id` property).
-    // Normalize both forms to remapped string IDs.
+    // Remap children array (walls, levels, buildings, sites, items can have children)
     if ('children' in clonedNode && Array.isArray(clonedNode.children)) {
-      ;(clonedNode as Record<string, unknown>).children = (clonedNode.children as unknown[])
-        .map((child) => {
-          if (typeof child === 'string') return idMap.get(child)
-          if (
-            child &&
-            typeof child === 'object' &&
-            'id' in child &&
-            typeof (child as any).id === 'string'
-          ) {
-            return idMap.get((child as any).id)
-          }
-          return undefined
-        })
+      ;(clonedNode as Record<string, unknown>).children = (clonedNode.children as string[])
+        .map((childId) => idMap.get(childId))
         .filter((id): id is string => id !== undefined)
     }
 
@@ -90,6 +78,7 @@ export function cloneSceneGraph(sceneGraph: SceneGraph): SceneGraph {
     clonedCollections = {} as Record<CollectionId, Collection>
     const collectionIdMap = new Map<string, CollectionId>()
 
+    // Generate new collection IDs
     for (const collectionId of Object.keys(collections)) {
       collectionIdMap.set(collectionId, generateId('collection'))
     }
@@ -177,9 +166,6 @@ export function cloneLevelSubtree(
   const newLevelId = idMap.get(levelId)! as AnyNodeId
 
   // Clone each node with remapped references.
-  // Use JSON roundtrip instead of structuredClone because live runtime nodes may
-  // carry non-serializable properties (Three.js Object3D refs, functions, etc.)
-  // that structuredClone would throw on.
   const clonedNodes: AnyNode[] = []
   for (const oldId of subtreeIds) {
     const node = nodes[oldId]
@@ -192,7 +178,6 @@ export function cloneLevelSubtree(
     ;(cloned as Record<string, unknown>).id = newId
 
     // Remap parentId — but only for descendants, not the level node itself
-    // (the level's parentId points to the building, which is outside the subtree)
     if (oldId !== levelId && cloned.parentId && typeof cloned.parentId === 'string') {
       cloned.parentId = (idMap.get(cloned.parentId) ?? cloned.parentId) as AnyNodeId | null
     }
@@ -234,7 +219,6 @@ export function cloneLevelSubtree(
 export function forkSceneGraph(sceneGraph: SceneGraph): SceneGraph {
   const { nodes, rootNodeIds, collections } = sceneGraph
 
-  // First, identify scan and guide node IDs to exclude (user-uploaded imagery)
   const excludedNodeIds = new Set<string>()
   for (const [nodeId, node] of Object.entries(nodes)) {
     if (node.type === 'scan' || node.type === 'guide') {
@@ -242,15 +226,12 @@ export function forkSceneGraph(sceneGraph: SceneGraph): SceneGraph {
     }
   }
 
-  // Build a filtered scene graph without scan nodes
   const filteredNodes = {} as Record<AnyNodeId, AnyNode>
   for (const [nodeId, node] of Object.entries(nodes)) {
     if (excludedNodeIds.has(nodeId)) continue
 
     const clonedNode = structuredClone(node) as AnyNode
 
-    // Remove scan children from any parent that references them.
-    // Children can be string IDs or embedded node objects.
     if ('children' in clonedNode && Array.isArray(clonedNode.children)) {
       ;(clonedNode as Record<string, unknown>).children = (clonedNode.children as unknown[]).filter(
         (child) => {
@@ -270,7 +251,6 @@ export function forkSceneGraph(sceneGraph: SceneGraph): SceneGraph {
 
   const filteredRootNodeIds = rootNodeIds.filter((id) => !excludedNodeIds.has(id))
 
-  // Filter collections to remove references to scan nodes
   let filteredCollections: Record<CollectionId, Collection> | undefined
   if (collections) {
     filteredCollections = {} as Record<CollectionId, Collection>
@@ -289,7 +269,6 @@ export function forkSceneGraph(sceneGraph: SceneGraph): SceneGraph {
     }
   }
 
-  // Now clone the filtered graph with new IDs
   return cloneSceneGraph({
     nodes: filteredNodes,
     rootNodeIds: filteredRootNodeIds,

@@ -348,15 +348,15 @@ export class SpatialGridManager {
             const [width, height] = getScaledDimensions(item)
             const halfW = width / wallLength / 2
             // Calculate t from local X position (position[0] is distance along wall)
-            const t = item.position[0] / wallLength
+            const t = (item.position as [number, number, number])[0] / wallLength
             // position[1] is the bottom of the item
             this.getWallGrid(levelId).insert({
               itemId: item.id,
               wallId,
               tStart: t - halfW,
               tEnd: t + halfW,
-              yStart: item.position[1],
-              yEnd: item.position[1] + height,
+              yStart: (item.position as [number, number, number])[1],
+              yEnd: (item.position as [number, number, number])[1] + height,
               attachType: item.asset.attachTo as 'wall' | 'wall-side',
               side: item.side,
             })
@@ -368,9 +368,9 @@ export class SpatialGridManager {
         if (ceilingId && this.ceilings.has(ceilingId)) {
           this.getCeilingGrid(ceilingId).insert(
             item.id,
-            item.position,
+            item.position as [number, number, number],
             getScaledDimensions(item),
-            item.rotation,
+            (item.rotation as [number, number, number]),
           )
           this.itemCeilingMap.set(item.id, ceilingId)
         }
@@ -378,9 +378,9 @@ export class SpatialGridManager {
         // Floor item
         this.getFloorGrid(levelId).insert(
           item.id,
-          item.position,
+          item.position as [number, number, number],
           getScaledDimensions(item),
-          item.rotation,
+          (item.rotation as [number, number, number]),
         )
       }
     }
@@ -406,15 +406,15 @@ export class SpatialGridManager {
             const [width, height] = getScaledDimensions(item)
             const halfW = width / wallLength / 2
             // Calculate t from local X position (position[0] is distance along wall)
-            const t = item.position[0] / wallLength
+            const t = (item.position as [number, number, number])[0] / wallLength
             // position[1] is the bottom of the item
             this.getWallGrid(levelId).insert({
               itemId: item.id,
               wallId,
               tStart: t - halfW,
               tEnd: t + halfW,
-              yStart: item.position[1],
-              yEnd: item.position[1] + height,
+              yStart: (item.position as [number, number, number])[1],
+              yEnd: (item.position as [number, number, number])[1] + height,
               attachType: item.asset.attachTo as 'wall' | 'wall-side',
               side: item.side,
             })
@@ -432,18 +432,18 @@ export class SpatialGridManager {
         if (ceilingId && this.ceilings.has(ceilingId)) {
           this.getCeilingGrid(ceilingId).insert(
             item.id,
-            item.position,
+            item.position as [number, number, number],
             getScaledDimensions(item),
-            item.rotation,
+            (item.rotation as [number, number, number]),
           )
           this.itemCeilingMap.set(item.id, ceilingId)
         }
       } else if (!item.asset.attachTo) {
         this.getFloorGrid(levelId).update(
           item.id,
-          item.position,
+          item.position as [number, number, number],
           getScaledDimensions(item),
-          item.rotation,
+          (item.rotation as [number, number, number]),
         )
       }
     }
@@ -508,7 +508,7 @@ export class SpatialGridManager {
   ) {
     const wallLength = this.getWallLength(wallId)
     if (wallLength === 0) {
-      return { valid: false, conflictIds: [] }
+      return { valid: false, conflictIds: [] as string[] }
     }
     const wallHeight = this.getWallHeight(wallId)
     // Convert local X position to parametric t (0-1)
@@ -542,12 +542,12 @@ export class SpatialGridManager {
 
     let maxElevation = 0
     for (const slab of slabMap.values()) {
-      if (slab.polygon.length >= 3 && pointInPolygon(x, z, slab.polygon)) {
+      if (slab.polygon.length >= 3 && pointInPolygon(x, z, slab.polygon as [number, number][])) {
         // Check if point is in any hole
         let inHole = false
         const holes = slab.holes || []
         for (const hole of holes) {
-          if (hole.length >= 3 && pointInPolygon(x, z, hole)) {
+          if (hole.length >= 3 && pointInPolygon(x, z, hole as [number, number][])) {
             inHole = true
             break
           }
@@ -582,7 +582,7 @@ export class SpatialGridManager {
     for (const slab of slabMap.values()) {
       if (
         slab.polygon.length >= 3 &&
-        itemOverlapsPolygon(position, dimensions, rotation, slab.polygon, 0.01)
+        itemOverlapsPolygon(position, dimensions, rotation, slab.polygon as [number, number][], 0.01)
       ) {
         // Check if item is entirely within a hole (if so, ignore this slab)
         // We consider it entirely in a hole if the item center is in the hole
@@ -590,7 +590,7 @@ export class SpatialGridManager {
         const [cx, , cz] = position
         const holes = slab.holes || []
         for (const hole of holes) {
-          if (hole.length >= 3 && pointInPolygon(cx, cz, hole)) {
+          if (hole.length >= 3 && pointInPolygon(cx, cz, hole as [number, number][])) {
             inHole = true
             break
           }
@@ -619,7 +619,7 @@ export class SpatialGridManager {
     let maxElevation = Number.NEGATIVE_INFINITY
     for (const slab of slabMap.values()) {
       if (slab.polygon.length < 3) continue
-      if (!wallOverlapsPolygon(start, end, slab.polygon)) continue
+      if (!wallOverlapsPolygon(start, end, slab.polygon as [number, number][])) continue
 
       const holes = slab.holes || []
       if (holes.length === 0) {
@@ -640,7 +640,7 @@ export class SpatialGridManager {
         const pz = start[1] + dz * t
         let inHole = false
         for (const hole of holes) {
-          if (hole.length >= 3 && pointInPolygon(px, pz, hole)) {
+          if (hole.length >= 3 && pointInPolygon(px, pz, hole as [number, number][])) {
             inHole = true
             break
           }
@@ -672,14 +672,14 @@ export class SpatialGridManager {
   ): { valid: boolean; conflictIds: string[] } {
     const ceiling = this.ceilings.get(ceilingId)
     if (!ceiling || ceiling.polygon.length < 3) {
-      return { valid: false, conflictIds: [] }
+      return { valid: false, conflictIds: [] as string[] }
     }
 
     // Check that the item footprint is entirely within the ceiling polygon
     const corners = getItemFootprint(position, dimensions, rotation)
     for (const [cx, cz] of corners) {
-      if (!pointInPolygon(cx, cz, ceiling.polygon)) {
-        return { valid: false, conflictIds: [] }
+      if (!pointInPolygon(cx, cz, ceiling.polygon as [number, number][])) {
+        return { valid: false, conflictIds: [] as string[] }
       }
     }
 
@@ -687,8 +687,8 @@ export class SpatialGridManager {
     const [centerX, , centerZ] = position
     const holes = ceiling.holes || []
     for (const hole of holes) {
-      if (hole.length >= 3 && pointInPolygon(centerX, centerZ, hole)) {
-        return { valid: false, conflictIds: [] }
+      if (hole.length >= 3 && pointInPolygon(centerX, centerZ, hole as [number, number][])) {
+        return { valid: false, conflictIds: [] as string[] }
       }
     }
 

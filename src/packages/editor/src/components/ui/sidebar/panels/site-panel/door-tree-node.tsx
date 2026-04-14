@@ -1,50 +1,33 @@
 'use client'
 
-import { type AnyNodeId, useScene } from '@pascal-app/core'
+import type { DoorNode } from '@pascal-app/core'
 import { useViewer } from '@pascal-app/viewer'
 import Image from 'next/image'
-import { useCallback, useState } from 'react'
+import { useState } from 'react'
 import useEditor from './../../../../../store/use-editor'
 import { InlineRenameInput } from './inline-rename-input'
 import { focusTreeNode, handleTreeSelection, TreeNodeWrapper } from './tree-node'
 import { TreeNodeActions } from './tree-node-actions'
 
 interface DoorTreeNodeProps {
-  nodeId: AnyNodeId
+  node: DoorNode
   depth: number
   isLast?: boolean
 }
 
-export function DoorTreeNode({ nodeId, depth, isLast }: DoorTreeNodeProps) {
+export function DoorTreeNode({ node, depth, isLast }: DoorTreeNodeProps) {
   const [isEditing, setIsEditing] = useState(false)
-  const isVisible = useScene((s) => s.nodes[nodeId as AnyNodeId]?.visible !== false)
-  const isSelected = useViewer((state) => state.selection.selectedIds.includes(nodeId))
-  const isHovered = useViewer((state) => state.hoveredId === nodeId)
+  const selectedIds = useViewer((state) => state.selection.selectedIds)
+  const isSelected = selectedIds.includes(node.id)
+  const isHovered = useViewer((state) => state.hoveredId === node.id)
   const setSelection = useViewer((state) => state.setSelection)
   const setHoveredId = useViewer((state) => state.setHoveredId)
 
-  const handleClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation()
-      const handled = handleTreeSelection(
-        e,
-        nodeId,
-        useViewer.getState().selection.selectedIds,
-        setSelection,
-      )
-      if (!handled && useEditor.getState().phase === 'furnish') {
-        useEditor.getState().setPhase('structure')
-      }
-    },
-    [nodeId, setSelection],
-  )
-
-  const handleStartEditing = useCallback(() => setIsEditing(true), [])
-  const handleStopEditing = useCallback(() => setIsEditing(false), [])
+  const defaultName = 'Door'
 
   return (
     <TreeNodeWrapper
-      actions={<TreeNodeActions nodeId={nodeId as AnyNodeId} />}
+      actions={<TreeNodeActions node={node} />}
       depth={depth}
       expanded={false}
       hasChildren={false}
@@ -54,20 +37,26 @@ export function DoorTreeNode({ nodeId, depth, isLast }: DoorTreeNodeProps) {
       isHovered={isHovered}
       isLast={isLast}
       isSelected={isSelected}
-      isVisible={isVisible}
+      isVisible={node.visible !== false}
       label={
         <InlineRenameInput
-          defaultName="Door"
+          defaultName={defaultName}
           isEditing={isEditing}
-          nodeId={nodeId as AnyNodeId}
-          onStartEditing={handleStartEditing}
-          onStopEditing={handleStopEditing}
+          node={node}
+          onStartEditing={() => setIsEditing(true)}
+          onStopEditing={() => setIsEditing(false)}
         />
       }
-      nodeId={nodeId}
-      onClick={handleClick}
-      onDoubleClick={() => focusTreeNode(nodeId as AnyNodeId)}
-      onMouseEnter={() => setHoveredId(nodeId)}
+      nodeId={node.id}
+      onClick={(e: React.MouseEvent) => {
+        e.stopPropagation()
+        const handled = handleTreeSelection(e, node.id, selectedIds, setSelection)
+        if (!handled && useEditor.getState().phase === 'furnish') {
+          useEditor.getState().setPhase('structure')
+        }
+      }}
+      onDoubleClick={() => focusTreeNode(node.id)}
+      onMouseEnter={() => setHoveredId(node.id)}
       onMouseLeave={() => setHoveredId(null)}
       onToggle={() => {}}
     />

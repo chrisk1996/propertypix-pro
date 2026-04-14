@@ -1,8 +1,7 @@
-import { type AnyNodeId, type BuildingNode, LevelNode, useScene } from '@pascal-app/core'
+import { type BuildingNode, LevelNode, useScene } from '@pascal-app/core'
 import { useViewer } from '@pascal-app/viewer'
 import { Building2, Plus } from 'lucide-react'
 import { useState } from 'react'
-import { useShallow } from 'zustand/react/shallow'
 import {
   Tooltip,
   TooltipContent,
@@ -12,42 +11,37 @@ import { focusTreeNode, TreeNode, TreeNodeWrapper } from './tree-node'
 import { TreeNodeActions } from './tree-node-actions'
 
 interface BuildingTreeNodeProps {
-  nodeId: AnyNodeId
+  node: BuildingNode
   depth: number
   isLast?: boolean
 }
 
-export function BuildingTreeNode({ nodeId, depth, isLast }: BuildingTreeNodeProps) {
+export function BuildingTreeNode({ node, depth, isLast }: BuildingTreeNodeProps) {
   const [expanded, setExpanded] = useState(true)
   const createNode = useScene((state) => state.createNode)
-  const isVisible = useScene((s) => s.nodes[nodeId]?.visible !== false)
-  const name = useScene((s) => s.nodes[nodeId]?.name)
-  const children = useScene(
-    useShallow((s) => (s.nodes[nodeId] as BuildingNode | undefined)?.children ?? []),
-  )
-  const isSelected = useViewer((state) => state.selection.buildingId === nodeId)
-  const isHovered = useViewer((state) => state.hoveredId === nodeId)
+  const isSelected = useViewer((state) => state.selection.buildingId === node.id)
+  const isHovered = useViewer((state) => state.hoveredId === node.id)
   const setSelection = useViewer((state) => state.setSelection)
 
   const handleClick = () => {
-    setSelection({ buildingId: nodeId })
+    setSelection({ buildingId: node.id })
   }
 
   const handleAddLevel = (e: React.MouseEvent) => {
     e.stopPropagation()
     const newLevel = LevelNode.parse({
-      level: children.length,
+      level: node.children.length,
       children: [],
-      parentId: nodeId,
+      parentId: node.id,
     })
-    createNode(newLevel, nodeId)
+    createNode(newLevel, node.id)
   }
 
   return (
     <TreeNodeWrapper
       actions={
         <div className="flex items-center gap-0.5">
-          <TreeNodeActions nodeId={nodeId} />
+          <TreeNodeActions node={node} />
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -63,21 +57,20 @@ export function BuildingTreeNode({ nodeId, depth, isLast }: BuildingTreeNodeProp
       }
       depth={depth}
       expanded={expanded}
-      hasChildren={children.length > 0}
+      hasChildren={node.children.length > 0}
       icon={<Building2 className="h-3.5 w-3.5" />}
       isHovered={isHovered}
       isLast={isLast}
       isSelected={isSelected}
-      isVisible={isVisible}
-      label={name || 'Building'}
+      label={node.name || 'Building'}
       onClick={handleClick}
-      onDoubleClick={() => focusTreeNode(nodeId)}
+      onDoubleClick={() => focusTreeNode(node.id)}
       onToggle={() => setExpanded(!expanded)}
     >
-      {children.map((childId, index) => (
+      {node.children.map((childId, index) => (
         <TreeNode
           depth={depth + 1}
-          isLast={index === children.length - 1}
+          isLast={index === node.children.length - 1}
           key={childId}
           nodeId={childId}
         />

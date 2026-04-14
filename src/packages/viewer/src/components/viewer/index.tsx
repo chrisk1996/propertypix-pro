@@ -3,7 +3,6 @@
 import {
   CeilingSystem,
   DoorSystem,
-  FenceSystem,
   ItemSystem,
   RoofSystem,
   SlabSystem,
@@ -16,6 +15,7 @@ import { Canvas, extend, type ThreeToJSXElements, useFrame, useThree } from '@re
 import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three/webgpu'
 import useViewer from '../../store/use-viewer'
+import { ExportSystem } from '../../systems/export/export-system'
 import { GuideSystem } from '../../systems/guide/guide-system'
 import { ItemLightSystem } from '../../systems/item-light/item-light-system'
 import { LevelSystem } from '../../systems/level/level-system'
@@ -57,6 +57,7 @@ function AnimatedBackground({ isDark }: { isDark: boolean }) {
 }
 
 declare module '@react-three/fiber' {
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   interface ThreeElements extends ThreeToJSXElements<typeof THREE> {}
 }
 
@@ -101,6 +102,7 @@ const Viewer: React.FC<ViewerProps> = ({
   perf = false,
 }) => {
   const theme = useViewer((state) => state.theme)
+
   return (
     <Canvas
       camera={{ position: [50, 50, 50], fov: 50 }}
@@ -139,7 +141,6 @@ const Viewer: React.FC<ViewerProps> = ({
       {/* Core systems */}
       <CeilingSystem />
       <DoorSystem />
-      <FenceSystem />
       <ItemSystem />
       <RoofSystem />
       <SlabSystem />
@@ -147,6 +148,7 @@ const Viewer: React.FC<ViewerProps> = ({
       <WallSystem />
       <WindowSystem />
       <ZoneSystem />
+      <ExportSystem />
       <PostProcessing />
       {/* <DebugRenderer /> */}
       <GPUDeviceWatcher />

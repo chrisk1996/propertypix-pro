@@ -14,11 +14,9 @@ const SIDEBAR_COLLAPSE_THRESHOLD = 220
 function LeftColumn({
   tabs,
   renderTabContent,
-  sidebarOverlay,
 }: {
   tabs: SidebarTab[]
   renderTabContent: (tabId: string) => ReactNode
-  sidebarOverlay?: ReactNode
 }) {
   const width = useSidebarStore((s) => s.width)
   const isCollapsed = useSidebarStore((s) => s.isCollapsed)
@@ -110,10 +108,7 @@ function LeftColumn({
       }}
     >
       <TabBar activeTab={activePanel} onTabChange={setActivePanel} tabs={tabs} />
-      <div className="relative flex flex-1 flex-col overflow-hidden">
-        {renderTabContent(activePanel)}
-        {sidebarOverlay && <div className="absolute inset-0 z-50">{sidebarOverlay}</div>}
-      </div>
+      <div className="flex flex-1 flex-col overflow-hidden">{renderTabContent(activePanel)}</div>
 
       {/* Resize handle + hit area */}
       <div
@@ -176,7 +171,6 @@ export interface EditorLayoutV2Props {
   navbarSlot?: ReactNode
   sidebarTabs?: SidebarTab[]
   renderTabContent: (tabId: string) => ReactNode
-  sidebarOverlay?: ReactNode
   viewerToolbarLeft?: ReactNode
   viewerToolbarRight?: ReactNode
   viewerContent: ReactNode
@@ -187,7 +181,6 @@ export function EditorLayoutV2({
   navbarSlot,
   sidebarTabs = [],
   renderTabContent,
-  sidebarOverlay,
   viewerToolbarLeft,
   viewerToolbarRight,
   viewerContent,
@@ -201,11 +194,7 @@ export function EditorLayoutV2({
       {/* Main content: left column + right column */}
       <div className="flex min-h-0 flex-1">
         {sidebarTabs.length > 0 && (
-          <LeftColumn
-            renderTabContent={renderTabContent}
-            sidebarOverlay={sidebarOverlay}
-            tabs={sidebarTabs}
-          />
+          <LeftColumn renderTabContent={renderTabContent} tabs={sidebarTabs} />
         )}
         <RightColumn
           overlays={overlays}

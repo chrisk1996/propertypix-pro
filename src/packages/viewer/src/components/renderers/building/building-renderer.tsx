@@ -9,14 +9,8 @@ export const BuildingRenderer = ({ node }: { node: BuildingNode }) => {
 
   useRegistry(node.id, node.type, ref)
   const handlers = useNodeEvents(node, 'building')
-
   return (
-    <group
-      position={node.position}
-      ref={ref}
-      rotation={[node.rotation[0], node.rotation[1], node.rotation[2]]}
-      {...handlers}
-    >
+    <group ref={ref} {...handlers}>
       {node.children.map((childId) => (
         <NodeRenderer key={childId} nodeId={childId} />
       ))}

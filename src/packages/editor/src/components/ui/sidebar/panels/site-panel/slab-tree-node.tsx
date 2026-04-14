@@ -1,52 +1,53 @@
-import { type AnyNodeId, type SlabNode, useScene } from '@pascal-app/core'
+import type { SlabNode } from '@pascal-app/core'
 import { useViewer } from '@pascal-app/viewer'
 import Image from 'next/image'
-import { useCallback, useState } from 'react'
+import { useState } from 'react'
 import useEditor from './../../../../../store/use-editor'
 import { InlineRenameInput } from './inline-rename-input'
 import { focusTreeNode, handleTreeSelection, TreeNodeWrapper } from './tree-node'
 import { TreeNodeActions } from './tree-node-actions'
 
 interface SlabTreeNodeProps {
-  nodeId: AnyNodeId
+  node: SlabNode
   depth: number
   isLast?: boolean
 }
 
-export function SlabTreeNode({ nodeId, depth, isLast }: SlabTreeNodeProps) {
+export function SlabTreeNode({ node, depth, isLast }: SlabTreeNodeProps) {
   const [isEditing, setIsEditing] = useState(false)
-  const isVisible = useScene((s) => s.nodes[nodeId]?.visible !== false)
-  const polygon = useScene((s) => (s.nodes[nodeId] as SlabNode | undefined)?.polygon ?? [])
-  const isSelected = useViewer((state) => state.selection.selectedIds.includes(nodeId))
-  const isHovered = useViewer((state) => state.hoveredId === nodeId)
+  const selectedIds = useViewer((state) => state.selection.selectedIds)
+  const isSelected = selectedIds.includes(node.id)
+  const isHovered = useViewer((state) => state.hoveredId === node.id)
   const setSelection = useViewer((state) => state.setSelection)
   const setHoveredId = useViewer((state) => state.setHoveredId)
 
-  const handleClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation()
-      const handled = handleTreeSelection(
-        e,
-        nodeId,
-        useViewer.getState().selection.selectedIds,
-        setSelection,
-      )
-      if (!handled && useEditor.getState().phase === 'furnish') {
-        useEditor.getState().setPhase('structure')
-      }
-    },
-    [nodeId, setSelection],
-  )
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const handled = handleTreeSelection(e, node.id, selectedIds, setSelection)
+    if (!handled && useEditor.getState().phase === 'furnish') {
+      useEditor.getState().setPhase('structure')
+    }
+  }
 
-  const handleStartEditing = useCallback(() => setIsEditing(true), [])
-  const handleStopEditing = useCallback(() => setIsEditing(false), [])
+  const handleDoubleClick = () => {
+    focusTreeNode(node.id)
+  }
 
-  const area = calculatePolygonArea(polygon).toFixed(1)
+  const handleMouseEnter = () => {
+    setHoveredId(node.id)
+  }
+
+  const handleMouseLeave = () => {
+    setHoveredId(null)
+  }
+
+  // Calculate approximate area from polygon
+  const area = calculatePolygonArea(node.polygon).toFixed(1)
   const defaultName = `Slab (${area}m²)`
 
   return (
     <TreeNodeWrapper
-      actions={<TreeNodeActions nodeId={nodeId} />}
+      actions={<TreeNodeActions node={node} />}
       depth={depth}
       expanded={false}
       hasChildren={false}
@@ -56,21 +57,21 @@ export function SlabTreeNode({ nodeId, depth, isLast }: SlabTreeNodeProps) {
       isHovered={isHovered}
       isLast={isLast}
       isSelected={isSelected}
-      isVisible={isVisible}
+      isVisible={node.visible !== false}
       label={
         <InlineRenameInput
           defaultName={defaultName}
           isEditing={isEditing}
-          nodeId={nodeId}
-          onStartEditing={handleStartEditing}
-          onStopEditing={handleStopEditing}
+          node={node}
+          onStartEditing={() => setIsEditing(true)}
+          onStopEditing={() => setIsEditing(false)}
         />
       }
-      nodeId={nodeId}
+      nodeId={node.id}
       onClick={handleClick}
-      onDoubleClick={() => focusTreeNode(nodeId)}
-      onMouseEnter={() => setHoveredId(nodeId)}
-      onMouseLeave={() => setHoveredId(null)}
+      onDoubleClick={handleDoubleClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       onToggle={() => {}}
     />
   )
@@ -87,8 +88,12 @@ function calculatePolygonArea(polygon: Array<[number, number]>): number {
 
   for (let i = 0; i < n; i++) {
     const j = (i + 1) % n
-    area += polygon[i]?.[0] * polygon[j]?.[1]
-    area -= polygon[j]?.[0] * polygon[i]?.[1]
+    const pi = polygon[i]
+    const pj = polygon[j]
+    if (pi && pj) {
+      area += pi[0] * pj[1]
+      area -= pj[0] * pi[1]
+    }
   }
 
   return Math.abs(area) / 2

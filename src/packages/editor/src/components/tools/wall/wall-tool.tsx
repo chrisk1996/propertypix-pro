@@ -6,7 +6,12 @@ import { markToolCancelConsumed } from '../../../hooks/use-keyboard'
 import { EDITOR_LAYER } from '../../../lib/constants'
 import { sfxEmitter } from '../../../lib/sfx-bus'
 import { CursorSphere } from '../shared/cursor-sphere'
-import { createWallOnCurrentLevel, snapWallDraftPoint, type WallPlanPoint } from './wall-drafting'
+import {
+  createWallOnCurrentLevel,
+  snapWallDraftPoint,
+  WALL_MIN_LENGTH,
+  type WallPlanPoint,
+} from './wall-drafting'
 
 const WALL_HEIGHT = 2.5
 
@@ -18,7 +23,7 @@ const updateWallPreview = (mesh: Mesh, start: Vector3, end: Vector3) => {
   const direction = new Vector3(end.x - start.x, 0, end.z - start.z)
   const length = direction.length()
 
-  if (length < 0.01) {
+  if (length < WALL_MIN_LENGTH) {
     mesh.visible = false
     return
   }
@@ -78,28 +83,31 @@ export const WallTool: React.FC = () => {
     let gridPosition: WallPlanPoint = [0, 0]
     let previousWallEnd: [number, number] | null = null
 
-    // All positions are building-local: this tool is inside the ToolManager building group,
-    // so local coords are used for both data and visual positioning.
     const onGridMove = (event: GridEvent) => {
       if (!(cursorRef.current && wallPreviewRef.current)) return
 
       const walls = getCurrentLevelWalls()
-      // event.localPosition is building-local — consistent with stored wall start/end
-      const localPoint: WallPlanPoint = [event.localPosition[0], event.localPosition[2]]
-      gridPosition = snapWallDraftPoint({ point: localPoint, walls })
+      const cursorPoint: WallPlanPoint = [event.position[0], event.position[2]]
+      gridPosition = snapWallDraftPoint({
+        point: cursorPoint,
+        walls,
+      })
 
       if (buildingState.current === 1) {
-        const snappedLocal = snapWallDraftPoint({
-          point: localPoint,
+        const snappedPoint = snapWallDraftPoint({
+          point: cursorPoint,
           walls,
           start: [startingPoint.current.x, startingPoint.current.z],
           angleSnap: !shiftPressed.current,
         })
-        endingPoint.current.set(snappedLocal[0], event.localPosition[1], snappedLocal[1])
-        cursorRef.current.position.copy(endingPoint.current)
+        const snapped = new Vector3(snappedPoint[0], event.position[1], snappedPoint[1])
+        endingPoint.current.copy(snapped)
+
+        // Position the cursor at the end of the wall being drawn
+        cursorRef.current.position.set(snapped.x, snapped.y, snapped.z)
 
         // Play snap sound only when the actual wall end position changes
-        const currentWallEnd: [number, number] = [snappedLocal[0], snappedLocal[1]]
+        const currentWallEnd: [number, number] = [endingPoint.current.x, endingPoint.current.z]
         if (
           previousWallEnd &&
           (currentWallEnd[0] !== previousWallEnd[0] || currentWallEnd[1] !== previousWallEnd[1])
@@ -108,36 +116,43 @@ export const WallTool: React.FC = () => {
         }
         previousWallEnd = currentWallEnd
 
+        // Update wall preview geometry
         updateWallPreview(wallPreviewRef.current, startingPoint.current, endingPoint.current)
       } else {
         // Not drawing a wall yet, show the snapped anchor point.
-        cursorRef.current.position.set(gridPosition[0], event.localPosition[1], gridPosition[1])
+        cursorRef.current.position.set(gridPosition[0], event.position[1], gridPosition[1])
       }
     }
 
     const onGridClick = (event: GridEvent) => {
       const walls = getCurrentLevelWalls()
-      const localClick: WallPlanPoint = [event.localPosition[0], event.localPosition[2]]
+      const clickPoint: WallPlanPoint = [event.position[0], event.position[2]]
 
       if (buildingState.current === 0) {
-        const snappedStart = snapWallDraftPoint({ point: localClick, walls })
+        const snappedStart = snapWallDraftPoint({
+          point: clickPoint,
+          walls,
+        })
         gridPosition = snappedStart
-        startingPoint.current.set(snappedStart[0], event.localPosition[1], snappedStart[1])
+        startingPoint.current.set(snappedStart[0], event.position[1], snappedStart[1])
         endingPoint.current.copy(startingPoint.current)
         buildingState.current = 1
         wallPreviewRef.current.visible = true
       } else if (buildingState.current === 1) {
         const snappedEnd = snapWallDraftPoint({
-          point: localClick,
+          point: clickPoint,
           walls,
           start: [startingPoint.current.x, startingPoint.current.z],
           angleSnap: !shiftPressed.current,
         })
-        const dx = snappedEnd[0] - startingPoint.current.x
-        const dz = snappedEnd[1] - startingPoint.current.z
-        if (dx * dx + dz * dz < 0.01 * 0.01) return
-        // Both start and end are building-local ✓
-        createWallOnCurrentLevel([startingPoint.current.x, startingPoint.current.z], snappedEnd)
+        endingPoint.current.set(snappedEnd[0], event.position[1], snappedEnd[1])
+        const dx = endingPoint.current.x - startingPoint.current.x
+        const dz = endingPoint.current.z - startingPoint.current.z
+        if (dx * dx + dz * dz < WALL_MIN_LENGTH * WALL_MIN_LENGTH) return
+        createWallOnCurrentLevel(
+          [startingPoint.current.x, startingPoint.current.z],
+          [endingPoint.current.x, endingPoint.current.z],
+        )
         wallPreviewRef.current.visible = false
         buildingState.current = 0
       }

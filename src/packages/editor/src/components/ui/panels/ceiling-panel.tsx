@@ -32,13 +32,6 @@ export function CeilingPanel() {
     [selectedId, updateNode],
   )
 
-  const handleMaterialChange = useCallback(
-    (material: MaterialSchema) => {
-      handleUpdate({ material })
-    },
-    [handleUpdate],
-  )
-
   const handleClose = useCallback(() => {
     setSelection({ selectedIds: [] })
     setEditingHole(null)
@@ -102,6 +95,10 @@ export function CeilingPanel() {
     [selectedId, node?.holes, handleUpdate, editingHole, setEditingHole],
   )
 
+  const handleMaterialChange = useCallback((material: MaterialSchema) => {
+    handleUpdate({ material })
+  }, [handleUpdate])
+
   if (!node || node.type !== 'ceiling' || selectedIds.length !== 1) return null
 
   const calculateArea = (polygon: Array<[number, number]>): number => {
@@ -110,8 +107,12 @@ export function CeilingPanel() {
     const n = polygon.length
     for (let i = 0; i < n; i++) {
       const j = (i + 1) % n
-      area += polygon[i]?.[0] * polygon[j]?.[1]
-      area -= polygon[j]?.[0] * polygon[i]?.[1]
+      const pi = polygon[i]
+      const pj = polygon[j]
+      if (pi && pj) {
+        area += pi[0] * pj[1]
+        area -= pj[0] * pi[1]
+      }
     }
     return Math.abs(area) / 2
   }
@@ -223,7 +224,10 @@ export function CeilingPanel() {
       </PanelSection>
 
       <PanelSection title="Material">
-        <MaterialPicker onChange={handleMaterialChange} value={node.material} />
+        <MaterialPicker
+          onChange={handleMaterialChange}
+          value={node.material}
+        />
       </PanelSection>
     </PanelWrapper>
   )

@@ -15,8 +15,8 @@ export const WallNode = BaseNode.extend({
   thickness: z.number().optional(),
   height: z.number().optional(),
   // e.g., start/end points for path
-  start: z.tuple([z.number(), z.number()]),
-  end: z.tuple([z.number(), z.number()]),
+  start: z.array(z.number()).length(2),
+  end: z.array(z.number()).length(2),
   // Space detection for cutaway mode
   frontSide: z.enum(['interior', 'exterior', 'unknown']).default('unknown'),
   backSide: z.enum(['interior', 'exterior', 'unknown']).default('unknown'),

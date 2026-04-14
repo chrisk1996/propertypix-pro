@@ -84,7 +84,7 @@ export function StairSegmentPanel() {
     if (!node?.parentId) return
     sfxEmitter.emit('sfx:item-pick')
 
-    let duplicateInfo = structuredClone(node) as any
+    const duplicateInfo = structuredClone(node) as any
     delete duplicateInfo.id
     duplicateInfo.metadata = { ...duplicateInfo.metadata, isNew: true }
     duplicateInfo.position = [

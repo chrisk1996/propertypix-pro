@@ -55,13 +55,6 @@ export function RoofSegmentPanel() {
     [selectedId, updateNode],
   )
 
-  const handleMaterialChange = useCallback(
-    (material: MaterialSchema) => {
-      handleUpdate({ material })
-    },
-    [handleUpdate],
-  )
-
   const handleClose = useCallback(() => {
     setSelection({ selectedIds: [] })
   }, [setSelection])
@@ -76,7 +69,7 @@ export function RoofSegmentPanel() {
     if (!node?.parentId) return
     sfxEmitter.emit('sfx:item-pick')
 
-    let duplicateInfo = structuredClone(node) as any
+    const duplicateInfo = structuredClone(node) as any
     delete duplicateInfo.id
     duplicateInfo.metadata = { ...duplicateInfo.metadata, isNew: true }
     // Offset slightly so it's visible
@@ -116,6 +109,10 @@ export function RoofSegmentPanel() {
       setSelection({ selectedIds: [] })
     }
   }, [selectedId, node, setSelection])
+
+  const handleMaterialChange = useCallback((material: MaterialSchema) => {
+    handleUpdate({ material })
+  }, [handleUpdate])
 
   if (!node || node.type !== 'roof-segment' || selectedIds.length !== 1) return null
 
@@ -302,6 +299,13 @@ export function RoofSegmentPanel() {
         </div>
       </PanelSection>
 
+      <PanelSection title="Material">
+        <MaterialPicker
+          onChange={handleMaterialChange}
+          value={node.material}
+        />
+      </PanelSection>
+
       <PanelSection title="Actions">
         <ActionGroup>
           <ActionButton icon={<Move className="h-3.5 w-3.5" />} label="Move" onClick={handleMove} />
@@ -317,9 +321,6 @@ export function RoofSegmentPanel() {
             onClick={handleDelete}
           />
         </ActionGroup>
-      </PanelSection>
-      <PanelSection title="Material">
-        <MaterialPicker onChange={handleMaterialChange} value={node.material} />
       </PanelSection>
     </PanelWrapper>
   )

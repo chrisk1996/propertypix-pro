@@ -1,7 +1,6 @@
 'use client'
 
 import useEditor from '../../../store/use-editor'
-import { BuildingHelper } from './building-helper'
 import { CeilingHelper } from './ceiling-helper'
 import { ItemHelper } from './item-helper'
 import { RoofHelper } from './roof-helper'
@@ -13,7 +12,6 @@ export function HelperManager() {
   const movingNode = useEditor((state) => state.movingNode)
 
   if (movingNode) {
-    if (movingNode.type === 'building') return <BuildingHelper showRotate />
     return <ItemHelper showEsc />
   }
 

@@ -173,9 +173,9 @@ export const RoofTool: React.FC = () => {
     const onGridMove = (event: GridEvent) => {
       if (!cursorRef.current) return
 
-      const gridX = Math.round(event.localPosition[0] * 2) / 2
-      const gridZ = Math.round(event.localPosition[2] * 2) / 2
-      const y = event.localPosition[1]
+      const gridX = Math.round(event.position[0] * 2) / 2
+      const gridZ = Math.round(event.position[2] * 2) / 2
+      const y = event.position[1]
 
       const cursorPosition: [number, number, number] = [gridX, y, gridZ]
       const gridY = y + GRID_OFFSET
@@ -206,9 +206,9 @@ export const RoofTool: React.FC = () => {
     const onGridClick = (event: GridEvent) => {
       if (!currentLevelId) return
 
-      const gridX = Math.round(event.localPosition[0] * 2) / 2
-      const gridZ = Math.round(event.localPosition[2] * 2) / 2
-      const y = event.localPosition[1]
+      const gridX = Math.round(event.position[0] * 2) / 2
+      const gridZ = Math.round(event.position[2] * 2) / 2
+      const y = event.position[1]
 
       if (corner1Ref.current) {
         const roofId = commitRoofPlacement(
@@ -268,11 +268,11 @@ export const RoofTool: React.FC = () => {
     <group>
       <CursorSphere ref={cursorRef} />
 
-      {/* @ts-ignore */}
+      
       <line
         frustumCulled={false}
         layers={EDITOR_LAYER}
-        // @ts-expect-error
+        // @ts-expect-error R3F type conflict with Three.js
         ref={outlineRef}
         renderOrder={1}
         visible={false}

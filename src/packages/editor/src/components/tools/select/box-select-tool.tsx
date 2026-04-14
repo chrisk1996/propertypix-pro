@@ -16,7 +16,6 @@ import { useViewer } from '@pascal-app/viewer'
 import { useThree } from '@react-three/fiber'
 import { useEffect, useRef } from 'react'
 import {
-  Box3,
   BufferAttribute,
   BufferGeometry,
   DoubleSide,
@@ -152,33 +151,12 @@ function pointInPolygon(x: number, z: number, polygon: [number, number][]): bool
 // ── Node-in-bounds checks ───────────────────────────────────────────────────
 
 const _tempVec = new Vector3()
-const _tempBox = new Box3()
 
 function getNodeWorldXZ(nodeId: string): [number, number] | null {
   const obj = sceneRegistry.nodes.get(nodeId)
   if (!obj) return null
   obj.getWorldPosition(_tempVec)
   return [_tempVec.x, _tempVec.z]
-}
-
-function objectBoundsIntersectsBounds(nodeId: string, bounds: Bounds): boolean {
-  const obj = sceneRegistry.nodes.get(nodeId)
-  if (!obj) return false
-
-  obj.updateWorldMatrix(true, true)
-  _tempBox.setFromObject(obj)
-
-  if (_tempBox.isEmpty()) {
-    const xz = getNodeWorldXZ(nodeId)
-    return Boolean(xz && pointInBounds(xz[0], xz[1], bounds))
-  }
-
-  return !(
-    _tempBox.max.x < bounds.minX ||
-    _tempBox.min.x > bounds.maxX ||
-    _tempBox.max.z < bounds.minZ ||
-    _tempBox.min.z > bounds.maxZ
-  )
 }
 
 function collectNodeIdsInBounds(bounds: Bounds): string[] {
@@ -197,7 +175,7 @@ function collectNodeIdsInBounds(bounds: Bounds): string[] {
       const node = nodes[childId as AnyNodeId]
       if (!node) continue
 
-      if (node.type === 'wall' || node.type === 'fence') {
+      if (node.type === 'wall') {
         const wall = node as WallNode
         if (
           segmentIntersectsBounds(wall.start[0], wall.start[1], wall.end[0], wall.end[1], bounds)
@@ -205,7 +183,7 @@ function collectNodeIdsInBounds(bounds: Bounds): string[] {
           result.push(wall.id)
         }
         // Check wall children (doors/windows)
-        for (const itemId of Array.isArray(wall.children) ? wall.children : []) {
+        for (const itemId of wall.children) {
           const child = nodes[itemId as AnyNodeId]
           if (!child) continue
           if (
@@ -236,10 +214,6 @@ function collectNodeIdsInBounds(bounds: Bounds): string[] {
         if (xz && pointInBounds(xz[0], xz[1], bounds)) {
           result.push(node.id)
         }
-      } else if (node.type === 'stair') {
-        if (objectBoundsIntersectsBounds(node.id, bounds)) {
-          result.push(node.id)
-        }
       }
     }
   } else if (phase === 'structure' && structureLayer === 'zones') {
@@ -267,13 +241,6 @@ function collectNodeIdsInBounds(bounds: Bounds): string[] {
   }
 
   return result
-}
-
-function haveSameIds(currentIds: string[], nextIds: string[]): boolean {
-  return (
-    currentIds.length === nextIds.length &&
-    currentIds.every((currentId, index) => currentId === nextIds[index])
-  )
 }
 
 // ── Visual helpers ──────────────────────────────────────────────────────────
@@ -333,11 +300,11 @@ function createOutlineSegments(): LineSegments {
   geo.setAttribute('position', new BufferAttribute(positions, 3))
 
   const mat = new LineBasicMaterial({
-    color: BOX_SELECT_ACCENT_COLOR,
+    color: '#818cf8',
     depthTest: false,
     depthWrite: false,
     transparent: true,
-    opacity: 0.85,
+    opacity: 0.6,
   })
 
   const segments = new LineSegments(geo, mat)
@@ -351,17 +318,7 @@ function createOutlineSegments(): LineSegments {
 
 // ── Drag threshold (pixels) ─────────────────────────────────────────────────
 
-const BOX_SELECT_ACCENT_COLOR = '#818cf8'
 const DRAG_THRESHOLD_PX = 4
-
-function getSnappedGridPosition(x: number, z: number): [number, number] {
-  return [Math.round(x * 2) / 2, Math.round(z * 2) / 2]
-}
-
-function setSnappedPoint(target: Vector3, x: number, y: number, z: number) {
-  const [snappedX, snappedZ] = getSnappedGridPosition(x, z)
-  target.set(snappedX, y, snappedZ)
-}
 
 // ── Component ───────────────────────────────────────────────────────────────
 
@@ -387,7 +344,6 @@ const BOX_SELECT_TOOLTIP = (
 
 const BoxSelectToolInner: React.FC = () => {
   const { camera, gl } = useThree()
-  const setPreviewSelectedIds = useViewer((state) => state.setPreviewSelectedIds)
   const cursorRef = useRef<Group>(null)
   const rectFillRef = useRef<Mesh>(null!)
   const outlineRef = useRef(createOutlineSegments())
@@ -398,8 +354,7 @@ const BoxSelectToolInner: React.FC = () => {
   const startClientX = useRef(0)
   const startClientY = useRef(0)
   const gridY = useRef(0)
-  const previousGridPosition = useRef<[number, number] | null>(null)
-  const previewSelectedIdsRef = useRef<string[]>([])
+  const prevHitCount = useRef(0)
 
   // Raycasting helpers (same technique as useGridEvents)
   const raycasterRef = useRef(new Raycaster())
@@ -411,21 +366,10 @@ const BoxSelectToolInner: React.FC = () => {
   useEffect(() => {
     const outline = outlineRef.current
     return () => {
-      previewSelectedIdsRef.current = []
-      setPreviewSelectedIds([])
       outline.geometry.dispose()
       ;(outline.material as LineBasicMaterial).dispose()
     }
-  }, [setPreviewSelectedIds])
-
-  const syncPreviewSelectedIds = (nextIds: string[]) => {
-    if (haveSameIds(previewSelectedIdsRef.current, nextIds)) {
-      return
-    }
-
-    previewSelectedIdsRef.current = nextIds
-    setPreviewSelectedIds(nextIds)
-  }
+  }, [])
 
   // Sync ground plane Y with the current level
   useEffect(() => {
@@ -465,15 +409,14 @@ const BoxSelectToolInner: React.FC = () => {
       const point = raycastToGround(e)
       if (!point) return
 
-      setSnappedPoint(startPoint.current, point.x, point.y, point.z)
-      setSnappedPoint(currentPoint.current, point.x, point.y, point.z)
+      startPoint.current.copy(point)
+      currentPoint.current.copy(point)
       gridY.current = point.y
       pointerDown.current = true
       isDragging.current = false
-      previousGridPosition.current = getSnappedGridPosition(point.x, point.z)
+      prevHitCount.current = 0
       startClientX.current = e.clientX
       startClientY.current = e.clientY
-      syncPreviewSelectedIds([])
     }
 
     const onCanvasPointerUp = (e: PointerEvent) => {
@@ -482,7 +425,7 @@ const BoxSelectToolInner: React.FC = () => {
 
       if (isDragging.current) {
         const point = raycastToGround(e)
-        if (point) setSnappedPoint(currentPoint.current, point.x, point.y, point.z)
+        if (point) currentPoint.current.copy(point)
 
         const bounds: Bounds = {
           minX: Math.min(startPoint.current.x, currentPoint.current.x),
@@ -522,7 +465,6 @@ const BoxSelectToolInner: React.FC = () => {
       // Hide visuals
       if (rectFillRef.current) rectFillRef.current.visible = false
       if (outlineRef.current) outlineRef.current.visible = false
-      syncPreviewSelectedIds([])
 
       // Reset
       pointerDown.current = false
@@ -541,16 +483,14 @@ const BoxSelectToolInner: React.FC = () => {
   // grid:move for cursor tracking + rectangle update during drag
   useEffect(() => {
     const onMove = (event: GridEvent) => {
-      const [snappedX, snappedZ] = getSnappedGridPosition(event.position[0], event.position[2])
-
       // Always update cursor position
       if (cursorRef.current) {
-        cursorRef.current.position.set(snappedX, event.position[1], snappedZ)
+        cursorRef.current.position.set(event.position[0], event.position[1], event.position[2])
       }
 
       if (!pointerDown.current) return
 
-      currentPoint.current.set(snappedX, event.position[1], snappedZ)
+      currentPoint.current.set(event.position[0], event.position[1], event.position[2])
 
       // Check drag threshold (screen pixels)
       const nativeEvent = event.nativeEvent as unknown as PointerEvent
@@ -569,23 +509,18 @@ const BoxSelectToolInner: React.FC = () => {
           gridY.current,
         )
 
-        const nextGridPosition: [number, number] = [snappedX, snappedZ]
-        if (
-          previousGridPosition.current &&
-          (nextGridPosition[0] !== previousGridPosition.current[0] ||
-            nextGridPosition[1] !== previousGridPosition.current[1])
-        ) {
-          sfxEmitter.emit('sfx:grid-snap')
-        }
-        previousGridPosition.current = nextGridPosition
-
+        // Play snap sound when the set of captured nodes changes
         const bounds: Bounds = {
           minX: Math.min(startPoint.current.x, currentPoint.current.x),
           maxX: Math.max(startPoint.current.x, currentPoint.current.x),
           minZ: Math.min(startPoint.current.z, currentPoint.current.z),
           maxZ: Math.max(startPoint.current.z, currentPoint.current.z),
         }
-        syncPreviewSelectedIds(collectNodeIdsInBounds(bounds))
+        const hitCount = collectNodeIdsInBounds(bounds).length
+        if (hitCount !== prevHitCount.current) {
+          sfxEmitter.emit('sfx:grid-snap')
+          prevHitCount.current = hitCount
+        }
       }
     }
 
@@ -610,10 +545,10 @@ const BoxSelectToolInner: React.FC = () => {
       >
         <planeGeometry args={[1, 1]} />
         <meshBasicMaterial
-          color={BOX_SELECT_ACCENT_COLOR}
+          color="#818cf8"
           depthTest={false}
           depthWrite={false}
-          opacity={0.14}
+          opacity={0.12}
           side={DoubleSide}
           transparent
         />

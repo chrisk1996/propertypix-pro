@@ -8,7 +8,7 @@ export const RoofNode = BaseNode.extend({
   id: objectId('roof'),
   type: nodeType('roof'),
   material: MaterialSchema.optional(),
-  position: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
+  position: z.array(z.number()).length(3).default([0, 0, 0]),
   // Rotation around Y axis in radians
   rotation: z.number().default(0),
   // Child roof segment IDs

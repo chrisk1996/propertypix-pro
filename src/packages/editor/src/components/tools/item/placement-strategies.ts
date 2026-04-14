@@ -47,16 +47,12 @@ export const floorStrategy = {
       ? getScaledDimensions(ctx.draftItem)
       : (ctx.asset.dimensions ?? DEFAULT_DIMENSIONS)
     const [dimX, , dimZ] = dims
-    const rotY = ctx.draftItem?.rotation?.[1] ?? 0
-    const swapDims = Math.abs(Math.sin(rotY)) > 0.9
-    // event.localPosition is building-local; the coordinator cursor group is inside the
-    // building-local ToolManager group, so local coords are correct for both data and visuals.
-    const x = snapToGrid(event.localPosition[0], swapDims ? dimZ : dimX)
-    const z = snapToGrid(event.localPosition[2], swapDims ? dimX : dimZ)
+    const x = snapToGrid(event.position[0], dimX)
+    const z = snapToGrid(event.position[2], dimZ)
 
     return {
       gridPosition: [x, 0, z],
-      cursorPosition: [x, event.localPosition[1], z],
+      cursorPosition: [x, event.position[1], z],
       cursorRotationY: 0,
       nodeUpdate: { position: [x, 0, z] },
       stopPropagation: false,
@@ -306,11 +302,9 @@ export const ceilingStrategy = {
       : (ctx.asset.dimensions ?? DEFAULT_DIMENSIONS)
     const [dimX, , dimZ] = dims
     const itemHeight = dims[1]
-    const rotY = ctx.draftItem?.rotation?.[1] ?? 0
-    const swapDims = Math.abs(Math.sin(rotY)) > 0.9
 
-    const x = snapToGrid(event.position[0], swapDims ? dimZ : dimX)
-    const z = snapToGrid(event.position[2], swapDims ? dimX : dimZ)
+    const x = snapToGrid(event.position[0], dimX)
+    const z = snapToGrid(event.position[2], dimZ)
 
     return {
       stateUpdate: { surface: 'ceiling', ceilingId: event.node.id },
@@ -335,11 +329,9 @@ export const ceilingStrategy = {
     const dims = getScaledDimensions(ctx.draftItem)
     const [dimX, , dimZ] = dims
     const itemHeight = dims[1]
-    const rotY = ctx.draftItem.rotation?.[1] ?? 0
-    const swapDims = Math.abs(Math.sin(rotY)) > 0.9
 
-    const x = snapToGrid(event.position[0], swapDims ? dimZ : dimX)
-    const z = snapToGrid(event.position[2], swapDims ? dimX : dimZ)
+    const x = snapToGrid(event.position[0], dimX)
+    const z = snapToGrid(event.position[2], dimZ)
 
     return {
       gridPosition: [x, -itemHeight, z],

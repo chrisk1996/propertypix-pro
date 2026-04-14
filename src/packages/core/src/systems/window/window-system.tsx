@@ -1,9 +1,27 @@
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import { DoubleSide, MeshStandardNodeMaterial } from 'three/webgpu'
 import { sceneRegistry } from '../../hooks/scene-registry/scene-registry'
-import { baseMaterial, glassMaterial } from '../../materials'
 import type { AnyNodeId, WindowNode } from '../../schema'
 import useScene from '../../store/use-scene'
+
+const glassMaterial = new MeshStandardNodeMaterial({
+  name: 'glass',
+  color: 'lightblue',
+  roughness: 0.05,
+  metalness: 0.1,
+  transparent: true,
+  opacity: 0.3,
+  side: DoubleSide,
+  depthWrite: false,
+})
+
+const frameMaterial = new MeshStandardNodeMaterial({
+  name: 'window-frame',
+  color: '#e8e8e8',
+  roughness: 0.6,
+  metalness: 0,
+})
 
 // Invisible material for root mesh — used as selection hitbox only
 const hitboxMaterial = new THREE.MeshBasicMaterial({ visible: false })
@@ -90,7 +108,7 @@ function updateWindowMesh(node: WindowNode, mesh: THREE.Mesh) {
   // Top / bottom — full width
   addBox(
     mesh,
-    baseMaterial,
+    frameMaterial,
     width,
     frameThickness,
     frameDepth,
@@ -100,7 +118,7 @@ function updateWindowMesh(node: WindowNode, mesh: THREE.Mesh) {
   )
   addBox(
     mesh,
-    baseMaterial,
+    frameMaterial,
     width,
     frameThickness,
     frameDepth,
@@ -111,7 +129,7 @@ function updateWindowMesh(node: WindowNode, mesh: THREE.Mesh) {
   // Left / right — inner height to avoid corner overlap
   addBox(
     mesh,
-    baseMaterial,
+    frameMaterial,
     frameThickness,
     innerH,
     frameDepth,
@@ -121,7 +139,7 @@ function updateWindowMesh(node: WindowNode, mesh: THREE.Mesh) {
   )
   addBox(
     mesh,
-    baseMaterial,
+    frameMaterial,
     frameThickness,
     innerH,
     frameDepth,
@@ -166,7 +184,7 @@ function updateWindowMesh(node: WindowNode, mesh: THREE.Mesh) {
     cx += colWidths[c]!
     addBox(
       mesh,
-      baseMaterial,
+      frameMaterial,
       columnDividerThickness,
       innerH,
       frameDepth,
@@ -185,7 +203,7 @@ function updateWindowMesh(node: WindowNode, mesh: THREE.Mesh) {
     for (let c = 0; c < numCols; c++) {
       addBox(
         mesh,
-        baseMaterial,
+        frameMaterial,
         colWidths[c]!,
         rowDividerThickness,
         frameDepth,
@@ -221,7 +239,7 @@ function updateWindowMesh(node: WindowNode, mesh: THREE.Mesh) {
     const sillZ = frameDepth / 2 + sillDepth / 2
     addBox(
       mesh,
-      baseMaterial,
+      frameMaterial,
       sillW,
       sillThickness,
       sillDepth,

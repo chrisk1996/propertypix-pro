@@ -8,7 +8,6 @@ import { MathUtils, type Mesh, Vector2 } from 'three'
 import { color, float, fract, fwidth, mix, positionLocal, uniform } from 'three/tsl'
 import { MeshBasicNodeMaterial } from 'three/webgpu'
 import { useGridEvents } from '../../hooks/use-grid-events'
-import { EDITOR_LAYER } from '../../lib/constants'
 
 export const Grid = ({
   cellSize = 0.5,
@@ -51,8 +50,10 @@ export const Grid = ({
     const getGrid = (size: number, thickness: number) => {
       const r = pos.div(size)
       const fw = fwidth(r)
+
       // Distance to nearest grid line for each axis
       const grid = fract(r.sub(0.5)).sub(0.5).abs()
+
       // Anti-aliased step: divide by fwidth and clamp
       const lineX = float(1).sub(
         grid.x
@@ -66,6 +67,7 @@ export const Grid = ({
           .add(1 - thickness)
           .min(1),
       )
+
       // Combine both axes - max gives us lines in both directions
       return lineX.max(lineY)
     }
@@ -124,7 +126,6 @@ export const Grid = ({
     const onGridMove = (event: GridEvent) => {
       cursorPositionRef.current.set(event.position[0], -event.position[2])
     }
-
     emitter.on('grid:move', onGridMove)
     return () => {
       emitter.off('grid:move', onGridMove)
@@ -149,7 +150,6 @@ export const Grid = ({
 
   return (
     <mesh
-      layers={EDITOR_LAYER}
       material={material}
       ref={gridRef}
       rotation-x={-Math.PI / 2}

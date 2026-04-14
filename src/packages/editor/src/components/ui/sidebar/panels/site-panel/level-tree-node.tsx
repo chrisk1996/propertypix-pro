@@ -1,66 +1,61 @@
-import { type AnyNodeId, type LevelNode, useScene } from '@pascal-app/core'
+import type { LevelNode } from '@pascal-app/core'
 import { useViewer } from '@pascal-app/viewer'
 import { Layers } from 'lucide-react'
-import { useCallback, useState } from 'react'
-import { useShallow } from 'zustand/react/shallow'
+import { useState } from 'react'
 import { InlineRenameInput } from './inline-rename-input'
 import { focusTreeNode, TreeNode, TreeNodeWrapper } from './tree-node'
 import { TreeNodeActions } from './tree-node-actions'
 
 interface LevelTreeNodeProps {
-  nodeId: AnyNodeId
+  node: LevelNode
   depth: number
   isLast?: boolean
 }
 
-export function LevelTreeNode({ nodeId, depth, isLast }: LevelTreeNodeProps) {
+export function LevelTreeNode({ node, depth, isLast }: LevelTreeNodeProps) {
   const [expanded, setExpanded] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
-  const isVisible = useScene((s) => s.nodes[nodeId]?.visible !== false)
-  const children = useScene(
-    useShallow((s) => (s.nodes[nodeId] as LevelNode | undefined)?.children ?? []),
-  )
-  const level = useScene((s) => (s.nodes[nodeId] as LevelNode | undefined)?.level ?? 0)
-  const isSelected = useViewer((state) => state.selection.levelId === nodeId)
-  const isHovered = useViewer((state) => state.hoveredId === nodeId)
+  const isSelected = useViewer((state) => state.selection.levelId === node.id)
+  const isHovered = useViewer((state) => state.hoveredId === node.id)
   const setSelection = useViewer((state) => state.setSelection)
 
-  const handleClick = useCallback(() => setSelection({ levelId: nodeId }), [nodeId, setSelection])
-  const handleDoubleClick = useCallback(() => focusTreeNode(nodeId), [nodeId])
-  const handleToggle = useCallback(() => setExpanded((prev) => !prev), [])
-  const handleStartEditing = useCallback(() => setIsEditing(true), [])
-  const handleStopEditing = useCallback(() => setIsEditing(false), [])
+  const handleClick = () => {
+    setSelection({ levelId: node.id })
+  }
 
-  const defaultName = `Level ${level}`
+  const handleDoubleClick = () => {
+    focusTreeNode(node.id)
+  }
+
+  const defaultName = `Level ${node.level}`
 
   return (
     <TreeNodeWrapper
-      actions={<TreeNodeActions nodeId={nodeId} />}
+      actions={<TreeNodeActions node={node} />}
       depth={depth}
       expanded={expanded}
-      hasChildren={children.length > 0}
+      hasChildren={node.children.length > 0}
       icon={<Layers className="h-3.5 w-3.5" />}
       isHovered={isHovered}
       isLast={isLast}
       isSelected={isSelected}
-      isVisible={isVisible}
       label={
         <InlineRenameInput
           defaultName={defaultName}
           isEditing={isEditing}
-          nodeId={nodeId}
-          onStartEditing={handleStartEditing}
-          onStopEditing={handleStopEditing}
+          node={node}
+          onStartEditing={() => setIsEditing(true)}
+          onStopEditing={() => setIsEditing(false)}
         />
       }
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
-      onToggle={handleToggle}
+      onToggle={() => setExpanded(!expanded)}
     >
-      {children.map((childId, index) => (
+      {node.children.map((childId, index) => (
         <TreeNode
           depth={depth + 1}
-          isLast={index === children.length - 1}
+          isLast={index === node.children.length - 1}
           key={childId}
           nodeId={childId}
         />

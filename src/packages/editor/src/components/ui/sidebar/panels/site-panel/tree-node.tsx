@@ -57,7 +57,6 @@ import { cn } from '../../../../../lib/utils'
 import { BuildingTreeNode } from './building-tree-node'
 import { CeilingTreeNode } from './ceiling-tree-node'
 import { DoorTreeNode } from './door-tree-node'
-import { FenceTreeNode } from './fence-tree-node'
 import { ItemTreeNode } from './item-tree-node'
 import { LevelTreeNode } from './level-tree-node'
 import { RoofTreeNode } from './roof-tree-node'
@@ -74,35 +73,33 @@ interface TreeNodeProps {
 }
 
 export function TreeNode({ nodeId, depth = 0, isLast }: TreeNodeProps) {
-  const nodeType = useScene((state) => state.nodes[nodeId]?.type)
+  const node = useScene((state) => state.nodes[nodeId])
 
-  if (!nodeType) return null
+  if (!node) return null
 
-  switch (nodeType) {
+  switch (node.type) {
     case 'building':
-      return <BuildingTreeNode depth={depth} isLast={isLast} nodeId={nodeId} />
+      return <BuildingTreeNode depth={depth} isLast={isLast} node={node as any} />
     case 'ceiling':
-      return <CeilingTreeNode depth={depth} isLast={isLast} nodeId={nodeId} />
+      return <CeilingTreeNode depth={depth} isLast={isLast} node={node as any} />
     case 'level':
-      return <LevelTreeNode depth={depth} isLast={isLast} nodeId={nodeId} />
+      return <LevelTreeNode depth={depth} isLast={isLast} node={node as any} />
     case 'slab':
-      return <SlabTreeNode depth={depth} isLast={isLast} nodeId={nodeId} />
+      return <SlabTreeNode depth={depth} isLast={isLast} node={node as any} />
     case 'wall':
-      return <WallTreeNode depth={depth} isLast={isLast} nodeId={nodeId} />
-    case 'fence':
-      return <FenceTreeNode depth={depth} isLast={isLast} nodeId={nodeId} />
+      return <WallTreeNode depth={depth} isLast={isLast} node={node as any} />
     case 'roof':
-      return <RoofTreeNode depth={depth} isLast={isLast} nodeId={nodeId} />
+      return <RoofTreeNode depth={depth} isLast={isLast} node={node as any} />
     case 'stair':
-      return <StairTreeNode depth={depth} isLast={isLast} nodeId={nodeId} />
+      return <StairTreeNode depth={depth} isLast={isLast} node={node as any} />
     case 'item':
-      return <ItemTreeNode depth={depth} isLast={isLast} nodeId={nodeId} />
+      return <ItemTreeNode depth={depth} isLast={isLast} node={node as any} />
     case 'door':
-      return <DoorTreeNode depth={depth} isLast={isLast} nodeId={nodeId} />
+      return <DoorTreeNode depth={depth} isLast={isLast} node={node as any} />
     case 'window':
-      return <WindowTreeNode depth={depth} isLast={isLast} nodeId={nodeId} />
+      return <WindowTreeNode depth={depth} isLast={isLast} node={node as any} />
     case 'zone':
-      return <ZoneTreeNode depth={depth} isLast={isLast} nodeId={nodeId} />
+      return <ZoneTreeNode depth={depth} isLast={isLast} node={node as any} />
     default:
       return null
   }
