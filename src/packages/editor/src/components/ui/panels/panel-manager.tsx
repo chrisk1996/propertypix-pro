@@ -5,6 +5,7 @@ import { useViewer } from '@pascal-app/viewer'
 import useEditor from '../../../store/use-editor'
 import { CeilingPanel } from './ceiling-panel'
 import { DoorPanel } from './door-panel'
+import { FencePanel } from './fence-panel'
 import { ItemPanel } from './item-panel'
 import { ReferencePanel } from './reference-panel'
 import { RoofPanel } from './roof-panel'
@@ -37,16 +38,18 @@ export function PanelManager() {
           return <RoofPanel />
         case 'roof-segment':
           return <RoofSegmentPanel />
-        case 'slab':
-          return <SlabPanel />
         case 'stair':
           return <StairPanel />
         case 'stair-segment':
           return <StairSegmentPanel />
+        case 'slab':
+          return <SlabPanel />
         case 'ceiling':
           return <CeilingPanel />
         case 'wall':
           return <WallPanel />
+        case 'fence':
+          return <FencePanel />
         case 'door':
           return <DoorPanel />
         case 'window':

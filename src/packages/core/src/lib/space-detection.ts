@@ -596,10 +596,10 @@ export function wallTouchesOthers(wall: WallNode, otherWalls: WallNode[]): boole
 
     // Check if any endpoint of wall is close to any endpoint or segment of other
     if (
-      distanceToSegment(wall.start as [number, number], other.start as [number, number], other.end as [number, number]) < threshold ||
-      distanceToSegment(wall.end as [number, number], other.start as [number, number], other.end as [number, number]) < threshold ||
-      distanceToSegment(other.start as [number, number], wall.start as [number, number], wall.end as [number, number]) < threshold ||
-      distanceToSegment(other.end as [number, number], wall.start as [number, number], wall.end as [number, number]) < threshold
+      distanceToSegment(wall.start, other.start, other.end) < threshold ||
+      distanceToSegment(wall.end, other.start, other.end) < threshold ||
+      distanceToSegment(other.start, wall.start, wall.end) < threshold ||
+      distanceToSegment(other.end, wall.start, wall.end) < threshold
     ) {
       return true
     }

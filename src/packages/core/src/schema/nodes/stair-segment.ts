@@ -15,7 +15,7 @@ export const StairSegmentNode = BaseNode.extend({
   id: objectId('sseg'),
   type: nodeType('stair-segment'),
   material: MaterialSchema.optional(),
-  position: z.array(z.number()).length(3).default([0, 0, 0]),
+  position: z.tuple([z.number(), z.number(), z.number()]).default([0, 0, 0]),
   // Rotation around Y axis in radians
   rotation: z.number().default(0),
   // Stair or landing

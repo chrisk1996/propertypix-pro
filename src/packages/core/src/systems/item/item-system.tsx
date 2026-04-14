@@ -42,9 +42,9 @@ export const ItemSystem = () => {
           const levelId = resolveLevelId(item, nodes)
           const slabElevation = spatialGridManager.getSlabElevationForItem(
             levelId,
-            item.position as [number, number, number],
+            item.position,
             getScaledDimensions(item),
-            item.rotation as [number, number, number],
+            item.rotation,
           )
           mesh.position.y = slabElevation + item.position[1]
         }

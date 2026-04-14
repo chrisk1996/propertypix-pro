@@ -1,3 +1,5 @@
+'use client'
+
 import { useLayoutEffect } from 'react'
 import type * as THREE from 'three'
 
@@ -13,6 +15,7 @@ export const sceneRegistry = {
     ceiling: new Set<string>(),
     level: new Set<string>(),
     wall: new Set<string>(),
+    fence: new Set<string>(),
     item: new Set<string>(),
     slab: new Set<string>(),
     zone: new Set<string>(),
@@ -29,7 +32,7 @@ export const sceneRegistry = {
   /** Remove all entries. Call when unloading a scene to prevent stale 3D refs. */
   clear() {
     this.nodes.clear()
-    for (const set of Object.values(this.byType) as Set<string>[]) {
+    for (const set of Object.values(this.byType)) {
       set.clear()
     }
   },
