@@ -24,6 +24,10 @@ export async function POST(request: NextRequest) {
   try {
     const stripe = getStripe();
     const supabase = await createClient();
+    
+    // Get the base URL from the request
+    const baseUrl = process.env.NEXT_PUBLIC_URL || request.headers.get('origin') || `https://${request.headers.get('host')}`;
+    
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
@@ -47,7 +51,7 @@ export async function POST(request: NextRequest) {
     // Create portal session
     const session = await stripe.billingPortal.sessions.create({
       customer: userData.stripe_customer_id,
-      return_url: `${process.env.NEXT_PUBLIC_URL || 'https://zestio.ai'}/billing`,
+      return_url: `${baseUrl}/billing`,
     });
 
     return NextResponse.json({ url: session.url });

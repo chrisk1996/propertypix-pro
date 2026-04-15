@@ -31,6 +31,10 @@ export async function POST(request: NextRequest) {
   try {
     const stripe = getStripe();
     const supabase = await createClient();
+    
+    // Get the base URL from the request
+    const baseUrl = process.env.NEXT_PUBLIC_URL || request.headers.get('origin') || `https://${request.headers.get('host')}`;
+    
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
@@ -80,8 +84,8 @@ export async function POST(request: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: `${process.env.NEXT_PUBLIC_URL || 'https://zestio.ai'}/billing?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_URL || 'https://zestio.ai'}/billing?canceled=true`,
+      success_url: `${baseUrl}/billing?success=true`,
+      cancel_url: `${baseUrl}/billing?canceled=true`,
       metadata: {
         user_id: user.id,
         plan: plan,
