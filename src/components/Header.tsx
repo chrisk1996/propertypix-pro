@@ -35,7 +35,7 @@ export function Header() {
       <div className="max-w-[1920px] mx-auto flex justify-between items-center px-12 py-5">
         {/* Logo */}
         <Link href="/" className="flex items-center">
-          <img src="/logo.png" alt="Zestio" className="h-8 w-auto" />
+          <img src="/logo.png" alt="Zestio" className="h-10 w-auto" />
         </Link>
 
         {/* Nav - Desktop */}
