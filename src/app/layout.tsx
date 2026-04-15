@@ -12,6 +12,10 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Zestio - AI-Powered Real Estate",
   description: "AI-powered property photo enhancement and 3D floor plans for real estate agents",
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
 };
 
 async function getLocale(): Promise<Locale> {

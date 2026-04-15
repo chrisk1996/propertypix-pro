@@ -21,7 +21,7 @@ export default function SideNavBar() {
       <div className="p-6 flex flex-col h-full">
         {/* Logo */}
         <div className="mb-10 px-2">
-          <img src="/logo.png" alt="Zestio" className="h-8 w-auto" />
+          <img src="/logo.png" alt="Zestio" className="h-10 w-auto" />
         </div>
 
         {/* Navigation */}
