@@ -81,7 +81,7 @@ export default function VideoPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
-        const { data: creditsData } = await supabase.from('propertypix_users').select('credits, used_credits').eq('id', user.id).single();
+        const { data: creditsData } = await supabase.from('zestio_users').select('credits, used_credits').eq('id', user.id).single();
         if (creditsData) {
           setCredits({ total: creditsData.credits ?? 0, used: creditsData.used_credits ?? 0 });
         }

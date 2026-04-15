@@ -48,7 +48,7 @@ export default function LibraryPage() {
       }
 
       const { data, error: fetchError } = await supabase
-        .from('propertypix_jobs')
+        .from('zestio_jobs')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
@@ -88,7 +88,7 @@ export default function LibraryPage() {
 
     try {
       const { error: deleteError } = await supabase
-        .from('propertypix_jobs')
+        .from('zestio_jobs')
         .delete()
         .eq('id', jobId);
 

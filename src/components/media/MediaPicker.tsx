@@ -40,7 +40,7 @@ export function MediaPicker({ onSelect, multiple = true, onClose }: MediaPickerP
       }
 
       const { data, error } = await supabase
-        .from('propertypix_jobs')
+        .from('zestio_jobs')
         .select('*')
         .eq('user_id', user.id)
         .eq('status', 'completed')

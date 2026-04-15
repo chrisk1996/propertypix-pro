@@ -1,4 +1,4 @@
-# PropertyPix Pro - Component Documentation
+# Zestio Pro - Component Documentation
 
 Reusable UI components located in `src/components/`.
 

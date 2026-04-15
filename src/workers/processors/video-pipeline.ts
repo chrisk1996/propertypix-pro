@@ -376,16 +376,16 @@ async function refundCredit(userId: string, jobId: string): Promise<void> {
 
     if (error) {
       console.error(`[VideoPipeline] Failed to refund credit:`, error);
-      // Fallback: update propertypix_users directly
+      // Fallback: update zestio_users directly
       const { data: userData } = await supabase
-        .from('propertypix_users')
+        .from('zestio_users')
         .select('used_credits')
         .eq('id', userId)
         .single();
 
       if (userData && userData.used_credits > 0) {
         await supabase
-          .from('propertypix_users')
+          .from('zestio_users')
           .update({ used_credits: userData.used_credits - 1 })
           .eq('id', userId);
         console.log(`[VideoPipeline] Refunded 1 credit to user ${userId}`);

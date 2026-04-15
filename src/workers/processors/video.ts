@@ -14,7 +14,7 @@ export async function processVideo(
   try {
     // Update job status
     await supabase
-      .from('propertypix_jobs')
+      .from('zestio_jobs')
       .update({ status: 'processing' })
       .eq('id', jobId);
 
@@ -51,7 +51,7 @@ export async function processVideo(
 
     // Update job with result
     await supabase
-      .from('propertypix_jobs')
+      .from('zestio_jobs')
       .update({
         status: 'completed',
         output_url: videoUrl,
@@ -69,7 +69,7 @@ export async function processVideo(
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
     await supabase
-      .from('propertypix_jobs')
+      .from('zestio_jobs')
       .update({
         status: 'failed',
         error_message: errorMessage,
@@ -87,14 +87,14 @@ async function deductCredits(
   amount: number
 ): Promise<void> {
   const { data: user } = await supabase
-    .from('propertypix_users')
+    .from('zestio_users')
     .select('credits_remaining, credits_used')
     .eq('id', userId)
     .single();
 
   if (user && user.credits_remaining >= amount) {
     await supabase
-      .from('propertypix_users')
+      .from('zestio_users')
       .update({
         credits_remaining: user.credits_remaining - amount,
         credits_used: user.credits_used + amount,

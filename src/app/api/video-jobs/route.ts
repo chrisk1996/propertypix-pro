@@ -70,9 +70,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check user credits from propertypix_users table
+    // Check user credits from zestio_users table
     const { data: userData } = await supabase
-      .from('propertypix_users')
+      .from('zestio_users')
       .select('credits, used_credits')
       .eq('id', user.id)
       .single();
@@ -111,9 +111,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Deduct credit from propertypix_users
+    // Deduct credit from zestio_users
     await supabase
-      .from('propertypix_users')
+      .from('zestio_users')
       .update({ used_credits: (userData?.used_credits ?? 0) + 1 })
       .eq('id', user.id);
 

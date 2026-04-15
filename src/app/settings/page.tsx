@@ -38,7 +38,7 @@ export default function SettingsPage() {
       }
 
       const { data, error: fetchError } = await supabase
-        .from('propertypix_users')
+        .from('zestio_users')
         .select('*')
         .eq('id', authUser.id)
         .single();
@@ -71,7 +71,7 @@ export default function SettingsPage() {
       if (!authUser) return;
 
       const { error: updateError } = await supabase
-        .from('propertypix_users')
+        .from('zestio_users')
         .update({ language: newLanguage })
         .eq('id', authUser.id);
 
@@ -103,7 +103,7 @@ export default function SettingsPage() {
       if (!authUser) return;
 
       const { error: updateError } = await supabase
-        .from('propertypix_users')
+        .from('zestio_users')
         .update({ full_name: name })
         .eq('id', authUser.id);
 

@@ -1,8 +1,8 @@
-# PropertyPix Pro
+# Zestio Pro
 
 AI-powered real estate media platform for agents, photographers, and property marketers.
 
-**Live:** [propertypix.pro](https://propertypix.pro)
+**Live:** [zestio.ai](https://zestio.ai)
 
 ---
 
@@ -96,8 +96,8 @@ Depth Map + Prompt → FLUX Depth Pro → Staged Image
 ### Installation
 
 ```bash
-git clone https://github.com/chrisk1996/propertypix-pro.git
-cd propertypix-pro/frontend
+git clone https://github.com/chrisk1996/zestio-pro.git
+cd zestio-pro/frontend
 npm install
 ```
 
@@ -190,8 +190,8 @@ src/
 ### Docker
 
 ```bash
-docker build -t propertypix-pro .
-docker run -p 3000:3000 propertypix-pro
+docker build -t zestio-pro .
+docker run -p 3000:3000 zestio-pro
 ```
 
 ---
@@ -218,8 +218,8 @@ MIT License - See [LICENSE](LICENSE) for details.
 
 ## Support
 
-- **Issues:** [GitHub Issues](https://github.com/chrisk1996/propertypix-pro/issues)
-- **Email:** support@propertypix.pro
+- **Issues:** [GitHub Issues](https://github.com/chrisk1996/zestio-pro/issues)
+- **Email:** support@zestio.ai
 
 ---
 

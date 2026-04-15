@@ -175,16 +175,16 @@ export async function DELETE(
       })
       .eq('id', id);
 
-    // Refund credit to propertypix_users
+    // Refund credit to zestio_users
     const { data: userData } = await supabase
-      .from('propertypix_users')
+      .from('zestio_users')
       .select('used_credits')
       .eq('id', user.id)
       .single();
 
     if (userData && userData.used_credits > 0) {
       await supabase
-        .from('propertypix_users')
+        .from('zestio_users')
         .update({ used_credits: userData.used_credits - 1 })
         .eq('id', user.id);
     }

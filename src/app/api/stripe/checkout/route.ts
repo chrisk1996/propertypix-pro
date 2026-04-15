@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     // Get or create Stripe customer
     const { data: userData } = await supabase
-      .from('propertypix_users')
+      .from('zestio_users')
       .select('stripe_customer_id, email')
       .eq('id', user.id)
       .single();
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
 
       // Save customer ID to database
       await supabase
-        .from('propertypix_users')
+        .from('zestio_users')
         .update({ stripe_customer_id: customerId })
         .eq('id', user.id);
     }
@@ -80,8 +80,8 @@ export async function POST(request: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: `${process.env.NEXT_PUBLIC_URL || 'https://propertypix.pro'}/billing?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_URL || 'https://propertypix.pro'}/billing?canceled=true`,
+      success_url: `${process.env.NEXT_PUBLIC_URL || 'https://zestio.ai'}/billing?success=true`,
+      cancel_url: `${process.env.NEXT_PUBLIC_URL || 'https://zestio.ai'}/billing?canceled=true`,
       metadata: {
         user_id: user.id,
         plan: plan,

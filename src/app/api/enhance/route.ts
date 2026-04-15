@@ -46,16 +46,16 @@ export async function POST(request: NextRequest) {
 
     // Check user credits
     const { data: userData, error: userError } = await supabase
-      .from('propertypix_users')
+      .from('zestio_users')
       .select('credits, used_credits, subscription_tier')
       .eq('id', user.id)
       .single();
 
     if (userError) {
       console.error('Error fetching user:', userError);
-      // User might not exist in propertypix_users yet, create record
+      // User might not exist in zestio_users yet, create record
       const { error: insertError } = await supabase
-        .from('propertypix_users')
+        .from('zestio_users')
         .insert({
           id: user.id,
           credits: 5, // Free tier default
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
 
     // Create job record
     const { data: job, error: jobError } = await supabase
-      .from('propertypix_jobs')
+      .from('zestio_jobs')
       .insert({
         user_id: user.id,
         input_url: image.substring(0, 500), // Store truncated reference
@@ -211,7 +211,7 @@ export async function POST(request: NextRequest) {
 
       // Update job with result
       await supabase
-        .from('propertypix_jobs')
+        .from('zestio_jobs')
         .update({
           output_url: resultUrl,
           status: 'completed',
@@ -222,7 +222,7 @@ export async function POST(request: NextRequest) {
       // Deduct credits
       if (userData) {
         await supabase
-          .from('propertypix_users')
+          .from('zestio_users')
           .update({
             credits: Math.max(0, userData.credits - creditsUsed),
             used_credits: userData.used_credits + creditsUsed,
@@ -242,7 +242,7 @@ export async function POST(request: NextRequest) {
       console.error('Enhancement error:', enhanceError);
       // Update job as failed
       await supabase
-        .from('propertypix_jobs')
+        .from('zestio_jobs')
         .update({ status: 'failed' })
         .eq('id', job.id);
       throw enhanceError;

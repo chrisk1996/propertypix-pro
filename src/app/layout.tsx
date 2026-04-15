@@ -10,7 +10,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "PropertyPix Pro - AI-Powered Real Estate",
+  title: "Zestio - AI-Powered Real Estate",
   description: "AI-powered property photo enhancement and 3D floor plans for real estate agents",
 };
 

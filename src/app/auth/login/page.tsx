@@ -57,7 +57,7 @@ export default function LoginPage() {
       <div className="max-w-md w-full mx-4">
         <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">PropertyPix Pro</h1>
+            <h1 className="text-3xl font-bold text-white mb-2">Zestio</h1>
             <p className="text-slate-400">AI-powered real estate photo enhancement</p>
           </div>
 

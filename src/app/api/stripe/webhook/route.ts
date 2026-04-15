@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
         if (userId && plan) {
           // Update user subscription
           await supabaseAdmin
-            .from('propertypix_users')
+            .from('zestio_users')
             .update({
               subscription_tier: plan,
               subscription_status: 'active',
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
 
         // Find user by Stripe customer ID
         const { data: user } = await supabaseAdmin
-          .from('propertypix_users')
+          .from('zestio_users')
           .select('id')
           .eq('stripe_customer_id', customerId)
           .single();
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
           const plan = subscription.items.data[0]?.price.metadata?.plan || 'pro';
 
           await supabaseAdmin
-            .from('propertypix_users')
+            .from('zestio_users')
             .update({
               subscription_tier: status === 'active' ? plan : 'free',
               subscription_status: status,
@@ -110,14 +110,14 @@ export async function POST(request: NextRequest) {
 
         // Find user by Stripe customer ID
         const { data: user } = await supabaseAdmin
-          .from('propertypix_users')
+          .from('zestio_users')
           .select('id')
           .eq('stripe_customer_id', customerId)
           .single();
 
         if (user) {
           await supabaseAdmin
-            .from('propertypix_users')
+            .from('zestio_users')
             .update({
               subscription_tier: 'free',
               subscription_status: 'canceled',
@@ -136,14 +136,14 @@ export async function POST(request: NextRequest) {
 
         // Reset credits on successful payment (monthly reset)
         const { data: user } = await supabaseAdmin
-          .from('propertypix_users')
+          .from('zestio_users')
           .select('id, subscription_tier')
           .eq('stripe_customer_id', customerId)
           .single();
 
         if (user && user.subscription_tier !== 'free') {
           await supabaseAdmin
-            .from('propertypix_users')
+            .from('zestio_users')
             .update({
               used_credits: 0,
               credits: user.subscription_tier === 'enterprise' ? -1 : 100,

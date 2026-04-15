@@ -24,7 +24,7 @@ export async function POST() {
 
     // Get user's Stripe customer ID
     const { data: userData } = await supabase
-      .from('propertypix_users')
+      .from('zestio_users')
       .select('stripe_customer_id')
       .eq('id', user.id)
       .single();

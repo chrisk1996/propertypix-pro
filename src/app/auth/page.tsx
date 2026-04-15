@@ -94,7 +94,7 @@ export default function AuthPage() {
             {isLogin ? 'Welcome back' : 'Create your account'}
           </h1>
           <p className="text-gray-600">
-            {isLogin ? 'Sign in to access your PropertyPix Pro account' : 'Start enhancing your property photos today'}
+            {isLogin ? 'Sign in to access your Zestio account' : 'Start enhancing your property photos today'}
           </p>
         </div>
 

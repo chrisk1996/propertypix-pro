@@ -322,14 +322,14 @@ export async function POST(request: NextRequest) {
 
     // Deduct credits
     const { data: userData } = await supabase
-      .from('propertypix_users')
+      .from('zestio_users')
       .select('credits, used_credits')
       .eq('id', user.id)
       .single();
 
     if (userData) {
       await supabase
-        .from('propertypix_users')
+        .from('zestio_users')
         .update({
           credits: Math.max(0, userData.credits - creditsUsed),
           used_credits: userData.used_credits + creditsUsed,

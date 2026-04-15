@@ -11,7 +11,7 @@ const plans = [
     name: 'Free',
     price: '€0',
     period: 'forever',
-    description: 'Perfect for trying out PropertyPix Pro',
+    description: 'Perfect for trying out Zestio Pro',
     icon: <Zap className="w-6 h-6" />,
     features: [
       '5 photo enhancements per month',
@@ -71,7 +71,7 @@ const plans = [
     ],
     limitations: [],
     cta: 'Contact Sales',
-    ctaLink: 'mailto:sales@propertypix.pro',
+    ctaLink: 'mailto:sales@zestio.ai',
     popular: false,
   },
 ];
@@ -85,7 +85,7 @@ export default function PricingPage() {
       return;
     }
     if (planId === 'enterprise') {
-      window.location.href = 'mailto:sales@propertypix.pro?subject=Enterprise Plan Inquiry';
+      window.location.href = 'mailto:sales@zestio.ai?subject=Enterprise Plan Inquiry';
       return;
     }
     setLoading(planId);

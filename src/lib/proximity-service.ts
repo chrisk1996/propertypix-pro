@@ -220,7 +220,7 @@ export async function geocodeAddress(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
       {
         headers: {
-          'User-Agent': 'PropertyPix-Pro/1.0',
+          'User-Agent': 'Zestio-Pro/1.0',
         },
       }
     );

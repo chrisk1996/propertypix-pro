@@ -38,7 +38,7 @@ export async function GET(
     let media: unknown[] = [];
     if (listing.media_ids && listing.media_ids.length > 0) {
       const { data: mediaData, error: mediaError } = await supabase
-        .from('propertypix_media')
+        .from('zestio_media')
         .select('*')
         .in('id', listing.media_ids);
 

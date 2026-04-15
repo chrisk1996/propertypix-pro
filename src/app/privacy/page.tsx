@@ -1,8 +1,8 @@
 import { Header } from '@/components/Header';
 
 export const metadata = {
-  title: 'Privacy Policy - PropertyPix Pro',
-  description: 'Privacy Policy for PropertyPix Pro',
+  title: 'Privacy Policy - Zestio',
+  description: 'Privacy Policy for Zestio',
 };
 
 export default function PrivacyPage() {
@@ -46,7 +46,7 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-3">5. Your Rights</h2>
             <p className="text-gray-600">
-              You can request deletion of your data at any time by contacting us at privacy@propertypix.pro
+              You can request deletion of your data at any time by contacting us at privacy@zestio.ai
             </p>
           </section>
 
@@ -54,8 +54,8 @@ export default function PrivacyPage() {
             <h2 className="text-xl font-semibold text-gray-900 mb-3">6. Contact</h2>
             <p className="text-gray-600">
               For privacy questions, contact us at{' '}
-              <a href="mailto:privacy@propertypix.pro" className="text-indigo-600 hover:text-indigo-700">
-                privacy@propertypix.pro
+              <a href="mailto:privacy@zestio.ai" className="text-indigo-600 hover:text-indigo-700">
+                privacy@zestio.ai
               </a>
             </p>
           </section>

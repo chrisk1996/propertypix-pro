@@ -22,7 +22,7 @@ export default function LandingPage() {
                 to <span className="italic">Fine Art.</span>
               </h1>
               <p className="text-base text-[#43474c] leading-relaxed mb-8 max-w-xl">
-                The visual standard for the world&apos;s most prestigious properties. PropertyPix transforms
+                The visual standard for the world&apos;s most prestigious properties. Zestio transforms
                 standard photography into cinematic narratives that captivate and convert.
               </p>
               <Link
@@ -270,7 +270,7 @@ export default function LandingPage() {
       <footer className="w-full bg-[#edf4ff] border-t border-[#c4c6cd]/15">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 px-8 md:px-20 py-16">
           <div className="space-y-6">
-            <div className="text-xl font-serif italic text-[#1d2832]">PropertyPix</div>
+            <div className="text-xl font-serif italic text-[#1d2832]">Zestio</div>
             <p className="font-manrope text-xs uppercase tracking-widest text-[#1d2832]/60 leading-relaxed">
               The Digital Gallerist.
               <br />
@@ -288,9 +288,9 @@ export default function LandingPage() {
           <div className="space-y-6">
             <h5 className="font-manrope text-xs uppercase tracking-[0.2em] font-bold text-[#1d2832]">Connect</h5>
             <ul className="space-y-3">
-              <li><Link href="https://twitter.com/propertypix" target="_blank" className="font-manrope text-xs uppercase tracking-widest text-[#1d2832]/60 hover:text-[#006c4d] transition-colors">Twitter</Link></li>
-              <li><Link href="https://linkedin.com/company/propertypix" target="_blank" className="font-manrope text-xs uppercase tracking-widest text-[#1d2832]/60 hover:text-[#006c4d] transition-colors">LinkedIn</Link></li>
-              <li><Link href="mailto:hello@propertypix.pro" className="font-manrope text-xs uppercase tracking-widest text-[#1d2832]/60 hover:text-[#006c4d] transition-colors">Contact Us</Link></li>
+              <li><Link href="https://twitter.com/zestio" target="_blank" className="font-manrope text-xs uppercase tracking-widest text-[#1d2832]/60 hover:text-[#006c4d] transition-colors">Twitter</Link></li>
+              <li><Link href="https://linkedin.com/company/zestio" target="_blank" className="font-manrope text-xs uppercase tracking-widest text-[#1d2832]/60 hover:text-[#006c4d] transition-colors">LinkedIn</Link></li>
+              <li><Link href="mailto:hello@zestio.ai" className="font-manrope text-xs uppercase tracking-widest text-[#1d2832]/60 hover:text-[#006c4d] transition-colors">Contact Us</Link></li>
             </ul>
           </div>
           <div className="space-y-6">
@@ -303,7 +303,7 @@ export default function LandingPage() {
         </div>
         <div className="px-8 md:px-20 py-8 border-t border-[#c4c6cd]/10 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="font-manrope text-[9px] uppercase tracking-[0.2em] text-[#1d2832]/40">
-            © 2026 PropertyPix. The Digital Gallerist. All rights reserved.
+            © 2026 Zestio. The Digital Gallerist. All rights reserved.
           </p>
           <div className="flex gap-4">
             <span className="text-[#006c4d] font-bold text-[9px] uppercase tracking-widest">Status: Excellence Optimized</span>

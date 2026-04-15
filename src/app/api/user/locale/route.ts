@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 
     // Update user's language preference
     const { error: updateError } = await supabase
-      .from('propertypix_users')
+      .from('zestio_users')
       .update({ language: locale })
       .eq('id', user.id);
 

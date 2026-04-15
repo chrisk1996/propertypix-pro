@@ -1,8 +1,8 @@
 import { Header } from '@/components/Header';
 
 export const metadata = {
-  title: 'Terms of Service - PropertyPix Pro',
-  description: 'Terms of Service for PropertyPix Pro',
+  title: 'Terms of Service - Zestio',
+  description: 'Terms of Service for Zestio',
 };
 
 export default function TermsPage() {
@@ -18,7 +18,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-3">1. Acceptance of Terms</h2>
             <p className="text-gray-600">
-              By using PropertyPix Pro, you agree to these terms. If you do not agree, please do not use our service.
+              By using Zestio, you agree to these terms. If you do not agree, please do not use our service.
             </p>
           </section>
 
@@ -46,7 +46,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-3">5. Limitation of Liability</h2>
             <p className="text-gray-600">
-              PropertyPix Pro is provided as-is. We are not liable for any indirect, incidental, or consequential damages.
+              Zestio is provided as-is. We are not liable for any indirect, incidental, or consequential damages.
             </p>
           </section>
 
@@ -61,8 +61,8 @@ export default function TermsPage() {
             <h2 className="text-xl font-semibold text-gray-900 mb-3">7. Contact</h2>
             <p className="text-gray-600">
               Questions? Contact us at{' '}
-              <a href="mailto:legal@propertypix.pro" className="text-indigo-600 hover:text-indigo-700">
-                legal@propertypix.pro
+              <a href="mailto:legal@zestio.pro" className="text-indigo-600 hover:text-indigo-700">
+                legal@zestio.pro
               </a>
             </p>
           </section>

@@ -1,4 +1,4 @@
-# PropertyPix Pro - Architecture Overview
+# Zestio Pro - Architecture Overview
 
 ## Tech Stack
 
@@ -208,7 +208,7 @@ interface FloorPlanState {
 - Supabase Auth handles email/password + OAuth
 - Session stored in HTTP-only cookies
 - Middleware validates session on protected routes
-- User data synced to `propertypix_users` table
+- User data synced to `zestio_users` table
 
 ### Protected Routes
 - `/dashboard/*` — Requires authentication
@@ -255,7 +255,7 @@ interface FloorPlanState {
 | Video Generation | 5 | $0.10 | 20% |
 
 ### Credit Tracking
-- `propertypix_users` table: `credits`, `used_credits`
+- `zestio_users` table: `credits`, `used_credits`
 - Each API call deducts appropriate credits
 - Real-time balance updates
 

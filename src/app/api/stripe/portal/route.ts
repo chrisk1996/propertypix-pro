@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     // Get user's Stripe customer ID
     const { data: userData } = await supabase
-      .from('propertypix_users')
+      .from('zestio_users')
       .select('stripe_customer_id')
       .eq('id', user.id)
       .single();
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     // Create portal session
     const session = await stripe.billingPortal.sessions.create({
       customer: userData.stripe_customer_id,
-      return_url: `${process.env.NEXT_PUBLIC_URL || 'https://propertypix.pro'}/billing`,
+      return_url: `${process.env.NEXT_PUBLIC_URL || 'https://zestio.ai'}/billing`,
     });
 
     return NextResponse.json({ url: session.url });

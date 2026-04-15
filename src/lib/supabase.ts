@@ -150,12 +150,12 @@ export async function getCurrentUser() {
   return user;
 }
 
-// Credit helpers - uses propertypix_users table
+// Credit helpers - uses zestio_users table
 export async function getUserCredits(userId: string): Promise<{ credits: number; used_credits: number } | null> {
   if (!supabase) return null;
 
   const { data, error } = await supabase
-    .from('propertypix_users')
+    .from('zestio_users')
     .select('credits, used_credits')
     .eq('id', userId)
     .single();

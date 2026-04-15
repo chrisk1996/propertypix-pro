@@ -4,7 +4,7 @@ import { createClient } from '@/utils/supabase/server';
 // Force dynamic rendering - uses cookies/auth
 export const dynamic = 'force-dynamic';
 
-// GET /api/media - List user's media assets (enhanced images from PropertyPix)
+// GET /api/media - List user's media assets (enhanced images from Zestio)
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -20,10 +20,10 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '100');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    // Fetch completed enhancement jobs from propertypix_jobs table
-    // These are the user's PropertyPix assets (enhanced photos)
+    // Fetch completed enhancement jobs from zestio_jobs table
+    // These are the user's Zestio assets (enhanced photos)
     const query = supabase
-      .from('propertypix_jobs')
+      .from('zestio_jobs')
       .select('id, output_url, input_url, job_type, status, created_at, completed_at')
       .eq('user_id', user.id)
       .eq('status', 'completed')
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
 
     // Get total count for pagination
     const { count, error: countError } = await supabase
-      .from('propertypix_jobs')
+      .from('zestio_jobs')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id)
       .eq('status', 'completed')

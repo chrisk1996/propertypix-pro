@@ -55,7 +55,7 @@ export function FloorplanNavbar({ projectId, projectName = 'Untitled Project' }:
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
               <span className="text-primary-foreground font-bold text-sm">PP</span>
             </div>
-            <span className="font-semibold text-sm hidden sm:inline">PropertyPix Pro</span>
+            <span className="font-semibold text-sm hidden sm:inline">Zestio</span>
           </a>
 
           {/* Divider */}

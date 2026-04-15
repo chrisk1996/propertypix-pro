@@ -51,16 +51,16 @@ export async function POST(request: NextRequest) {
 
     // Check user credits
     const { data: userData, error: userError } = await supabase
-      .from('propertypix_users')
+      .from('zestio_users')
       .select('credits, used_credits, subscription_tier')
       .eq('id', user.id)
       .single();
 
     if (userError) {
       console.error('Error fetching user:', userError);
-      // User might not exist in propertypix_users yet, create record
+      // User might not exist in zestio_users yet, create record
       const { error: insertError } = await supabase
-        .from('propertypix_users')
+        .from('zestio_users')
         .insert({
           id: user.id,
           credits: 5, // Free tier default
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
 
     // Create job record
     const { data: job, error: jobError } = await supabase
-      .from('propertypix_jobs')
+      .from('zestio_jobs')
       .insert({
         user_id: user.id,
         input_url: image.substring(0, 500), // Store truncated reference
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
 
       // Update job with result
       await supabase
-        .from('propertypix_jobs')
+        .from('zestio_jobs')
         .update({
           output_url: videoUrl,
           status: 'completed',
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
       // Deduct credits (video costs 3 credits - most expensive operation)
       if (userData) {
         await supabase
-          .from('propertypix_users')
+          .from('zestio_users')
           .update({
             credits: Math.max(0, userData.credits - 3),
             used_credits: userData.used_credits + 3,
@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
       
       // Update job as failed
       await supabase
-        .from('propertypix_jobs')
+        .from('zestio_jobs')
         .update({ status: 'failed' })
         .eq('id', job.id);
       
@@ -202,7 +202,7 @@ export async function GET(request: NextRequest) {
     }
 
     const { data: job, error } = await supabase
-      .from('propertypix_jobs')
+      .from('zestio_jobs')
       .select('id, status, output_url, created_at, completed_at')
       .eq('id', jobId)
       .eq('user_id', user.id)

@@ -70,7 +70,7 @@ export function TryExampleButton({ onSelectExample }: TryExampleButtonProps) {
 
             <div className="p-4">
               <p className="text-sm text-gray-600 mb-4">
-                Select an example image to see how PropertyPix Pro enhances property photos.
+                Select an example image to see how Zestio Pro enhances property photos.
               </p>
 
               <div className="grid grid-cols-3 gap-3">

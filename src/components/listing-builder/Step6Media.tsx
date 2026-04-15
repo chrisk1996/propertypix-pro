@@ -31,7 +31,7 @@ export function Step6Media({ data, onChange, onNext, onBack }: Step6MediaProps) 
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  // Load user's PropertyPix assets on mount
+  // Load user's Zestio assets on mount
   useEffect(() => {
     loadMedia();
   }, []);
@@ -50,7 +50,7 @@ export function Step6Media({ data, onChange, onNext, onBack }: Step6MediaProps) 
       setMediaItems(data.media || []);
     } catch (err) {
       console.error('Error loading media:', err);
-      setError('Failed to load your PropertyPix assets');
+      setError('Failed to load your Zestio assets');
     } finally {
       setLoading(false);
     }
@@ -81,7 +81,7 @@ export function Step6Media({ data, onChange, onNext, onBack }: Step6MediaProps) 
       // 2. Create enhancement jobs
       // 3. Poll for completion
       // For now, redirect to enhance page
-      alert('Please use the Enhance page to upload and enhance photos first, then they will appear in your PropertyPix assets.');
+      alert('Please use the Enhance page to upload and enhance photos first, then they will appear in your Zestio assets.');
     } finally {
       setUploading(false);
     }
@@ -162,11 +162,11 @@ export function Step6Media({ data, onChange, onNext, onBack }: Step6MediaProps) 
         <p className="text-sm text-gray-500">JPG, PNG, WebP up to 10MB each</p>
       </div>
 
-      {/* Existing PropertyPix Assets */}
+      {/* Existing Zestio Assets */}
       <div>
-        <h3 className="font-medium text-gray-900 mb-3">Your PropertyPix Assets</h3>
+        <h3 className="font-medium text-gray-900 mb-3">Your Zestio Assets</h3>
         <p className="text-sm text-gray-500 mb-4">
-          Click to add enhanced photos, videos, or 3D models from your PropertyPix library.
+          Click to add enhanced photos, videos, or 3D models from your Zestio library.
         </p>
 
         {/* Loading State */}
@@ -193,7 +193,7 @@ export function Step6Media({ data, onChange, onNext, onBack }: Step6MediaProps) 
         {!loading && !error && mediaItems.length === 0 && (
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
             <ImageIcon className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-600 mb-2">No PropertyPix assets yet</p>
+            <p className="text-gray-600 mb-2">No Zestio assets yet</p>
             <p className="text-sm text-gray-500">
               Enhance some photos first, then they'll appear here for selection.
             </p>

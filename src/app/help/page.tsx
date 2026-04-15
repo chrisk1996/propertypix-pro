@@ -3,8 +3,8 @@ import Link from 'next/link';
 import { Sparkles, Home, Video, Box } from 'lucide-react';
 
 export const metadata = {
-  title: 'Help & Support - PropertyPix Pro',
-  description: 'Get help using PropertyPix Pro AI-powered real estate tools',
+  title: 'Help & Support - Zestio',
+  description: 'Get help using Zestio AI-powered real estate tools',
 };
 
 export default function HelpPage() {
@@ -78,8 +78,8 @@ export default function HelpPage() {
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Need More Help?</h2>
           <p className="text-gray-600 mb-4">
             Contact our support team at{' '}
-            <a href="mailto:support@propertypix.pro" className="text-indigo-600 hover:text-indigo-700">
-              support@propertypix.pro
+            <a href="mailto:support@zestio.pro" className="text-indigo-600 hover:text-indigo-700">
+              support@zestio.pro
             </a>
           </p>
           <Link

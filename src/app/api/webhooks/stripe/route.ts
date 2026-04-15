@@ -36,14 +36,14 @@ export async function POST(request: NextRequest) {
 
         // Find user by email and update with Stripe customer ID
         const { data: existingUser } = await supabase
-          .from('propertypix_users')
+          .from('zestio_users')
           .select('id')
           .eq('email', email)
           .single();
 
         if (existingUser) {
           await supabase
-            .from('propertypix_users')
+            .from('zestio_users')
             .update({
               stripe_customer_id: customerId,
               plan: 'pro',
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
         // Update user plan based on subscription status
         const plan = subscription.status === 'active' ? 'pro' : 'free';
         await supabase
-          .from('propertypix_users')
+          .from('zestio_users')
           .update({ plan })
           .eq('stripe_customer_id', customerId);
         break;
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 
         // Downgrade to free plan
         await supabase
-          .from('propertypix_users')
+          .from('zestio_users')
           .update({ plan: 'free', credits: 5 })
           .eq('stripe_customer_id', customerId);
         break;

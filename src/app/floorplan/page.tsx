@@ -4,7 +4,7 @@ import Link from 'next/link';
 import ProjectsGrid from './ProjectsGrid';
 
 export const metadata: Metadata = {
-  title: 'PropertyPix | Floor Plan Projects',
+  title: 'Zestio | Floor Plan Projects',
   description: 'Manage your 3D floor plan projects',
 };
 

@@ -19,7 +19,7 @@ export async function GET() {
 
     // Use correct column names: subscription_tier, credits, used_credits
     const { data: userData, error } = await supabase
-      .from('propertypix_users')
+      .from('zestio_users')
       .select('subscription_tier, credits, used_credits')
       .eq('id', user.id)
       .single();

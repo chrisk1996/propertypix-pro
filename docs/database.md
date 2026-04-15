@@ -1,4 +1,4 @@
-# PropertyPix Pro - Database Schema
+# Zestio Pro - Database Schema
 
 Supabase PostgreSQL database.
 

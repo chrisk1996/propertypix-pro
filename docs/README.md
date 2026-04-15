@@ -1,6 +1,6 @@
-# PropertyPix Pro Documentation
+# Zestio Pro Documentation
 
-This folder contains technical and functional documentation for all modules of PropertyPix Pro.
+This folder contains technical and functional documentation for all modules of Zestio Pro.
 
 ## Documentation Structure
 

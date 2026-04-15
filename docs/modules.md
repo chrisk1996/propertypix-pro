@@ -1,4 +1,4 @@
-# PropertyPix Pro - Module Documentation
+# Zestio Pro - Module Documentation
 
 This document provides detailed functional and technical descriptions of all major modules.
 

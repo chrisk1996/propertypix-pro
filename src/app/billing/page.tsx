@@ -73,9 +73,9 @@ export default function BillingPage() {
         return;
       }
 
-      // Fetch user profile with credits from propertypix_users table
+      // Fetch user profile with credits from zestio_users table
       const { data: profile, error: profileError } = await supabase
-        .from('propertypix_users')
+        .from('zestio_users')
         .select('id, subscription_tier, credits, used_credits, stripe_customer_id')
         .eq('id', authUser.id)
         .single();
