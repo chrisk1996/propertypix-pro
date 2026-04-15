@@ -218,7 +218,7 @@ export function ListingWizard({ editId }: ListingWizardProps) {
           <span className="text-xs font-medium">Back to Listings</span>
         </Link>
         <div className="flex items-center gap-12">
-          <span className="text-2xl font-serif italic text-[#1d2832]">Property-Pix</span>
+          <span className="text-2xl font-serif italic text-[#1d2832]">Zestio</span>
           <div className="hidden md:flex gap-8 items-center">
             <a className="text-[10px] uppercase tracking-widest text-[#1d2832]/60 hover:text-[#1d2832] transition-opacity" href="/dashboard">Dashboard</a>
             <a className="text-[10px] uppercase tracking-widest text-[#006c4d] border-b-2 border-[#006c4d] pb-1" href="/listing">Portfolio</a>

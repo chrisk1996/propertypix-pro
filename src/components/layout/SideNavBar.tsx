@@ -20,14 +20,8 @@ export default function SideNavBar() {
     <aside className="fixed left-0 top-0 h-full flex flex-col z-40 w-64 border-r border-slate-200 bg-white font-['Plus_Jakarta_Sans'] font-medium text-sm">
       <div className="p-6 flex flex-col h-full">
         {/* Logo */}
-        <div className="mb-10 px-2 flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <span className="material-symbols-outlined text-white text-xl">photo_camera</span>
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight leading-none">Property-Pix</h1>
-            <p className="text-[10px] text-slate-500 font-bold tracking-[0.2em] uppercase mt-1">AI Solutions</p>
-          </div>
+        <div className="mb-10 px-2">
+          <img src="/logo.png" alt="Zestio" className="h-8 w-auto" />
         </div>
 
         {/* Navigation */}
@@ -56,9 +50,7 @@ export default function SideNavBar() {
           <Link
             href="/billing"
             className={`flex items-center gap-3 px-4 py-2 transition-all ${
-              pathname === '/billing'
-                ? 'text-blue-600 bg-blue-50'
-                : 'text-slate-500 hover:text-slate-900'
+              pathname === '/billing' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-900'
             }`}
           >
             <span className="material-symbols-outlined">account_balance_wallet</span>
@@ -67,9 +59,7 @@ export default function SideNavBar() {
           <Link
             href="/settings"
             className={`flex items-center gap-3 px-4 py-2 transition-all ${
-              pathname === '/settings'
-                ? 'text-blue-600 bg-blue-50'
-                : 'text-slate-500 hover:text-slate-900'
+              pathname === '/settings' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-900'
             }`}
           >
             <span className="material-symbols-outlined">settings</span>
