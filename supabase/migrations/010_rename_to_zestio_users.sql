@@ -4,11 +4,19 @@
 -- Rename the table
 ALTER TABLE propertypix_users RENAME TO zestio_users;
 
--- Rename the index for Stripe customer lookup
-ALTER INDEX idx_propertypix_users_stripe_customer RENAME TO idx_zestio_users_stripe_customer;
+-- Rename the index for Stripe customer lookup (if it exists from migration 009)
+-- If 009 hasn't run yet, skip this - the new index will be created with correct name
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_propertypix_users_stripe_customer') THEN
+        ALTER INDEX idx_propertypix_users_stripe_customer RENAME TO idx_zestio_users_stripe_customer;
+    END IF;
+END $$;
 
--- Update index name convention (if exists)
+-- Drop old index if exists (legacy naming)
 DROP INDEX IF EXISTS propertypix_users_stripe_customer_id_idx;
+
+-- Create index with correct name if it doesn't exist (in case 009 hasn't run)
 CREATE INDEX IF NOT EXISTS idx_zestio_users_stripe_customer 
 ON zestio_users(stripe_customer_id) WHERE stripe_customer_id IS NOT NULL;
 
@@ -16,7 +24,6 @@ ON zestio_users(stripe_customer_id) WHERE stripe_customer_id IS NOT NULL;
 COMMENT ON TABLE zestio_users IS 'User credits and subscription info. credits = total available, used_credits = already consumed';
 
 -- Rename any foreign key constraints that reference this table
--- First, find and update any FK constraints
 DO $$
 DECLARE
     constraint_record RECORD;
