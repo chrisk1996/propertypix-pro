@@ -109,8 +109,9 @@ async function generateDepthMap(imageUrl: string): Promise<string> {
   try {
     // Use Depth Pro - Apple's state-of-the-art depth estimation model
     // https://replicate.com/ibrahimpenekli/depth-pro
+    // Must use versioned endpoint for this model
     const result = await replicate.run(
-      "ibrahimpenekli/depth-pro",
+      "ibrahimpenekli/depth-pro:8bee17f621ab23567c836703be980b3aa1552127b252b7ef9f6ce6db6c4619ef",
       {
         input: {
           image: imageUrl,
