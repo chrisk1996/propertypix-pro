@@ -39,7 +39,6 @@ export async function POST(request: NextRequest) {
     // Authenticate user
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -65,7 +64,8 @@ export async function POST(request: NextRequest) {
       if (insertError) {
         return NextResponse.json({ error: 'Failed to create user record' }, { status: 500 });
       }
-    } else if (userData && userData.credits <= 0) {
+    } else if (userData && userData.credits !== -1 && userData.credits <= 0) {
+      // -1 means unlimited credits (enterprise plan)
       return NextResponse.json(
         { error: 'No credits remaining. Please upgrade your plan.' },
         { status: 402 }
@@ -113,7 +113,6 @@ export async function POST(request: NextRequest) {
           prompt = "professional real estate photography, enhanced, high quality, vibrant colors, sharp details, well-lit";
       }
     }
-
     const negativePrompt = "blurry, low quality, distorted, overexposed, underexposed, noisy, pixelated, watermark, text";
 
     try {
@@ -137,7 +136,6 @@ export async function POST(request: NextRequest) {
             },
           }
         );
-
         if (typeof result === 'string') {
           resultUrl = result;
         } else if (Array.isArray(result) && result.length > 0) {
@@ -149,7 +147,6 @@ export async function POST(request: NextRequest) {
           throw new Error('Invalid output from FLUX Kontext');
         }
         creditsUsed = 2;
-
       } else if (model === 'ideogram') {
         // Ideogram v2 - best for text in images
         console.log('Using Ideogram v2 for enhancement');
@@ -165,7 +162,6 @@ export async function POST(request: NextRequest) {
             },
           }
         );
-
         if (typeof result === 'string') {
           resultUrl = result;
         } else if (Array.isArray(result) && result.length > 0) {
@@ -177,7 +173,6 @@ export async function POST(request: NextRequest) {
           throw new Error('Invalid output from Ideogram');
         }
         creditsUsed = 2;
-
       } else {
         // Default: SDXL (fast and versatile) or 'auto'
         console.log('Using SDXL for enhancement (auto/default)');
@@ -195,7 +190,6 @@ export async function POST(request: NextRequest) {
             },
           }
         );
-
         if (typeof result === 'string') {
           resultUrl = result;
         } else if (Array.isArray(result) && result.length > 0) {
@@ -219,8 +213,8 @@ export async function POST(request: NextRequest) {
         })
         .eq('id', job.id);
 
-      // Deduct credits
-      if (userData) {
+      // Deduct credits (only if not unlimited)
+      if (userData && userData.credits !== -1) {
         await supabase
           .from('zestio_users')
           .update({
@@ -237,7 +231,6 @@ export async function POST(request: NextRequest) {
         creditsUsed,
         model,
       });
-
     } catch (enhanceError) {
       console.error('Enhancement error:', enhanceError);
       // Update job as failed
@@ -247,7 +240,6 @@ export async function POST(request: NextRequest) {
         .eq('id', job.id);
       throw enhanceError;
     }
-
   } catch (error) {
     console.error('Enhancement error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to enhance image';

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Replicate from 'replicate';
-
 // Force dynamic rendering - uses cookies/auth
 export const dynamic = 'force-dynamic';
 import { createClient } from '@/utils/supabase/server';
@@ -31,9 +30,7 @@ function checkRateLimit(ip: string): boolean {
 export async function POST(request: NextRequest) {
   try {
     // Get client IP for rate limiting
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
-               request.headers.get('x-real-ip') || 'unknown';
-    
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown';
     if (!checkRateLimit(ip)) {
       return NextResponse.json(
         { error: 'Rate limit exceeded. Please try again later.' },
@@ -44,7 +41,6 @@ export async function POST(request: NextRequest) {
     // Authenticate user
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -67,11 +63,11 @@ export async function POST(request: NextRequest) {
           used_credits: 0,
           subscription_tier: 'free'
         });
-      
       if (insertError) {
         return NextResponse.json({ error: 'Failed to create user record' }, { status: 500 });
       }
-    } else if (userData && userData.credits <= 0) {
+    } else if (userData && userData.credits !== -1 && userData.credits <= 0) {
+      // -1 means unlimited credits (enterprise plan)
       return NextResponse.json(
         { error: 'No credits remaining. Please upgrade your plan.' },
         { status: 402 }
@@ -87,9 +83,7 @@ export async function POST(request: NextRequest) {
 
     const validMotionTypes = ['pan_left', 'pan_right', 'zoom_in', 'zoom_out', 'orbit'];
     if (!motionType || !validMotionTypes.includes(motionType)) {
-      return NextResponse.json({ 
-        error: 'Valid motion type required: pan_left, pan_right, zoom_in, zoom_out, orbit' 
-      }, { status: 400 });
+      return NextResponse.json({ error: 'Valid motion type required: pan_left, pan_right, zoom_in, zoom_out, orbit' }, { status: 400 });
     }
 
     // Create job record
@@ -149,7 +143,8 @@ export async function POST(request: NextRequest) {
         .eq('id', job.id);
 
       // Deduct credits (video costs 3 credits - most expensive operation)
-      if (userData) {
+      // Only deduct if not unlimited (enterprise)
+      if (userData && userData.credits !== -1) {
         await supabase
           .from('zestio_users')
           .update({
@@ -166,13 +161,11 @@ export async function POST(request: NextRequest) {
       });
     } catch (videoError) {
       console.error('Video generation error:', videoError);
-      
       // Update job as failed
       await supabase
         .from('zestio_jobs')
         .update({ status: 'failed' })
         .eq('id', job.id);
-      
       throw videoError;
     }
   } catch (error) {
@@ -190,13 +183,11 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const jobId = request.nextUrl.searchParams.get('jobId');
-    
     if (!jobId) {
       return NextResponse.json({ error: 'Job ID required' }, { status: 400 });
     }
