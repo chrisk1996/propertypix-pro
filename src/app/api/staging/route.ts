@@ -107,14 +107,14 @@ async function generateDepthMap(imageUrl: string): Promise<string> {
   console.log('Input image URL:', imageUrl);
 
   try {
-    // Use Depth Pro - Apple's state-of-the-art depth estimation model
-    // https://replicate.com/ibrahimpenekli/depth-pro
-    // Must use versioned endpoint for this model
+    // Use Marigold - diffusion-based monocular depth estimation
+    // https://replicate.com/adirik/marigold
+    // Returns: [grayscale_depth_url, spectral_depth_url]
     const result = await replicate.run(
-      "ibrahimpenekli/depth-pro:8bee17f621ab23567c836703be980b3aa1552127b252b7ef9f6ce6db6c4619ef",
+      "adirik/marigold:1a363593bc4882684fc58042d19db5e13a810e44e02f8d4c32afd1eb30464818",
       {
         input: {
-          image_path: imageUrl, // Note: this model uses image_path, not image
+          image: imageUrl,
         },
       }
     );
