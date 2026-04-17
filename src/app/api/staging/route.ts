@@ -114,7 +114,7 @@ async function generateDepthMap(imageUrl: string): Promise<string> {
       "ibrahimpenekli/depth-pro:8bee17f621ab23567c836703be980b3aa1552127b252b7ef9f6ce6db6c4619ef",
       {
         input: {
-          image: imageUrl,
+          image_path: imageUrl, // Note: this model uses image_path, not image
         },
       }
     );
