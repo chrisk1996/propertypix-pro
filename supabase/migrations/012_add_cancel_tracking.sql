@@ -1,8 +1,11 @@
 -- Migration: Add subscription period end tracking
 -- Required for proper cancellation handling (cancel at period end)
 
+-- Drop the unused subscriptions table (we store subscription data in zestio_users)
+DROP TABLE IF EXISTS subscriptions CASCADE;
+
 -- Add columns for tracking subscription period and cancellation
-ALTER TABLE zestio_users 
+ALTER TABLE zestio_users
 ADD COLUMN IF NOT EXISTS subscription_current_period_end TIMESTAMPTZ,
 ADD COLUMN IF NOT EXISTS subscription_cancel_at TIMESTAMPTZ,
 ADD COLUMN IF NOT EXISTS subscription_canceled_at TIMESTAMPTZ;
