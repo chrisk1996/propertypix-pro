@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (userError) {
-      console.error('Error fetching user:', userError);
+      console.error('[Enhance] Error fetching user:', userError.message);
       // User might not exist in zestio_users yet, create record
       const { error: insertError } = await supabase
         .from('zestio_users')
@@ -62,10 +62,13 @@ export async function POST(request: NextRequest) {
           subscription_tier: 'free'
         });
       if (insertError) {
+        console.error('[Enhance] Failed to create user record:', insertError.message);
         return NextResponse.json({ error: 'Failed to create user record' }, { status: 500 });
       }
-    } else if (userData && userData.credits !== -1 && userData.credits <= 0) {
-      // -1 means unlimited credits (enterprise plan)
+    }
+
+    // Check if user has credits (skip for enterprise with -1/unlimited)
+    if (userData && userData.credits !== -1 && userData.credits <= 0) {
       return NextResponse.json(
         { error: 'No credits remaining. Please upgrade your plan.' },
         { status: 402 }
@@ -77,23 +80,6 @@ export async function POST(request: NextRequest) {
 
     if (!image) {
       return NextResponse.json({ error: 'Image is required' }, { status: 400 });
-    }
-
-    // Create job record
-    const { data: job, error: jobError } = await supabase
-      .from('zestio_jobs')
-      .insert({
-        user_id: user.id,
-        input_url: image.substring(0, 500), // Store truncated reference
-        job_type: enhancementType || 'auto',
-        status: 'processing',
-      })
-      .select()
-      .single();
-
-    if (jobError) {
-      console.error('Error creating job:', jobError);
-      return NextResponse.json({ error: 'Failed to create job' }, { status: 500 });
     }
 
     // Build prompt based on enhancement type
@@ -121,7 +107,6 @@ export async function POST(request: NextRequest) {
 
       // Select model based on user choice
       if (model === 'flux-kontext') {
-        // FLUX Kontext Pro - best for instruction-based edits
         console.log('Using FLUX Kontext Pro for enhancement');
         const result = await replicate.run(
           "black-forest-labs/flux-kontext-pro",
@@ -148,7 +133,6 @@ export async function POST(request: NextRequest) {
         }
         creditsUsed = 2;
       } else if (model === 'ideogram') {
-        // Ideogram v2 - best for text in images
         console.log('Using Ideogram v2 for enhancement');
         const result = await replicate.run(
           "ideogram-ai/ideogram-v2",
@@ -174,7 +158,6 @@ export async function POST(request: NextRequest) {
         }
         creditsUsed = 2;
       } else {
-        // Default: SDXL (fast and versatile) or 'auto'
         console.log('Using SDXL for enhancement (auto/default)');
         const result = await replicate.run(
           "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
@@ -203,17 +186,7 @@ export async function POST(request: NextRequest) {
         creditsUsed = 1;
       }
 
-      // Update job with result
-      await supabase
-        .from('zestio_jobs')
-        .update({
-          output_url: resultUrl,
-          status: 'completed',
-          completed_at: new Date().toISOString(),
-        })
-        .eq('id', job.id);
-
-      // Deduct credits (only if not unlimited)
+      // Deduct credits if not unlimited (enterprise)
       if (userData && userData.credits !== -1) {
         await supabase
           .from('zestio_users')
@@ -227,21 +200,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         output: resultUrl,
-        jobId: job.id,
         creditsUsed,
         model,
       });
     } catch (enhanceError) {
-      console.error('Enhancement error:', enhanceError);
-      // Update job as failed
-      await supabase
-        .from('zestio_jobs')
-        .update({ status: 'failed' })
-        .eq('id', job.id);
+      console.error('[Enhance] Enhancement error:', enhanceError);
       throw enhanceError;
     }
   } catch (error) {
-    console.error('Enhancement error:', error);
+    console.error('[Enhance] Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to enhance image';
     return NextResponse.json(
       { error: errorMessage },
