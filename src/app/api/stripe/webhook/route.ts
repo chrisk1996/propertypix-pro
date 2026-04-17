@@ -142,19 +142,26 @@ export async function POST(request: NextRequest) {
 
         // Fetch full subscription from Stripe to get all fields
         // Webhook payload may not include current_period_end
+        // Note: In API version 2025-03-31.basil, current_period_end moved to items.data[].current_period_end
         const fullSubscription = await stripe.subscriptions.retrieve(subscription.id);
-        console.log('[Stripe] Fetched subscription:', JSON.stringify({
-          id: fullSubscription.id,
-          status: fullSubscription.status,
-          current_period_end: fullSubscription.current_period_end,
-          cancel_at: fullSubscription.cancel_at,
-        }));
-        const periodEnd = fullSubscription.current_period_end 
-          ? new Date(fullSubscription.current_period_end * 1000).toISOString() 
+        
+        // Get period end from subscription items (new API structure)
+        const firstItem = fullSubscription.items.data[0];
+        const periodEndTimestamp = firstItem?.current_period_end || (fullSubscription as any).current_period_end;
+        const periodEnd = periodEndTimestamp 
+          ? new Date(periodEndTimestamp * 1000).toISOString() 
           : null;
         const cancelAt = fullSubscription.cancel_at 
           ? new Date(fullSubscription.cancel_at * 1000).toISOString() 
           : null;
+
+        console.log('[Stripe] Fetched subscription:', JSON.stringify({
+          id: fullSubscription.id,
+          status: fullSubscription.status,
+          item_period_end: firstItem?.current_period_end,
+          legacy_period_end: (fullSubscription as any).current_period_end,
+          cancel_at: fullSubscription.cancel_at,
+        }));
 
         const { data: user } = await supabaseAdmin
           .from('zestio_users')
