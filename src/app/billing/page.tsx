@@ -120,8 +120,22 @@ export default function BillingPage() {
   const handleSubscribe = async (plan: string) => {
     setCheckoutLoading(plan);
     try {
-      // Use hardcoded test price IDs for development
-      // These should be created in Stripe Dashboard first
+      // If user already has a subscription, redirect to portal for prorated upgrade
+      if (user?.plan !== 'free' && user?.stripe_customer_id) {
+        // Open billing portal which handles prorated upgrades
+        const response = await fetch('/api/stripe/portal', {
+          method: 'POST',
+        });
+        const data = await response.json();
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          setError(data.error || 'Failed to open billing portal');
+        }
+        return;
+      }
+
+      // New subscription - use checkout
       const priceIds: Record<string, string> = {
         pro: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID || 'price_pro_test',
         enterprise: process.env.NEXT_PUBLIC_STRIPE_ENTERPRISE_PRICE_ID || 'price_enterprise_test',
@@ -134,7 +148,6 @@ export default function BillingPage() {
       });
 
       const data = await response.json();
-
       if (data.url) {
         window.location.href = data.url;
       } else {
@@ -151,9 +164,10 @@ export default function BillingPage() {
   const handleManageSubscription = async () => {
     setCheckoutLoading('portal');
     try {
-      const response = await fetch('/api/stripe/portal', { method: 'POST' });
+      const response = await fetch('/api/stripe/portal', {
+        method: 'POST',
+      });
       const data = await response.json();
-
       if (data.url) {
         window.location.href = data.url;
       } else {
@@ -262,12 +276,13 @@ export default function BillingPage() {
             {plans.map((plan) => {
               const Icon = plan.icon;
               const isCurrent = user?.plan === plan.id;
-
               return (
                 <div
                   key={plan.id}
                   className={`relative bg-white rounded-xl border-2 p-5 transition-shadow hover:shadow-md ${
-                    isCurrent ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-gray-200'
+                    isCurrent
+                      ? 'border-indigo-500 ring-2 ring-indigo-500/20'
+                      : 'border-gray-200'
                   } ${plan.popular && !isCurrent ? 'border-indigo-300' : ''}`}
                 >
                   {plan.popular && !isCurrent && (
@@ -275,6 +290,7 @@ export default function BillingPage() {
                       Most Popular
                     </div>
                   )}
+
                   {isCurrent && (
                     <div className="absolute -top-3 right-4 px-3 py-1 bg-green-600 text-white text-xs font-medium rounded-full flex items-center gap-1">
                       <Check className="w-3 h-3" />
@@ -330,6 +346,15 @@ export default function BillingPage() {
             })}
           </div>
         </div>
+
+        {/* Upgrade Info for existing subscribers */}
+        {user?.plan !== 'free' && user?.stripe_customer_id && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <p className="text-blue-800 text-sm">
+              <strong>💡 Upgrading?</strong> Click "Switch Plan" to open the billing portal where you can upgrade with prorated pricing. You'll only pay the difference for the remaining time in your billing cycle.
+            </p>
+          </div>
+        )}
 
         {/* Stripe Test Mode Notice */}
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
