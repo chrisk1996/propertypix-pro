@@ -5,44 +5,6 @@ import { createClient } from '@/utils/supabase/server';
 
 const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN! });
 
-// Helper: Convert data URL to File and upload to Supabase storage
-async function uploadImageToStorage(supabase: any, userId: string, dataUrl: string): Promise<string> {
-  // Extract base64 data from data URL
-  const matches = dataUrl.match(/^data:image\/(\w+);base64,(.+)$/);
-  if (!matches) {
-    throw new Error('Invalid image data URL format');
-  }
-
-  const extension = matches[1];
-  const base64Data = matches[2];
-
-  // Convert base64 to buffer
-  const buffer = Buffer.from(base64Data, 'base64');
-
-  // Generate unique filename
-  const filename = `staged/${userId}/${Date.now()}.${extension}`;
-
-  // Upload to Supabase storage
-  const { data, error } = await supabase.storage
-    .from('images')
-    .upload(filename, buffer, {
-      contentType: `image/${extension}`,
-      upsert: true,
-    });
-
-  if (error) {
-    console.error('Supabase upload error:', error);
-    throw new Error('Failed to upload image to storage');
-  }
-
-  // Get public URL
-  const { data: urlData } = supabase.storage
-    .from('images')
-    .getPublicUrl(filename);
-
-  return urlData.publicUrl;
-}
-
 // Room type prompts for virtual staging
 const ROOM_PROMPTS: Record<string, string> = {
   living: 'furnished living room with comfortable sofa, coffee table, rug, lamps, wall art, plants, curtains',
@@ -69,53 +31,35 @@ const STYLE_PROMPTS: Record<string, string> = {
 
 // Generate depth map using Marigold
 async function generateDepthMap(imageUrl: string): Promise<string> {
-  try {
-    // Use Marigold - diffusion-based monocular depth estimation
-    // https://replicate.com/adirik/marigold
-    // Returns: [grayscale_depth_url, spectral_depth_url]
-    const result = await replicate.run(
-      "adirik/marigold:1a363593bc4882684fc58042d19db5e13a810e44e02f8d4c32afd1eb30464818",
-      {
-        input: {
-          image: imageUrl,
-        },
-      }
-    );
-
-    // Debug log the result
-    console.log('Marigold result:', JSON.stringify(result, null, 2));
-
-    // Extract URL from result
-    // Marigold returns an array of URLs [grayscale, spectral]
-    const r = result as any;
-
-    // Try array output
-    if (Array.isArray(result) && result.length > 0) {
-      const first = result[0];
-      if (typeof first === 'string') return first;
-      if (first && typeof first.url === 'function') {
-        const url = first.url();
-        return typeof url === 'string' ? url : url.toString();
-      }
+  const result = await replicate.run(
+    "adirik/marigold:1a363593bc4882684fc58042d19db5e13a810e44e02f8d4c32afd1eb30464818",
+    {
+      input: {
+        image: imageUrl,
+      },
     }
+  );
 
-    // Try common property names
-    if (r.url) return r.url;
-    if (r.output) return typeof r.output === 'string' ? r.output : r.output.url;
-    if (r.image) return r.image;
+  console.log('Marigold result:', JSON.stringify(result, null, 2));
+
+  // Marigold returns an array of URLs [grayscale, spectral]
+  if (Array.isArray(result) && result.length > 0) {
+    const first = result[0];
+    if (typeof first === 'string') return first;
+    if (first && typeof first.url === 'function') {
+      const url = first.url();
+      return typeof url === 'string' ? url : url.toString();
+    }
   }
 
-  // Direct string URL
-  if (typeof result === 'string') {
-    return result;
-  }
+  // Try common property names
+  const r = result as any;
+  if (r.url) return r.url;
+  if (r.output) return typeof r.output === 'string' ? r.output : r.output.url;
+  if (r.image) return r.image;
+  if (typeof result === 'string') return result;
 
-  console.error('Could not extract URL from result:', result);
   throw new Error('Failed to generate depth map - no valid URL returned. Result: ' + JSON.stringify(result));
-  } catch (error) {
-    console.error('Depth map generation error:', error);
-    throw error;
-  }
 }
 
 export async function POST(request: NextRequest) {
@@ -158,7 +102,6 @@ export async function POST(request: NextRequest) {
     try {
       if (model === 'decor8') {
         // Use Decor8 API for virtual staging
-        // Decor8 is a specialized API for real estate virtual staging
         creditsUsed = 2;
 
         const roomTypeDecor8 = roomType?.toUpperCase() || 'LIVING_ROOM';
@@ -190,14 +133,12 @@ export async function POST(request: NextRequest) {
           throw new Error('No output from Decor8 API');
         }
       } else if (model === 'flux-depth') {
-        // FLUX Depth Pro workflow:
-        // 1. Generate depth map from input image using Marigold
-        // 2. Use depth map as control_image for FLUX Depth Pro
+        // FLUX Depth Pro workflow: depth map + FLUX
         creditsUsed = 2;
         
         const roomPrompt = ROOM_PROMPTS[roomType] || ROOM_PROMPTS.living;
         const stylePrompt = STYLE_PROMPTS[furnitureStyle] || STYLE_PROMPTS.modern;
-        const prompt = `${roomPrompt}, ${stylePrompt}, professional real estate photography, well-lit, high quality, interior design magazine, bright and clean`;
+        const prompt = `${roomPrompt}, ${stylePrompt}, professional real estate photography, well-lit, high quality`;
         
         console.log('FLUX Depth Pro workflow:', { roomType, furnitureStyle });
         
@@ -234,18 +175,15 @@ export async function POST(request: NextRequest) {
           throw new Error('No output from FLUX Depth Pro');
         }
       } else if (model === 'interior-design') {
-        // Use adirik/interior-design - specifically designed for virtual staging
-        // Uses Realistic Vision V3.0 + segmentation + MLSD ControlNets
-        // Preserves original room layout better than FLUX Depth Pro
-        // https://replicate.com/adirik/interior-design
+        // Use adirik/interior-design - ControlNet-based virtual staging
         creditsUsed = 2;
         
         const roomPrompt = ROOM_PROMPTS[roomType] || ROOM_PROMPTS.living;
         const stylePrompt = STYLE_PROMPTS[furnitureStyle] || STYLE_PROMPTS.modern;
-        const prompt = `${roomPrompt}, ${stylePrompt}, professional real estate photography, well-lit, high quality, interior design magazine, bright and clean`;
-        const negativePrompt = 'empty room, unfurnished, blurry, low quality, distorted, overexposed, underexposed, noisy, pixelated, watermark, text, dark, cluttered, structural changes, different room, hallucinated architecture';
+        const prompt = `${roomPrompt}, ${stylePrompt}, professional real estate photography, well-lit, high quality, interior design magazine`;
+        const negativePrompt = 'empty room, unfurnished, blurry, low quality, distorted, watermark, text, dark, structural changes, different room';
         
-        console.log('Interior design model:', { roomType, furnitureStyle, prompt });
+        console.log('Interior design model:', { roomType, furnitureStyle });
         
         const result = await replicate.run(
           "adirik/interior-design",
@@ -261,16 +199,9 @@ export async function POST(request: NextRequest) {
           }
         );
         
-        // Handle output
         if (Array.isArray(result) && result.length > 0) {
           const first = result[0];
-          if (first && typeof first.url === 'function') {
-            resultUrl = first.url();
-          } else {
-            resultUrl = String(first);
-          }
-        } else if (result && typeof result === 'object' && typeof (result as any).url === 'function') {
-          resultUrl = (result as any).url();
+          resultUrl = first && typeof first.url === 'function' ? first.url() : String(first);
         } else if (typeof result === 'string') {
           resultUrl = result;
         } else {
@@ -281,13 +212,12 @@ export async function POST(request: NextRequest) {
           throw new Error('No output from interior design model');
         }
       } else {
-        // Fallback to SDXL for other models
-        // Note: SDXL doesn't preserve structure as well as depth-based models
+        // Fallback to SDXL
         creditsUsed = 2;
         const roomPrompt = ROOM_PROMPTS[roomType] || ROOM_PROMPTS.living;
         const stylePrompt = STYLE_PROMPTS[furnitureStyle] || STYLE_PROMPTS.modern;
-        const prompt = `${roomPrompt}, ${stylePrompt}, professional real estate photography, well-lit, high quality, interior design magazine, bright and clean`;
-        const negativePrompt = 'empty room, unfurnished, blurry, low quality, distorted, overexposed, underexposed, noisy, pixelated, watermark, text, dark, cluttered';
+        const prompt = `${roomPrompt}, ${stylePrompt}, professional real estate photography, well-lit, high quality`;
+        const negativePrompt = 'empty room, unfurnished, blurry, low quality, distorted, watermark, text, dark';
 
         const result = await replicate.run(
           "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
