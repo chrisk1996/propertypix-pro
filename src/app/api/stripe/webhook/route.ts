@@ -125,15 +125,17 @@ export async function POST(request: NextRequest) {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
 
+        console.log(`[Stripe] Subscription deleted event - customerId: ${customerId}`);
+
         // Find user by Stripe customer ID
         const { data: user } = await supabaseAdmin
           .from('zestio_users')
-          .select('id')
+          .select('id, subscription_tier')
           .eq('stripe_customer_id', customerId)
           .single();
 
         if (user) {
-          await supabaseAdmin
+          const { error: updateError } = await supabaseAdmin
             .from('zestio_users')
             .update({
               subscription_tier: 'free',
@@ -141,7 +143,12 @@ export async function POST(request: NextRequest) {
               credits: 10,
             })
             .eq('id', user.id);
-          console.log(`[Stripe] Subscription canceled for user ${user.id}`);
+
+          if (updateError) {
+            console.error(`[Stripe] Failed to cancel subscription:`, updateError);
+          } else {
+            console.log(`[Stripe] Subscription canceled for user ${user.id}, was: ${user.subscription_tier}, now: free`);
+          }
         }
         break;
       }
