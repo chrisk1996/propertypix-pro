@@ -7,6 +7,13 @@ import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
+// Plan mapping by price ID (fallback when metadata not set)
+const PLAN_BY_PRICE_ID: Record<string, string> = {
+  // Add your actual price IDs here as fallback
+  // 'price_pro_xxx': 'pro',
+  // 'price_enterprise_xxx': 'enterprise',
+};
+
 // Lazy-initialize Stripe to avoid build-time errors when key is missing
 let stripe: Stripe | null = null;
 function getStripe(): Stripe {
@@ -32,6 +39,27 @@ function getSupabaseAdmin() {
     supabaseAdmin = createClient(url, key);
   }
   return supabaseAdmin;
+}
+
+// Helper to determine plan from price
+function getPlanFromPrice(price: Stripe.Price): string {
+  // First check price metadata
+  if (price.metadata?.plan) {
+    return price.metadata.plan;
+  }
+  // Then check price ID mapping
+  if (PLAN_BY_PRICE_ID[price.id]) {
+    return PLAN_BY_PRICE_ID[price.id];
+  }
+  // Fallback: check env var price IDs
+  if (price.id === process.env.STRIPE_PRO_PRICE_ID) {
+    return 'pro';
+  }
+  if (price.id === process.env.STRIPE_ENTERPRISE_PRICE_ID) {
+    return 'enterprise';
+  }
+  // Default to pro
+  return 'pro';
 }
 
 export async function POST(request: NextRequest) {
@@ -68,13 +96,12 @@ export async function POST(request: NextRequest) {
         console.log(`[Stripe] Checkout completed - userId: ${userId}, plan: ${plan}, metadata:`, session.metadata);
 
         if (userId && plan) {
-          // Update user subscription
           const { error: updateError } = await supabaseAdmin
             .from('zestio_users')
             .update({
               subscription_tier: plan,
               subscription_status: 'active',
-              credits: plan === 'pro' ? 100 : -1, // -1 = unlimited for enterprise
+              credits: plan === 'pro' ? 100 : -1,
               used_credits: 0,
               stripe_subscription_id: session.subscription as string,
             })
@@ -95,7 +122,6 @@ export async function POST(request: NextRequest) {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
 
-        // Find user by Stripe customer ID
         const { data: user } = await supabaseAdmin
           .from('zestio_users')
           .select('id')
@@ -104,10 +130,10 @@ export async function POST(request: NextRequest) {
 
         if (user) {
           const status = subscription.status;
-          const priceMetadata = subscription.items.data[0]?.price?.metadata;
-          const plan = priceMetadata?.plan || 'pro';
+          const price = subscription.items.data[0]?.price;
+          const plan = price ? getPlanFromPrice(price) : 'pro';
 
-          console.log(`[Stripe] Subscription update - status: ${status}, price metadata:`, priceMetadata, `, detected plan: ${plan}`);
+          console.log(`[Stripe] Subscription update - status: ${status}, priceId: ${price?.id}, metadata:`, price?.metadata, `, detected plan: ${plan}`);
 
           const { error: updateError } = await supabaseAdmin
             .from('zestio_users')
@@ -133,7 +159,6 @@ export async function POST(request: NextRequest) {
 
         console.log(`[Stripe] Subscription deleted event - customerId: ${customerId}`);
 
-        // Find user by Stripe customer ID
         const { data: user } = await supabaseAdmin
           .from('zestio_users')
           .select('id, subscription_tier')
@@ -163,7 +188,6 @@ export async function POST(request: NextRequest) {
         const invoice = event.data.object as Stripe.Invoice;
         const customerId = invoice.customer as string;
 
-        // Reset credits on successful payment (monthly reset)
         const { data: user } = await supabaseAdmin
           .from('zestio_users')
           .select('id, subscription_tier')
@@ -186,10 +210,7 @@ export async function POST(request: NextRequest) {
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
         const customerId = invoice.customer as string;
-
-        // Notify about failed payment
         console.log(`[Stripe] Payment failed for customer ${customerId}`);
-        // Could send email notification here
         break;
       }
 
