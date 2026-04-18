@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout';
-import { CreditCard, Loader2, AlertCircle, Check, Zap, Crown, Building2, ArrowUpRight, TrendingUp, ExternalLink } from 'lucide-react';
+import { CreditCard, Loader2, AlertCircle, Check, Zap, Crown, Building2, ArrowUpRight, Calendar, Clock, XCircle } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 
 interface UserData {
@@ -12,6 +12,10 @@ interface UserData {
   credits_used: number;
   credits_remaining: number;
   stripe_customer_id?: string;
+  subscription_status?: string;
+  subscription_current_period_end?: string;
+  subscription_cancel_at?: string;
+  subscription_canceled_at?: string;
 }
 
 const plans = [
@@ -57,6 +61,7 @@ export default function BillingPage() {
 
   useEffect(() => {
     loadUser();
+
     // Check for success/cancel params
     const params = new URLSearchParams(window.location.search);
     if (params.get('success')) {
@@ -68,6 +73,7 @@ export default function BillingPage() {
   const loadUser = async () => {
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser();
+
       if (!authUser) {
         window.location.href = '/auth';
         return;
@@ -76,7 +82,7 @@ export default function BillingPage() {
       // Fetch user profile with credits from zestio_users table
       const { data: profile, error: profileError } = await supabase
         .from('zestio_users')
-        .select('id, subscription_tier, credits, used_credits, stripe_customer_id')
+        .select('id, subscription_tier, credits, used_credits, stripe_customer_id, subscription_status, subscription_current_period_end, subscription_cancel_at, subscription_canceled_at')
         .eq('id', authUser.id)
         .single();
 
@@ -102,6 +108,10 @@ export default function BillingPage() {
         credits_used: creditsUsed,
         credits_remaining: creditsTotal === -1 ? 999999 : creditsTotal - creditsUsed,
         stripe_customer_id: profile?.stripe_customer_id,
+        subscription_status: profile?.subscription_status,
+        subscription_current_period_end: profile?.subscription_current_period_end,
+        subscription_cancel_at: profile?.subscription_cancel_at,
+        subscription_canceled_at: profile?.subscription_canceled_at,
       });
     } catch (err) {
       console.error('Error loading user:', err);
@@ -115,6 +125,15 @@ export default function BillingPage() {
     if (!user || user.plan === 'enterprise') return 100;
     const total = user.credits_total || 1;
     return Math.max(0, Math.round((user.credits_remaining / total) * 100));
+  };
+
+  const formatDate = (dateStr: string | undefined) => {
+    if (!dateStr) return 'N/A';
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
   };
 
   const handleSubscribe = async (plan: string) => {
@@ -146,7 +165,6 @@ export default function BillingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ plan, priceId: priceIds[plan] }),
       });
-
       const data = await response.json();
       if (data.url) {
         window.location.href = data.url;
@@ -192,6 +210,8 @@ export default function BillingPage() {
   }
 
   const currentPlan = plans.find(p => p.id === user?.plan) || plans[0];
+  const isCancelAtPeriodEnd = user?.subscription_status === 'cancel_at_period_end';
+  const isCanceled = user?.subscription_status === 'canceled';
 
   return (
     <AppLayout title="Billing">
@@ -209,6 +229,33 @@ export default function BillingPage() {
           </div>
         )}
 
+        {/* Subscription Status Alert */}
+        {isCancelAtPeriodEnd && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
+            <div>
+              <p className="text-yellow-800 font-medium">Subscription Ending</p>
+              <p className="text-yellow-700 text-sm mt-1">
+                Your subscription will end on <strong>{formatDate(user?.subscription_current_period_end)}</strong>.
+                You'll still have access until then. To reactivate, click Manage Subscription below.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {isCanceled && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 flex items-start gap-3">
+            <XCircle className="w-5 h-5 text-gray-500 mt-0.5" />
+            <div>
+              <p className="text-gray-700 font-medium">Subscription Canceled</p>
+              <p className="text-gray-600 text-sm mt-1">
+                Your subscription was canceled on <strong>{formatDate(user?.subscription_canceled_at)}</strong>.
+                You're now on the Free plan.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Credits Overview Card */}
         <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-6 mb-8 text-white shadow-lg">
           <div className="flex items-center justify-between mb-4">
@@ -216,8 +263,12 @@ export default function BillingPage() {
               <p className="text-indigo-200 text-sm font-medium">Current Plan</p>
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-2xl font-bold">{currentPlan.name}</span>
-                <span className="px-2 py-0.5 bg-white/20 rounded-full text-xs font-medium uppercase">
-                  Active
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium uppercase ${
+                  isCancelAtPeriodEnd ? 'bg-yellow-400/30 text-yellow-100' :
+                  isCanceled ? 'bg-gray-400/30 text-gray-200' :
+                  'bg-white/20'
+                }`}>
+                  {isCancelAtPeriodEnd ? 'Ending' : isCanceled ? 'Canceled' : 'Active'}
                 </span>
               </div>
             </div>
@@ -250,6 +301,24 @@ export default function BillingPage() {
             )}
           </div>
 
+          {/* Subscription Details */}
+          {user?.plan !== 'free' && (
+            <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+              {user?.subscription_current_period_end && !isCancelAtPeriodEnd && (
+                <div className="flex items-center gap-2 text-indigo-200">
+                  <Calendar className="w-4 h-4" />
+                  <span>Renews: {formatDate(user.subscription_current_period_end)}</span>
+                </div>
+              )}
+              {user?.subscription_cancel_at && isCancelAtPeriodEnd && (
+                <div className="flex items-center gap-2 text-yellow-200">
+                  <Clock className="w-4 h-4" />
+                  <span>Ends: {formatDate(user.subscription_cancel_at)}</span>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Manage Subscription Button */}
           {user?.plan !== 'free' && user?.stripe_customer_id && (
             <button
@@ -262,7 +331,7 @@ export default function BillingPage() {
               ) : (
                 <>
                   <CreditCard className="w-4 h-4" />
-                  Manage Subscription
+                  {isCancelAtPeriodEnd ? 'Reactivate Subscription' : 'Manage Subscription'}
                 </>
               )}
             </button>
@@ -307,6 +376,7 @@ export default function BillingPage() {
                     <span className="text-2xl font-bold text-gray-900">{plan.price}</span>
                     <span className="text-sm text-gray-500">{plan.period}</span>
                   </div>
+
                   <p className="text-sm text-gray-600 mt-2">
                     {plan.credits} {plan.credits !== 'Unlimited' ? 'credits/month' : ''}
                   </p>

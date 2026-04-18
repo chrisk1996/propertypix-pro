@@ -21,7 +21,9 @@ function getStripe(): Stripe {
     if (!key) {
       throw new Error('STRIPE_SECRET_KEY environment variable is not set');
     }
-    stripe = new Stripe(key, { apiVersion: '2025-03-31.basil' });
+    stripe = new Stripe(key, {
+      apiVersion: '2025-03-31.basil',
+    });
   }
   return stripe;
 }
@@ -100,7 +102,6 @@ export async function POST(request: NextRequest) {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.user_id;
         const plan = session.metadata?.plan;
-
         console.log(`[Stripe] Checkout completed - userId: ${userId}, plan: ${plan}`);
 
         if (userId && plan) {
@@ -133,35 +134,39 @@ export async function POST(request: NextRequest) {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
 
-        console.log('[Stripe] Raw subscription object:', JSON.stringify({
+        console.log('[Stripe] Raw webhook subscription object:', JSON.stringify({
+          id: subscription.id,
           status: subscription.status,
           cancel_at_period_end: subscription.cancel_at_period_end,
-          current_period_end: subscription.current_period_end,
+          current_period_end: (subscription as any).current_period_end,
           cancel_at: subscription.cancel_at,
         }));
 
         // Fetch full subscription from Stripe to get all fields
-        // Webhook payload may not include current_period_end
         // Note: In API version 2025-03-31.basil, current_period_end moved to items.data[].current_period_end
         const fullSubscription = await stripe.subscriptions.retrieve(subscription.id);
-        
+
+        console.log('[Stripe] FULL fetched subscription:', JSON.stringify({
+          id: fullSubscription.id,
+          status: fullSubscription.status,
+          cancel_at_period_end: fullSubscription.cancel_at_period_end,
+          items_count: fullSubscription.items.data.length,
+          first_item: fullSubscription.items.data[0] ? {
+            id: fullSubscription.items.data[0].id,
+            current_period_start: fullSubscription.items.data[0].current_period_start,
+            current_period_end: fullSubscription.items.data[0].current_period_end,
+          } : null,
+          legacy_current_period_end: (fullSubscription as any).current_period_end,
+          cancel_at: fullSubscription.cancel_at,
+        }));
+
         // Get period end from subscription items (new API structure)
         const firstItem = fullSubscription.items.data[0];
         const periodEndTimestamp = firstItem?.current_period_end || (fullSubscription as any).current_period_end;
-        const periodEnd = periodEndTimestamp 
-          ? new Date(periodEndTimestamp * 1000).toISOString() 
-          : null;
-        const cancelAt = fullSubscription.cancel_at 
-          ? new Date(fullSubscription.cancel_at * 1000).toISOString() 
-          : null;
+        const periodEnd = periodEndTimestamp ? new Date(periodEndTimestamp * 1000).toISOString() : null;
+        const cancelAt = fullSubscription.cancel_at ? new Date(fullSubscription.cancel_at * 1000).toISOString() : null;
 
-        console.log('[Stripe] Fetched subscription:', JSON.stringify({
-          id: fullSubscription.id,
-          status: fullSubscription.status,
-          item_period_end: firstItem?.current_period_end,
-          legacy_period_end: (fullSubscription as any).current_period_end,
-          cancel_at: fullSubscription.cancel_at,
-        }));
+        console.log('[Stripe] Extracted period values:', { periodEnd, cancelAt });
 
         const { data: user } = await supabaseAdmin
           .from('zestio_users')
@@ -173,10 +178,14 @@ export async function POST(request: NextRequest) {
           const status = mapSubscriptionStatus(fullSubscription);
           const price = fullSubscription.items.data[0]?.price;
           const plan = price ? getPlanFromPrice(price) : 'pro';
-          
+
           // If cancel_at_period_end, keep their plan until period ends
-          const effectivePlan = status === 'cancel_at_period_end' ? plan : (status === 'active' ? plan : 'free');
-          const effectiveStatus = status === 'cancel_at_period_end' ? 'cancel_at_period_end' : fullSubscription.status;
+          const effectivePlan = status === 'cancel_at_period_end'
+            ? plan
+            : (status === 'active' ? plan : 'free');
+          const effectiveStatus = status === 'cancel_at_period_end'
+            ? 'cancel_at_period_end'
+            : fullSubscription.status;
 
           // If reactivating (no longer cancel_at_period_end), clear canceled_at
           const canceledAt = status === 'cancel_at_period_end' ? null : undefined;
@@ -186,8 +195,8 @@ export async function POST(request: NextRequest) {
             .update({
               subscription_tier: effectivePlan,
               subscription_status: effectiveStatus,
-              credits: status === 'cancel_at_period_end' || status === 'active' 
-                ? (plan === 'enterprise' ? -1 : 100) 
+              credits: status === 'cancel_at_period_end' || status === 'active'
+                ? (plan === 'enterprise' ? -1 : 100)
                 : 10,
               subscription_current_period_end: periodEnd,
               subscription_cancel_at: cancelAt,
@@ -208,7 +217,6 @@ export async function POST(request: NextRequest) {
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
-
         console.log(`[Stripe] Subscription deleted event - customerId: ${customerId}`);
 
         const { data: user } = await supabaseAdmin
@@ -248,7 +256,7 @@ export async function POST(request: NextRequest) {
         // Get the subscription from the invoice to determine the correct plan
         const subscriptionId = invoice.subscription as string | undefined;
         let plan = 'free';
-        
+
         if (subscriptionId) {
           // Fetch the subscription to get the current price
           const subscription = await stripe.subscriptions.retrieve(subscriptionId);
