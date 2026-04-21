@@ -3,6 +3,7 @@ import Replicate from 'replicate';
 // Force dynamic rendering - uses cookies/auth
 export const dynamic = 'force-dynamic';
 import { createClient } from '@/utils/supabase/server';
+import { authenticateRequest, logApiUsage } from '@/lib/api-auth';
 
 const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN! });
 
@@ -37,17 +38,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Authenticate user
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const authResult = await authenticateRequest(request);
+    if (!authResult) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const userId = authResult.userId;
+    const supabase = await createClient();
 
     // Check user credits
     const { data: userData, error: userError } = await supabase
       .from('zestio_users')
       .select('credits, used_credits, subscription_tier')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single();
 
     if (userError) {
@@ -56,7 +58,7 @@ export async function POST(request: NextRequest) {
       const { error: insertError } = await supabase
         .from('zestio_users')
         .insert({
-          id: user.id,
+          id: userId,
           credits: 5, // Free tier default
           used_credits: 0,
           subscription_tier: 'free'
@@ -194,8 +196,18 @@ export async function POST(request: NextRequest) {
             credits: Math.max(0, userData.credits - creditsUsed),
             used_credits: userData.used_credits + creditsUsed,
           })
-          .eq('id', user.id);
+          .eq('id', userId);
       }
+
+      logApiUsage({
+        apiKeyId: authResult.apiKeyId,
+        userId,
+        endpoint: '/api/enhance',
+        creditsUsed,
+        model,
+        statusCode: 200,
+        ipAddress: ip,
+      }).catch(() => {});
 
       return NextResponse.json({
         success: true,

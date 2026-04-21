@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Replicate from 'replicate';
 export const dynamic = 'force-dynamic';
 import { createClient } from '@/utils/supabase/server';
+import { authenticateRequest, logApiUsage } from '@/lib/api-auth';
 
 const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN! });
 
@@ -157,18 +158,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
+    const authResult = await authenticateRequest(request);
+    if (!authResult) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const userId = authResult.userId;
+    const supabase = await createClient();
 
     // Check if user has credits
     const { data: userData } = await supabase
       .from('zestio_users')
       .select('credits, used_credits, subscription_tier')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single();
 
     if (!userData) {
@@ -306,7 +307,18 @@ export async function POST(request: NextRequest) {
       }
 
       // Deduct credits atomically
-      const remainingCredits = await deductCredits(supabase, user.id, creditsUsed);
+      const remainingCredits = await deductCredits(supabase, userId, creditsUsed);
+
+      // Log usage
+      logApiUsage({
+        apiKeyId: authResult.apiKeyId,
+        userId,
+        endpoint: '/api/staging',
+        creditsUsed,
+        model: usedModel,
+        statusCode: 200,
+        ipAddress: ip,
+      }).catch(() => {});
 
       return NextResponse.json({
         success: true,
