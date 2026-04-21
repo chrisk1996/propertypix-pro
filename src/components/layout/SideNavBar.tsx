@@ -21,9 +21,14 @@ export default function SideNavBar() {
       <div className="p-6 flex flex-col h-full">
         {/* Logo */}
         <div className="mb-10 px-2">
-          <div className="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-sm inline-block">
-            <img src="/logo.png" alt="Zestio" className="h-10 w-auto" />
-          </div>
+          <Link href="/dashboard" className="flex items-center gap-2.5 group">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-md shadow-blue-600/20 group-hover:shadow-lg group-hover:shadow-blue-600/30 transition-shadow">
+              <span className="material-symbols-outlined text-white text-lg">home</span>
+            </div>
+            <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Zestio
+            </span>
+          </Link>
         </div>
 
         {/* Navigation */}
