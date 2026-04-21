@@ -167,7 +167,12 @@ export function StagingPanel({
             </span>
           ) : (
             <span className="flex items-center justify-center gap-2">
-              <span className="material-symbols-outlined text-base">sofa</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                <path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3" />
+                <path d="M2 11v5a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v2H6v-2a2 2 0 0 0-4 0Z" />
+                <path d="M4 18v2" />
+                <path d="M20 18v2" />
+              </svg>
               Stage Room (2-3 credits)
             </span>
           )}
