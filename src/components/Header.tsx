@@ -34,10 +34,13 @@ export function Header() {
     <header className="fixed top-0 w-full z-50 bg-[#f7f9ff]/80 backdrop-blur-md border-b border-[#c4c6cd]/10">
       <div className="max-w-[1920px] mx-auto flex justify-between items-center px-12 py-5">
         {/* Logo */}
-        <Link href="/" className="flex items-center">
-          <div className="bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-sm">
-            <img src="/logo.png" alt="Zestio" className="h-12 w-auto" />
+        <Link href="/" className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-lg bg-slate-900 flex items-center justify-center">
+            <span className="text-white font-extrabold text-sm leading-none">Z</span>
           </div>
+          <span className="text-xl font-bold tracking-tight text-[#1d2832]">
+            Zestio
+          </span>
         </Link>
 
         {/* Nav - Desktop */}

@@ -21,11 +21,13 @@ export default function SideNavBar() {
       <div className="p-6 flex flex-col h-full">
         {/* Logo */}
         <div className="mb-10 px-2">
-          <Link href="/dashboard" className="group">
-            <span className="text-2xl font-extrabold tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">
+          <Link href="/dashboard" className="flex items-center gap-2.5 group">
+            <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center group-hover:bg-blue-600 transition-colors">
+              <span className="text-white font-extrabold text-sm leading-none">Z</span>
+            </div>
+            <span className="text-xl font-bold tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">
               Zestio
             </span>
-            <span className="ml-1 text-xs font-semibold text-slate-400 align-top mt-1.5 inline-block">Pro</span>
           </Link>
         </div>
 
