@@ -24,32 +24,34 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       listing_url,
+      manual_images,
       renovation_style = 'modern',
       music_genre = 'cinematic'
     } = body;
 
-    // Validate URL
-    if (!listing_url) {
+    // Validate: either URL or manual images required
+    const isManualMode = Array.isArray(manual_images) && manual_images.length >= 5;
+    if (!listing_url && !isManualMode) {
       return NextResponse.json(
-        { error: 'listing_url is required' },
+        { error: 'Either listing_url or manual_images (min 5) is required' },
         { status: 400 }
       );
     }
 
-    // Auto-prepend https:// if missing protocol
-    let normalizedUrl = listing_url;
-    if (!normalizedUrl.match(/^https?:\/\//i)) {
-      normalizedUrl = 'https://' + normalizedUrl;
-    }
-    
-    // Validate URL format
-    try {
-      new URL(normalizedUrl);
-    } catch {
-      return NextResponse.json(
-        { error: 'Invalid URL format' },
-        { status: 400 }
-      );
+    // Validate URL format (only for URL mode)
+    let normalizedUrl = listing_url || '';
+    if (normalizedUrl) {
+      if (!normalizedUrl.match(/^https?:\/\//i)) {
+        normalizedUrl = 'https://' + normalizedUrl;
+      }
+      try {
+        new URL(normalizedUrl);
+      } catch {
+        return NextResponse.json(
+          { error: 'Invalid URL format' },
+          { status: 400 }
+        );
+      }
     }
 
     // Validate renovation style
@@ -86,20 +88,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Detect platform from URL
-    const platform = detectPlatform(normalizedUrl);
+    // Detect platform from URL (manual mode has no platform)
+    const platform = normalizedUrl ? detectPlatform(normalizedUrl) : 'other';
 
     // Create job record
     const { data: job, error: jobError } = await supabase
       .from('video_jobs')
       .insert({
         user_id: user.id,
-        listing_url: normalizedUrl,
+        listing_url: normalizedUrl || null,
         platform,
         renovation_style,
         music_genre,
         status: 'queued',
         credits_used: 1,
+        input_images: isManualMode ? manual_images : null,
       })
       .select()
       .single();
@@ -136,10 +139,11 @@ export async function POST(request: NextRequest) {
       await queueVideoPipeline({
         jobId: job.id,
         userId: user.id,
-        listingUrl: normalizedUrl,
+        listingUrl: normalizedUrl || '',
         platform,
         renovationStyle: renovation_style,
         musicGenre: music_genre,
+        inputImages: isManualMode ? manual_images : undefined,
       });
     } catch (queueError) {
       console.warn('[VideoJobs] Queue unavailable (serverless mode):', queueError);

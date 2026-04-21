@@ -66,6 +66,7 @@ export default function VideoPage() {
   const [listingUrl, setListingUrl] = useState('');
   const [detectedPlatform, setDetectedPlatform] = useState<VideoPlatform | null>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [renovationStyle, setRenovationStyle] = useState<RenovationStyle>('modern');
   const [musicGenre, setMusicGenre] = useState<MusicGenre>('cinematic');
@@ -106,11 +107,42 @@ export default function VideoPage() {
     }
   }, [listingUrl, mode]);
   
-  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) {
-      const newImages = Array.from(files).map(file => URL.createObjectURL(file));
-      setUploadedImages(prev => [...prev, ...newImages]);
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const newUrls: string[] = [];
+      for (const file of Array.from(files)) {
+        const ext = file.name.split('.').pop() || 'jpg';
+        const path = `${user.id}/video-uploads/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('user-uploads')
+          .upload(path, file, { contentType: file.type, upsert: false });
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          continue;
+        }
+
+        const { data: urlData } = supabase.storage.from('user-uploads').getPublicUrl(path);
+        if (urlData.publicUrl) {
+          newUrls.push(urlData.publicUrl);
+        }
+      }
+
+      setUploadedImages(prev => [...prev, ...newUrls]);
+    } catch (err) {
+      console.error('Upload failed:', err);
+    } finally {
+      setIsUploading(false);
+      // Reset file input so re-selecting the same file works
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
   
@@ -119,7 +151,7 @@ export default function VideoPage() {
   const handleCreateJob = useCallback(async () => {
     if (mode === 'url' && !listingUrl) return;
     if (mode === 'manual' && uploadedImages.length < 5) return;
-    if (credits.total - credits.used < 1) return;
+    if (!credits.total || credits.total === -1 || credits.total - credits.used < 1) return;
     
     setIsCreating(true);
     setCreateError(null);
@@ -132,7 +164,7 @@ export default function VideoPage() {
           listing_url: mode === 'url' ? listingUrl : undefined,
           renovation_style: renovationStyle,
           music_genre: musicGenre,
-          ...(mode === 'manual' && { manual_images: uploadedImages.length }),
+          ...(mode === 'manual' && { manual_images: uploadedImages }),
         }),
       });
       
@@ -159,7 +191,8 @@ export default function VideoPage() {
   };
   
   const remainingCredits = credits.total - credits.used;
-  const canSubmit = remainingCredits >= 1 && ((mode === 'url' && listingUrl.length > 0) || (mode === 'manual' && uploadedImages.length >= 5));
+  const hasCredit = credits.total === -1 || (credits.total - credits.used >= 1);
+  const canSubmit = hasCredit && ((mode === 'url' && listingUrl.length > 0) || (mode === 'manual' && uploadedImages.length >= 5));
   const currentStageInfo = activeJob ? statusToStage(activeJob.status) : null;
   const isJobComplete = activeJob?.status === 'done';
   const isJobFailed = activeJob?.status === 'failed';
@@ -253,9 +286,19 @@ export default function VideoPage() {
                 {mode === 'manual' && (
                   <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                     <h3 className="font-bold text-slate-900 mb-4">Upload Images</h3>
-                    <div onClick={() => fileInputRef.current?.click()} className="w-full aspect-video bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-purple-500 hover:bg-purple-50/50 transition-all mb-4">
-                      <span className="material-symbols-outlined text-5xl text-slate-400">add_photo_alternate</span>
-                      <div className="text-center"><p className="font-semibold text-slate-700">Drop your property images here</p><p className="text-sm text-slate-500">or click to browse (min 5 images)</p></div>
+                    <div onClick={() => !isUploading && fileInputRef.current?.click()} className={cn("w-full aspect-video bg-slate-50 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-purple-500 hover:bg-purple-50/50 transition-all mb-4", isUploading && "opacity-60 pointer-events-none")}>
+                      {isUploading ? (
+                        <>
+                          <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                          <p className="font-semibold text-slate-700">Uploading...</p>
+                        </>
+                      ) : (
+                        <>
+                          <span className="material-symbols-outlined text-5xl text-slate-400">add_photo_alternate</span>
+                          <div className="text-center"><p className="font-semibold text-slate-700">Drop your property images here</p><p className="text-sm text-slate-500">or click to browse (min 5 images)</p></div>
+                        </>
+                      )}
+                    </div>
                       <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleUpload} className="hidden" />
                     </div>
                     {uploadedImages.length > 0 && (<div className="grid grid-cols-5 gap-2 mb-4">{uploadedImages.map((img, idx) => (<div key={idx} className="relative aspect-square rounded-lg overflow-hidden group"><img src={img} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover" /><button type="button" onClick={() => removeImage(idx)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"><span className="material-symbols-outlined text-sm">close</span></button></div>))}</div>)}
@@ -283,7 +326,7 @@ export default function VideoPage() {
                   <span className="material-symbols-outlined">auto_awesome</span>{isCreating ? 'Creating...' : 'Generate Video'}
                 </button>
                 
-                {remainingCredits < 1 && (<p className="text-center text-sm text-red-600">You need at least 1 credit to generate a video. Please purchase more credits.</p>)}
+                {!hasCredit && (<p className="text-center text-sm text-red-600">You need at least 1 credit to generate a video. Please purchase more credits.</p>)}
               </div>
             )}
           </main>

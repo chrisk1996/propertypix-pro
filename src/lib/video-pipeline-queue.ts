@@ -14,6 +14,7 @@ export interface VideoPipelineJob {
   platform: string;
   renovationStyle: string;
   musicGenre: string;
+  inputImages?: string[];
 }
 
 // Pipeline stages
