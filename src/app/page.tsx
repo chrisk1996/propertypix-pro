@@ -131,7 +131,7 @@ export default function LandingPage() {
                   <img
                     alt="Cinematic property video frame"
                     className="w-full h-full object-cover opacity-80"
-                    src="https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?w=600&q=80"
+                    src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&q=80"
                   />
                   <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1.5 rounded-sm">
                     <span className="font-manrope text-[10px] uppercase tracking-widest text-[#1d2832]">
