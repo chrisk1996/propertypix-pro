@@ -102,15 +102,15 @@ function BeforeAfterSlider({ before, after }: { before: string; after: string })
     <div
       ref={containerRef}
       className="relative w-full h-full overflow-hidden rounded-xl cursor-col-resize select-none"
-      onMouseDown={(e) => { setDragging(true); updatePosition(e.clientX); }}
-      onTouchStart={(e) => { setDragging(true); updatePosition(e.touches[0].clientX); }}
+      onMouseDown={(e) => { e.stopPropagation(); setDragging(true); updatePosition(e.clientX); }}
+      onTouchStart={(e) => { e.stopPropagation(); setDragging(true); updatePosition(e.touches[0].clientX); }}
     >
       {/* After (full) */}
       <img src={after} alt="After" className="absolute inset-0 w-full h-full object-cover" draggable={false} />
 
       {/* Before (clipped) */}
       <div className="absolute inset-0 overflow-hidden" style={{ width: `${position}%` }}>
-        <img src={before} alt="Before" className="absolute inset-0 w-full h-full object-cover" style={{ minWidth: containerRef.current ? `${containerRef.current.offsetWidth}px` : '100%' }} draggable={false} />
+        <img src={before} alt="Before" className="w-full h-full object-cover" draggable={false} />
       </div>
 
       {/* Slider line */}
@@ -250,13 +250,15 @@ export function ImageStudio({ className = '' }: { className?: string }) {
               </button>
             </div>
           )}
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
-            className="absolute inset-0 opacity-0 cursor-pointer"
-          />
+          {!image && (
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
+              className="absolute inset-0 opacity-0 cursor-pointer"
+            />
+          )}
         </div>
 
         {/* Bottom bar */}
@@ -264,7 +266,7 @@ export function ImageStudio({ className = '' }: { className?: string }) {
           <div className="flex items-center justify-between py-3 gap-3">
             <div className="flex items-center gap-2">
               {image && (
-                <button onClick={resetAll} className="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-800 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
+                <button onClick={() => fileRef.current?.click()} className="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-800 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
                   New Image
                 </button>
               )}
