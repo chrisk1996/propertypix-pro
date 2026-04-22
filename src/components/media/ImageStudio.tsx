@@ -108,9 +108,9 @@ function BeforeAfterSlider({ before, after }: { before: string; after: string })
       {/* After (full) */}
       <img src={after} alt="After" className="absolute inset-0 w-full h-full object-cover" draggable={false} />
 
-      {/* Before (clipped) */}
-      <div className="absolute inset-0 overflow-hidden" style={{ width: `${position}%` }}>
-        <img src={before} alt="Before" className="w-full h-full object-cover" draggable={false} />
+      {/* Before (clipped at full size) */}
+      <div className="absolute inset-0 overflow-hidden" style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}>
+        <img src={before} alt="Before" className="absolute inset-0 w-full h-full object-cover" draggable={false} />
       </div>
 
       {/* Slider line */}
