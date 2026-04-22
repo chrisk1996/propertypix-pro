@@ -5,8 +5,7 @@ import { usePathname } from 'next/navigation';
 
 const navItems = [
   { href: '/dashboard', icon: 'dashboard', label: 'Dashboard' },
-  { href: '/enhance', icon: 'auto_awesome', label: 'Image Enhancer' },
-  { href: '/staging', icon: 'chair', label: 'Virtual Staging' },
+  { href: '/studio', icon: 'auto_awesome', label: 'Image Studio' },
   { href: '/social', icon: 'share', label: 'Social Media Kit' },
   { href: '/listing', icon: 'description', label: 'Listing Builder' },
   { href: '/video', icon: 'movie_filter', label: 'Video Creator' },
