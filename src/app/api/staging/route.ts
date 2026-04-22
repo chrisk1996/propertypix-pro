@@ -197,7 +197,7 @@ export async function POST(request: NextRequest) {
     try {
       const roomPrompt = ROOM_PROMPTS[roomType] || ROOM_PROMPTS.living;
       const stylePrompt = STYLE_PROMPTS[furnitureStyle] || STYLE_PROMPTS[furnitureStyle === 'minimalist' ? 'minimalist' : 'modern'];
-      const prompt = `${roomPrompt}, ${stylePrompt}, professional real estate photography, well-lit, high quality`;
+      const prompt = `${roomPrompt}, ${stylePrompt}, professional real estate photography, well-lit, high quality, keep original room structure, preserve walls, preserve windows, preserve ceiling, preserve floor plan`;
       const negativePrompt = 'empty room, unfurnished, blurry, low quality, distorted, watermark, text, dark, structural changes, different room';
 
       if (model === 'decor8') {
@@ -268,10 +268,10 @@ export async function POST(request: NextRequest) {
           input: {
             image: image,
             prompt: fullPrompt,
-            negative_prompt: negativePrompt,
+            negative_prompt: 'empty room, unfurnished, blurry, low quality, distorted, watermark, text, dark, structural changes, different room, changed walls, changed windows, changed ceiling, changed floor plan',
             num_inference_steps: 50,
-            guidance_scale: 7.5,
-            prompt_strength: 0.8,
+            guidance_scale: 15,
+            prompt_strength: 0.5,
           },
         });
 
