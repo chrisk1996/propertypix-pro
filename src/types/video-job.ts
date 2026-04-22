@@ -11,7 +11,8 @@ export type VideoJobStatus =
   | 'animating'
   | 'stitching'
   | 'done'
-  | 'failed';
+  | 'failed'
+  | 'needs_images';
 
 // Pipeline stage for progress indicator
 export type PipelineStage = 'scrape' | 'enhance' | 'generate' | 'complete';
@@ -150,6 +151,12 @@ export const VIDEO_STATUS_CONFIG: Record<VideoJobStatus, {
     bgColor: 'bg-red-100',
     icon: 'error',
   },
+  needs_images: {
+    label: 'Upload Required',
+    color: 'text-amber-700',
+    bgColor: 'bg-amber-100',
+    icon: 'upload_file',
+  },
 };
 
 // Pipeline stage configuration for progress indicator
@@ -205,6 +212,8 @@ export function statusToStage(status: VideoJobStatus): {
       return { stage: 'complete', stageStatus: 'complete' };
     case 'failed':
       return { stage: 'complete', stageStatus: 'error' };
+    case 'needs_images':
+      return { stage: 'scrape', stageStatus: 'error' };
     default:
       return { stage: 'scrape', stageStatus: 'pending' };
   }

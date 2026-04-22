@@ -169,7 +169,27 @@ async function processVideoJob(
     }
 
     if (images.length === 0) {
-      throw new Error('No images found. Try uploading images manually.');
+      // Can't scrape images — set status to indicate manual upload needed
+      await supabase
+        .from('video_jobs')
+        .update({ status: 'needs_images' })
+        .eq('id', jobId);
+      console.log(`[VideoJob ${jobId}] No images scraped. Job set to needs_images.`);
+      // Refund credit
+      try {
+        const { data: ud } = await supabase
+          .from('zestio_users')
+          .select('used_credits')
+          .eq('id', config.userId)
+          .single();
+        if (ud && ud.used_credits > 0) {
+          await supabase
+            .from('zestio_users')
+            .update({ used_credits: ud.used_credits - 1 })
+            .eq('id', config.userId);
+        }
+      } catch {}
+      return;
     }
 
     // Stage 2: AI Renovation (optional — enhance images)

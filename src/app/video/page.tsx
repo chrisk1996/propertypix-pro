@@ -206,7 +206,7 @@ export default function VideoPage() {
   const canSubmit = hasCredit && ((mode === 'url' && listingUrl.length > 0) || (mode === 'manual' && uploadedImages.length >= 5));
   const currentStageInfo = activeJob ? statusToStage(activeJob.status) : null;
   const isJobComplete = activeJob?.status === 'done';
-  const isJobFailed = activeJob?.status === 'failed';
+  const isJobFailed = activeJob?.status === 'failed' || activeJob?.status === 'needs_images';
 
   return (
     <AppLayout title="Video Creator">
@@ -246,7 +246,7 @@ export default function VideoPage() {
                         <span className={cn('material-symbols-outlined text-lg', !isJobFailed && 'animate-spin')}>{VIDEO_STATUS_CONFIG[activeJob.status]?.icon}</span>
                         {VIDEO_STATUS_CONFIG[activeJob.status]?.label}
                       </span>
-                      <p className="text-slate-400 text-sm mt-2">{isJobFailed && activeJob.error_message ? activeJob.error_message : 'Processing your video...'}</p>
+                      <p className="text-slate-400 text-sm mt-2">{activeJob?.status === 'needs_images' ? 'Could not extract images from this URL. Please switch to manual mode and upload images.' : (isJobFailed && activeJob.error_message ? activeJob.error_message : 'Processing your video...')}</p>
                     </div>
                   </div>
                 )}
