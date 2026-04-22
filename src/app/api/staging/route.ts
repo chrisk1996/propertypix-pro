@@ -27,14 +27,14 @@ function checkRateLimit(ip: string): boolean {
 
 // Room type prompts for virtual staging
 const ROOM_PROMPTS: Record<string, string> = {
-  living: 'furnished living room with comfortable sofa, coffee table, rug, lamps, wall art, plants, curtains',
-  bedroom: 'furnished bedroom with bed, nightstands, lamps, dresser, rug, curtains, pillows',
-  kitchen: 'furnished kitchen with dining table, chairs, countertop decorations, pendant lights',
-  bathroom: 'furnished bathroom with towels, plants, soap dispensers, mirror, rug',
-  dining: 'furnished dining room with dining table, chairs, sideboard, centerpiece, pendant light',
-  office: 'furnished home office with desk, office chair, bookshelf, desk lamp, computer, rug',
-  basement: 'furnished basement with entertainment center, sofa, game table, rug, lighting',
-  patio: 'furnished patio with outdoor furniture, plants, string lights, rug, cushions',
+  living: 'wide angle furnished living room with comfortable sofa, coffee table, rug, lamps, wall art, plants, curtains, full room visible',
+  bedroom: 'wide angle furnished bedroom with bed, nightstands, lamps, dresser, rug, curtains, pillows, full room visible',
+  kitchen: 'wide angle furnished kitchen with dining table, chairs, countertop decorations, pendant lights, full room visible',
+  bathroom: 'wide angle furnished bathroom with towels, plants, soap dispensers, mirror, rug, full room visible',
+  dining: 'wide angle furnished dining room with dining table, chairs, sideboard, centerpiece, pendant light, full room visible',
+  office: 'wide angle furnished home office with desk, office chair, bookshelf, desk lamp, computer, rug, full room visible',
+  basement: 'wide angle furnished basement with entertainment center, sofa, game table, rug, lighting, full room visible',
+  patio: 'wide angle furnished patio with outdoor furniture, plants, string lights, rug, cushions, full area visible',
 };
 
 // Style prompts for virtual staging
@@ -197,7 +197,7 @@ export async function POST(request: NextRequest) {
     try {
       const roomPrompt = ROOM_PROMPTS[roomType] || ROOM_PROMPTS.living;
       const stylePrompt = STYLE_PROMPTS[furnitureStyle] || STYLE_PROMPTS[furnitureStyle === 'minimalist' ? 'minimalist' : 'modern'];
-      const prompt = `${roomPrompt}, ${stylePrompt}, professional real estate photography, well-lit, high quality, keep original room structure, preserve walls, preserve windows, preserve ceiling, preserve floor plan`;
+      const prompt = `${roomPrompt}, ${stylePrompt}, wide angle, full room visible, professional real estate photography, well-lit, high quality, keep original room structure, preserve walls, preserve windows, preserve ceiling, preserve floor plan`;
       const negativePrompt = 'empty room, unfurnished, blurry, low quality, distorted, watermark, text, dark, structural changes, different room';
 
       if (model === 'decor8') {
@@ -271,7 +271,7 @@ export async function POST(request: NextRequest) {
             negative_prompt: 'empty room, unfurnished, blurry, low quality, distorted, watermark, text, dark, structural changes, different room, changed walls, changed windows, changed ceiling, changed floor plan',
             num_inference_steps: 50,
             guidance_scale: 15,
-            prompt_strength: 0.5,
+            prompt_strength: 0.6,
           },
         });
 
