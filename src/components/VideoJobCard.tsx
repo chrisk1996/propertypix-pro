@@ -18,7 +18,11 @@ export function VideoJobCard({
   showThumbnail = true,
 }: VideoJobCardProps) {
   const statusConfig = VIDEO_STATUS_CONFIG[job.status] || VIDEO_STATUS_CONFIG.queued;
-  const platformConfig = PLATFORM_CONFIG[job.platform];
+  const platformConfig = PLATFORM_CONFIG[job.platform] || PLATFORM_CONFIG.other;
+  
+  if (!platformConfig) {
+    return null;
+  }
   
   // Format created date
   const createdDate = new Date(job.created_at);
