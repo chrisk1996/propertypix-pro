@@ -96,8 +96,7 @@ export async function POST(request: NextRequest) {
       .from('video_jobs')
       .insert({
         user_id: user.id,
-        listing_url: normalizedUrl || 'manual-mode'
-        platform,
+        listing_url: normalizedUrl || 'manual-mode',
         renovation_style,
         music_genre,
         status: 'queued',
@@ -140,7 +139,6 @@ export async function POST(request: NextRequest) {
         jobId: job.id,
         userId: user.id,
         listingUrl: normalizedUrl || '',
-        platform,
         renovationStyle: renovation_style,
         musicGenre: music_genre,
         inputImages: isManualMode ? manual_images : undefined,
