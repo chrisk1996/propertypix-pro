@@ -129,8 +129,19 @@ async function handleRenovating(supabase: Awaited<ReturnType<typeof createClient
   const currentIndex = (metadata.renovateIndex as number) || 0;
   const renovated: string[] = (metadata.renovatedImages as string[]) || [];
 
+  // Prevent concurrent processing
+  if (metadata.renovating === true) {
+    return NextResponse.json({ status: 'renovating', message: `Still renovating image ${currentIndex + 1}/${toProcess.length}...` });
+  }
+
   if (currentIndex < toProcess.length) {
     console.log(`[VideoProcess] Renovating image ${currentIndex + 1}/${toProcess.length}`);
+
+    // Set lock
+    await supabase.from('video_jobs')
+      .update({ metadata: { ...metadata, renovating: true } })
+      .eq('id', job.id);
+
     try {
       const prediction = await replicate.predictions.create({
         model: "adirik/interior-design",
@@ -200,8 +211,19 @@ async function handleAnimating(supabase: Awaited<ReturnType<typeof createClient>
   const currentIndex = (metadata.animateIndex as number) || 0;
   const clips: string[] = (metadata.clips as string[]) || [];
 
+  // Prevent concurrent processing — if lock is set, skip
+  if (metadata.animating === true) {
+    return NextResponse.json({ status: 'animating', message: `Still animating image ${currentIndex + 1}/${images.length}...` });
+  }
+
   if (currentIndex < images.length) {
     console.log(`[VideoProcess] Animating image ${currentIndex + 1}/${images.length}`);
+
+    // Set lock
+    await supabase.from('video_jobs')
+      .update({ metadata: { ...metadata, animating: true } })
+      .eq('id', job.id);
+
     try {
       const prediction = await replicate.predictions.create({
         model: "stability-ai/stable-video-diffusion",
@@ -219,11 +241,10 @@ async function handleAnimating(supabase: Awaited<ReturnType<typeof createClient>
       if (url) clips.push(url);
     } catch (err) {
       console.warn(`[VideoProcess] Animation failed for image ${currentIndex}:`, err);
-      // Hard fail on animation error
       const errMsg = err instanceof Error ? err.message : 'Animation failed';
       await supabase.from('video_jobs').update({
         status: 'failed',
-        metadata: { ...metadata, animateIndex: nextIndex, clips, error: `animating: ${errMsg}` },
+        metadata: { ...metadata, clips, error: `animating: ${errMsg}` },
       }).eq('id', job.id);
       return NextResponse.json({ status: 'failed', error: `Animation failed at image ${currentIndex + 1}: ${errMsg}` });
     }
