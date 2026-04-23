@@ -76,7 +76,7 @@ export default function VideoPage() {
   const [credits, setCredits] = useState({ total: 0, used: 0 });
   const [isLoadingCredits, setIsLoadingCredits] = useState(true);
   
-  const { job: activeJob } = useVideoJob({ jobId: activeJobId ?? undefined, autoSubscribe: true });
+  const { job: activeJob, refetch: refetchActiveJob } = useVideoJob({ jobId: activeJobId ?? undefined, autoSubscribe: true });
   const { jobs: recentJobs, isLoading: isLoadingJobs, refetch: refetchJobs } = useVideoJobs({ limit: 5 });
   const supabase = createClient();
 
@@ -92,23 +92,16 @@ export default function VideoPage() {
       } catch (err) {
         console.error('Process trigger failed:', err);
       }
-      // Refetch job to get updated status
-      const { data } = await supabase
-        .from('video_jobs')
-        .select('*')
-        .eq('id', activeJob.id)
-        .single();
-      if (data) {
-        // Force a re-render by updating through the hook
-        refetchJobs();
-      }
+      // Refetch both the active job and the jobs list
+      refetchActiveJob();
+      refetchJobs();
     };
 
     // Poll every 5 seconds while active
     poll();
     const interval = setInterval(poll, 5000);
     return () => clearInterval(interval);
-  }, [activeJob?.id, activeJob?.status, refetchJobs, supabase]);
+  }, [activeJob?.id, activeJob?.status, refetchActiveJob, refetchJobs]);
   
   useEffect(() => {
     async function fetchCredits() {
