@@ -219,6 +219,13 @@ async function handleAnimating(supabase: Awaited<ReturnType<typeof createClient>
       if (url) clips.push(url);
     } catch (err) {
       console.warn(`[VideoProcess] Animation failed for image ${currentIndex}:`, err);
+      // Hard fail on animation error
+      const errMsg = err instanceof Error ? err.message : 'Animation failed';
+      await supabase.from('video_jobs').update({
+        status: 'failed',
+        metadata: { ...metadata, animateIndex: nextIndex, clips, error: `animating: ${errMsg}` },
+      }).eq('id', job.id);
+      return NextResponse.json({ status: 'failed', error: `Animation failed at image ${currentIndex + 1}: ${errMsg}` });
     }
 
     const nextIndex = currentIndex + 1;
@@ -251,25 +258,30 @@ async function handleStitching(supabase: Awaited<ReturnType<typeof createClient>
   const clips = (metadata.clips as string[]) || [];
   const images = (metadata.renovatedImages as string[]) || [];
 
-  // For now — store clips as output. If no clips, store renovated images.
-  const outputUrl = clips.length > 0 ? clips[0] : null;
-  const fallbackImage = images.length > 0 ? images[0] : null;
+  // If no clips were generated, fail
+  if (clips.length === 0) {
+    await supabase.from('video_jobs').update({
+      status: 'failed',
+      metadata: { ...metadata, error: 'stitching: No video clips were generated during animation' },
+    }).eq('id', job.id);
+    return NextResponse.json({ status: 'failed', error: 'No video clips generated' });
+  }
+
+  const outputUrl = clips[0];
 
   await supabase
     .from('video_jobs')
     .update({
       status: 'done',
-      output_video_url: outputUrl || fallbackImage,
+      output_video_url: outputUrl,
     })
     .eq('id', job.id);
 
   return NextResponse.json({
     status: 'done',
-    message: clips.length > 0
-      ? `Video complete! ${clips.length} clips generated.`
-      : `Enhancement complete! ${images.length} images renovated. Video clips could not be generated.`,
-    outputUrl: outputUrl || fallbackImage,
-    hasVideo: clips.length > 0,
+    message: `Video complete! ${clips.length} clips generated.`,
+    outputUrl,
+    hasVideo: true,
   });
 }
 

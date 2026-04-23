@@ -280,11 +280,7 @@ export default function VideoPage() {
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 {isJobComplete && activeJob.output_video_url ? (
                   <div className="aspect-video bg-slate-900">
-                    {activeJob.output_video_url.match(/\.(mp4|webm|mov)/i) ? (
-                      <video src={activeJob.output_video_url} controls className="w-full h-full object-contain" poster={activeJob.thumbnail_url} />
-                    ) : (
-                      <img src={activeJob.output_video_url} alt="Result" className="w-full h-full object-contain" />
-                    )}
+                    <video src={activeJob.output_video_url} controls className="w-full h-full object-contain" poster={activeJob.thumbnail_url} />
                   </div>
                 ) : (
                   <div className="aspect-video bg-gradient-to-br from-slate-800 to-slate-900 flex flex-col items-center justify-center p-8">
@@ -306,7 +302,7 @@ export default function VideoPage() {
                   {isJobComplete ? (
                     <div className="flex gap-4">
                       <a href={activeJob.output_video_url} download className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-colors">
-                        <span className="material-symbols-outlined">download</span> {activeJob.output_video_url.match(/\.(mp4|webm|mov)/i) ? 'Download Video' : 'Download Image'}
+                        <span className="material-symbols-outlined">download</span> Download Video
                       </a>
                       <button type="button" className="flex items-center justify-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 transition-colors">
                         <span className="material-symbols-outlined">share</span> Share
