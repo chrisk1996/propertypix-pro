@@ -1,6 +1,6 @@
 import { Header } from '@/components/Header';
 import Link from 'next/link';
-import { PLANS, CREDIT_BREAKDOWN } from '@/lib/pricing';
+import { PLANS, CREDIT_BREAKDOWN, TOP_UP_PACKS } from '@/lib/pricing';
 
 export const metadata = {
   title: 'Pricing - Zestio',
@@ -51,12 +51,12 @@ export default function PricingPage() {
             <div
               key={plan.name}
               className={`bg-white rounded-xl overflow-hidden border ${
-                plan.name === 'Pro'
+                plan.popular
                   ? 'border-[#006c4d] ring-2 ring-[#006c4d]/20 scale-[1.02]'
                   : 'border-[#c4c6cd]/20'
               }`}
             >
-              {plan.name === 'Pro' && (
+              {plan.popular && (
                 <div className="bg-[#006c4d] text-white text-center py-2 text-xs font-manrope uppercase tracking-widest">
                   Most Popular
                 </div>
@@ -68,16 +68,9 @@ export default function PricingPage() {
                 <div className="mb-6">
                   <span className="text-4xl font-bold text-[#1d2832]">{plan.priceLabel}</span>
                   <span className="text-[#43474c] ml-2">{plan.period}</span>
-                  {plan.credits > 0 && (
-                    <span className="block text-sm text-[#006c4d] font-medium mt-1">
-                      {plan.credits} credits/month
-                    </span>
-                  )}
-                  {plan.credits === -1 && (
-                    <span className="block text-sm text-[#006c4d] font-medium mt-1">
-                      Unlimited credits
-                    </span>
-                  )}
+                  <span className="block text-sm text-[#006c4d] font-medium mt-1">
+                    {plan.credits} credits/month
+                  </span>
                 </div>
 
                 <ul className="space-y-3 mb-8">
@@ -92,16 +85,44 @@ export default function PricingPage() {
                 <Link
                   href={plan.name === 'Enterprise' ? 'mailto:sales@zestio.pro?subject=Enterprise Plan Inquiry' : '/auth'}
                   className={`block w-full text-center py-3 rounded-lg font-medium transition-all ${
-                    plan.name === 'Pro'
+                    plan.popular
                       ? 'bg-[#006c4d] text-white hover:opacity-90'
                       : 'bg-[#edf4ff] text-[#1d2832] hover:bg-[#e3efff]'
-                  }`}
+                  }`
+                }
                 >
                   {plan.name === 'Free' ? 'Get Started Free' : plan.name === 'Enterprise' ? 'Contact Sales' : 'Start Pro Trial'}
                 </Link>
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Top-up Packs */}
+        <div className="mt-20 max-w-3xl mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="font-serif text-2xl text-[#1d2832] mb-2">Need More Credits?</h2>
+            <p className="text-[#43474c]">Top up anytime — credits never expire within your billing period.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {TOP_UP_PACKS.map((pack) => (
+              <div
+                key={pack.credits}
+                className={`bg-white rounded-xl p-6 border text-center ${
+                  pack.popular ? 'border-[#006c4d] ring-1 ring-[#006c4d]/20' : 'border-[#c4c6cd]/20'
+                }`}
+              >
+                <h3 className="font-medium text-[#1d2832] mb-1">{pack.label}</h3>
+                <span className="text-2xl font-bold text-[#1d2832]">{pack.priceLabel}</span>
+                <span className="block text-xs text-[#43474c] mt-1">{pack.perCredit}/credit</span>
+                <button
+                  className="mt-4 w-full py-2 bg-[#edf4ff] text-[#1d2832] rounded-lg text-sm font-medium hover:bg-[#e3efff] transition-all"
+                >
+                  Buy Now
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* FAQ */}
@@ -113,7 +134,7 @@ export default function PricingPage() {
                 How many videos can I make with 100 credits?
                 <span className="material-symbols-outlined text-[#43474c] text-sm group-open:rotate-180 transition-transform">expand_more</span>
               </summary>
-              <p className="text-sm text-[#43474c] mt-3">Each video costs 5 credits. So 100 credits = 20 videos per month. You could also use those credits for 100 basic enhancements, 50 sky replacements, or any mix.</p>
+              <p className="text-sm text-[#43474c] mt-3">Each video costs 5 credits. With Pro (100 credits) you can make 20 videos per month. Enterprise (500 credits) gives you 100 videos.</p>
             </details>
             <details className="bg-white rounded-lg border border-[#c4c6cd]/20 p-6 group">
               <summary className="font-medium text-[#1d2832] cursor-pointer list-none flex justify-between items-center">
@@ -128,6 +149,13 @@ export default function PricingPage() {
                 <span className="material-symbols-outlined text-[#43474c] text-sm group-open:rotate-180 transition-transform">expand_more</span>
               </summary>
               <p className="text-sm text-[#43474c] mt-3">Yes. Cancel anytime and you&apos;ll keep access until the end of your billing period. No cancellation fees.</p>
+            </details>
+            <details className="bg-white rounded-lg border border-[#c4c6cd]/20 p-6 group">
+              <summary className="font-medium text-[#1d2832] cursor-pointer list-none flex justify-between items-center">
+                What if I run out of credits?
+                <span className="material-symbols-outlined text-[#43474c] text-sm group-open:rotate-180 transition-transform">expand_more</span>
+              </summary>
+              <p className="text-sm text-[#43474c] mt-3">You can buy top-up packs anytime — 50, 200, or 500 credits. No need to upgrade your plan.</p>
             </details>
             <details className="bg-white rounded-lg border border-[#c4c6cd]/20 p-6 group">
               <summary className="font-medium text-[#1d2832] cursor-pointer list-none flex justify-between items-center">

@@ -106,7 +106,7 @@ export default function BillingPage() {
         plan: profile?.subscription_tier || 'free',
         credits_total: creditsTotal,
         credits_used: creditsUsed,
-        credits_remaining: creditsTotal === -1 ? 999999 : creditsTotal - creditsUsed,
+        credits_remaining: Math.max(0, creditsTotal - creditsUsed),
         stripe_customer_id: profile?.stripe_customer_id,
         subscription_status: profile?.subscription_status,
         subscription_current_period_end: profile?.subscription_current_period_end,

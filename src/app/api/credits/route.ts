@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 
-// Force dynamic rendering - uses cookies/auth
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
@@ -10,14 +9,9 @@ export async function GET() {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({
-        credits: 0,
-        plan: 'free',
-        used: 0,
-      });
+      return NextResponse.json({ credits: 0, plan: 'free', used: 0, total: 0 });
     }
 
-    // Use correct column names: subscription_tier, credits, used_credits
     const { data: userData, error } = await supabase
       .from('zestio_users')
       .select('subscription_tier, credits, used_credits')
@@ -25,28 +19,21 @@ export async function GET() {
       .single();
 
     if (error || !userData) {
-      return NextResponse.json({
-        credits: 5,
-        plan: 'free',
-        used: 0,
-      });
+      return NextResponse.json({ credits: 5, plan: 'free', used: 0, total: 5 });
     }
 
     const creditsTotal = userData.credits ?? 5;
     const creditsUsed = userData.used_credits ?? 0;
-    const creditsRemaining = creditsTotal - creditsUsed;
+    const creditsRemaining = Math.max(0, creditsTotal - creditsUsed);
 
     return NextResponse.json({
-      credits: userData.subscription_tier === 'enterprise' ? 999999 : creditsRemaining,
+      credits: creditsRemaining,
       plan: userData.subscription_tier || 'free',
       used: creditsUsed,
+      total: creditsTotal,
     });
   } catch (error) {
     console.error('Credits error:', error);
-    return NextResponse.json({
-      credits: 5,
-      plan: 'free',
-      used: 0,
-    });
+    return NextResponse.json({ credits: 5, plan: 'free', used: 0, total: 5 });
   }
 }

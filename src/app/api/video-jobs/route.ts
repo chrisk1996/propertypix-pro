@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
-    const hasUnlimited = userData?.credits === -1;
+    const hasUnlimited = userData?.subscription_tier === 'enterprise' && userData?.credits === -1;
     if (!hasUnlimited && ((userData?.credits ?? 0) - (userData?.used_credits ?? 0)) < 1) {
       return NextResponse.json({ error: 'Insufficient credits' }, { status: 402 });
     }

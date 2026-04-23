@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
             .update({
               subscription_tier: plan,
               subscription_status: 'active',
-              credits: plan === 'pro' ? 100 : -1,
+              credits: plan === 'pro' ? 100 : 500,
               used_credits: 0,
               stripe_subscription_id: session.subscription as string,
               // Clear any cancellation dates on new subscription
@@ -196,7 +196,7 @@ export async function POST(request: NextRequest) {
               subscription_tier: effectivePlan,
               subscription_status: effectiveStatus,
               credits: status === 'cancel_at_period_end' || status === 'active'
-                ? (plan === 'enterprise' ? -1 : 100)
+                ? (plan === 'enterprise' ? 500 : 100)
                 : 10,
               subscription_current_period_end: periodEnd,
               subscription_cancel_at: cancelAt,
@@ -275,7 +275,7 @@ export async function POST(request: NextRequest) {
             .from('zestio_users')
             .update({
               used_credits: 0,
-              credits: plan === 'enterprise' ? -1 : 100,
+              credits: plan === 'enterprise' ? 500 : 100,
             })
             .eq('id', user.id);
           console.log(`[Stripe] Credits reset for user ${user.id} based on plan: ${plan}`);

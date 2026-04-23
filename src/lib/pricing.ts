@@ -24,7 +24,6 @@ export const PLANS = {
       'Virtual staging',
       'Listing Builder',
       'Smart Captions & Social Kit',
-      'Community support',
     ],
   },
   pro: {
@@ -41,28 +40,34 @@ export const PLANS = {
       'Virtual staging (all models)',
       'Listing Builder (EN/DE)',
       'Smart Captions & Social Kit',
-      'API access',
-      'Priority processing',
       'No watermarks',
+      'Email support',
     ],
+    popular: true,
   },
   enterprise: {
     name: 'Enterprise',
     price: 99,
     priceLabel: '€99',
     period: 'per month',
-    credits: -1, // unlimited
+    credits: 500,
     description: 'For teams and agencies',
     features: [
-      'Unlimited credits',
+      '500 credits per month',
       'All Pro features',
-      'API access with higher limits',
-      'Team collaboration',
-      'Custom branding',
+      'API access',
+      'Priority processing',
       'Priority support',
     ],
   },
 } as const;
+
+// Credit top-up packs
+export const TOP_UP_PACKS = [
+  { credits: 50, price: 9, label: '50 credits', priceLabel: '€9', perCredit: '€0.18' },
+  { credits: 200, price: 29, label: '200 credits', priceLabel: '€29', perCredit: '€0.145', popular: true },
+  { credits: 500, price: 59, label: '500 credits', priceLabel: '€59', perCredit: '€0.118' },
+] as const;
 
 // What each credit buys (for display)
 export const CREDIT_BREAKDOWN = [

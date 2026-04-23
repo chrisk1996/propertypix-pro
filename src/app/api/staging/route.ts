@@ -127,7 +127,7 @@ async function deductCredits(supabase: Awaited<ReturnType<typeof createClient>>,
 
     if (!userData) throw new Error('User not found for credit deduction');
 
-    const isUnlimited = userData.credits === -1;
+    const isUnlimited = userData.subscription_tier === 'enterprise' && userData.credits === -1;
     if (!isUnlimited && userData.credits < amount) {
       throw new Error('Insufficient credits');
     }
@@ -186,8 +186,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check credits (enterprise has unlimited)
-    const hasUnlimitedCredits = userData.subscription_tier === 'enterprise' || userData.credits === -1;
-    if (!hasUnlimitedCredits && userData.credits <= 0) {
+    const remaining = (userData.credits ?? 0) - (userData.used_credits ?? 0);
+    if (remaining <= 0 && userData.credits !== -1) {
       return NextResponse.json({ error: 'No credits remaining' }, { status: 402 });
     }
 

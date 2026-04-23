@@ -25,18 +25,16 @@ import {
 type Mode = 'url' | 'manual';
 
 function CreditDisplay({ credits, used }: { credits: number; used: number }) {
-  const isUnlimited = credits === -1;
-  const remaining = isUnlimited ? Infinity : credits - used;
-  const percentage = isUnlimited ? 100 : (credits > 0 ? (remaining / credits) * 100 : 0);
+  const remaining = credits - used;
+  const percentage = credits > 0 ? (remaining / credits) * 100 : 0;
   
   return (
     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-slate-700">Credits Available</span>
-        <span className="text-lg font-bold text-purple-600">{isUnlimited ? '∞' : remaining}</span>
+        <span className="text-sm font-medium text-slate-700">{remaining} Credits Available</span>
+        <span className="text-lg font-bold text-purple-600">{remaining}</span>
       </div>
-      {!isUnlimited && (
-        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
           <div
             className={cn(
               'h-full rounded-full transition-all',
@@ -45,8 +43,7 @@ function CreditDisplay({ credits, used }: { credits: number; used: number }) {
             style={{ width: `${percentage}%` }}
           />
         </div>
-      )}
-      <p className="text-xs text-slate-500 mt-1">{isUnlimited ? 'Unlimited plan' : `${used} of ${credits} used`}</p>
+      <p className="text-xs text-slate-500 mt-1">{used} of {credits} used</p>
     </div>
   );
 }
@@ -198,9 +195,8 @@ export default function VideoPage() {
       setCreateError('Please upload at least 5 images');
       return;
     }
-    const hasUnlimited = credits.total === -1;
-    if (!hasUnlimited && credits.total - credits.used < 5) {
-      setCreateError('Not enough credits. Video generation requires 5 credits. Please purchase more.');
+    if (credits.total - credits.used < 5) {
+      setCreateError('Not enough credits. Video generation requires 5 credits. Top up or upgrade your plan.');
       return;
     }
     
@@ -250,7 +246,7 @@ export default function VideoPage() {
   };
   
   const remainingCredits = credits.total - credits.used;
-  const hasCredit = credits.total === -1 || credits.total > credits.used;
+  const hasCredit = credits.total > credits.used;
   const canSubmit = hasCredit && credits.total - credits.used >= 5 && ((mode === 'url' && listingUrl.length > 0) || (mode === 'manual' && uploadedImages.length >= 5));
   const currentStageInfo = activeJob ? statusToStage(activeJob.status) : null;
   const isJobComplete = activeJob?.status === 'done';
