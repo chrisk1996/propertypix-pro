@@ -143,7 +143,7 @@ async function handleRenovating(supabase: Awaited<ReturnType<typeof createClient
       .eq('id', job.id);
 
     try {
-      const prediction = await replicate.predictions.create({
+      const prediction = await createPredictionWithRetry({
         model: "adirik/interior-design",
         input: {
           image: toProcess[currentIndex],
@@ -225,7 +225,7 @@ async function handleAnimating(supabase: Awaited<ReturnType<typeof createClient>
       .eq('id', job.id);
 
     try {
-      const prediction = await replicate.predictions.create({
+      const prediction = await createPredictionWithRetry({
         model: "stability-ai/stable-video-diffusion",
         input: {
           input_image: images[currentIndex],
@@ -318,6 +318,24 @@ async function waitForPrediction(predictionId: string, timeoutMs = 120000) {
     await new Promise(r => setTimeout(r, 3000));
   }
   throw new Error('Prediction timed out');
+}
+
+// Create prediction with automatic retry on 429 rate limit
+async function createPredictionWithRetry(params: { model: string; input: Record<string, unknown> }, retries = 3) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await replicate.predictions.create(params);
+    } catch (err: unknown) {
+      const is429 = err instanceof Error && err.message.includes('429');
+      if (!is429 || attempt === retries) throw err;
+      // Parse retry_after from error message
+      const match = err.message.match(/retry_after.(\d+)/);
+      const waitMs = match ? parseInt(match[1]) * 1000 : 10000; // default 10s
+      console.log(`[Retry] 429 rate limited, waiting ${waitMs / 1000}s (attempt ${attempt + 1}/${retries})`);
+      await new Promise(r => setTimeout(r, waitMs + 1000)); // extra 1s buffer
+    }
+  }
+  throw new Error('Max retries exceeded');
 }
 
 function extractUrl(output: unknown): string | null {

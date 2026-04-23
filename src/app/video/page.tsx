@@ -116,7 +116,7 @@ export default function VideoPage() {
 
     // Poll every 5 seconds while active
     poll();
-    const interval = setInterval(poll, 5000);
+    const interval = setInterval(poll, 15000);
     return () => clearInterval(interval);
   }, [activeJob?.id, activeJob?.status, refetchActiveJob, refetchJobs]);
   
