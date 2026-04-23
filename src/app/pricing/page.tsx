@@ -1,13 +1,34 @@
+'use client';
+
+import { useState } from 'react';
 import { Header } from '@/components/Header';
 import Link from 'next/link';
 import { PLANS, CREDIT_BREAKDOWN, TOP_UP_PACKS } from '@/lib/pricing';
 
-export const metadata = {
-  title: 'Pricing - Zestio',
-  description: 'Simple credit-based pricing for Zestio AI real estate tools',
-};
-
 export default function PricingPage() {
+  const [loadingPack, setLoadingPack] = useState<number | null>(null);
+
+  const handleTopUp = async (credits: number) => {
+    setLoadingPack(credits);
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topUpCredits: credits }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || 'Failed to start checkout');
+      }
+    } catch {
+      alert('Failed to start checkout');
+    } finally {
+      setLoadingPack(null);
+    }
+  };
+
   const plansList = Object.values(PLANS);
 
   return (
@@ -116,9 +137,15 @@ export default function PricingPage() {
                 <span className="text-2xl font-bold text-[#1d2832]">{pack.priceLabel}</span>
                 <span className="block text-xs text-[#43474c] mt-1">{pack.perCredit}/credit</span>
                 <button
-                  className="mt-4 w-full py-2 bg-[#edf4ff] text-[#1d2832] rounded-lg text-sm font-medium hover:bg-[#e3efff] transition-all"
+                  onClick={() => handleTopUp(pack.credits)}
+                  disabled={loadingPack !== null}
+                  className={`mt-4 w-full py-2 rounded-lg text-sm font-medium transition-all ${
+                    loadingPack === pack.credits
+                      ? 'bg-[#006c4d] text-white opacity-75'
+                      : 'bg-[#edf4ff] text-[#1d2832] hover:bg-[#e3efff]'
+                  }`}
                 >
-                  Buy Now
+                  {loadingPack === pack.credits ? 'Redirecting...' : 'Buy Now'}
                 </button>
               </div>
             ))}

@@ -102,9 +102,38 @@ export async function POST(request: NextRequest) {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.user_id;
         const plan = session.metadata?.plan;
-        console.log(`[Stripe] Checkout completed - userId: ${userId}, plan: ${plan}`);
+        const type = session.metadata?.type;
+        const credits = session.metadata?.credits;
+
+        console.log(`[Stripe] Checkout completed - userId: ${userId}, type: ${type}, plan: ${plan}`);
+
+        if (userId && type === 'topup' && credits) {
+          // ── Credit top-up ──
+          const topUpAmount = parseInt(credits, 10);
+          const { data: userData } = await supabaseAdmin
+            .from('zestio_users')
+            .select('credits, used_credits')
+            .eq('id', userId)
+            .single();
+
+          if (userData) {
+            const newCredits = (userData.credits || 0) + topUpAmount;
+            const { error: updateError } = await supabaseAdmin
+              .from('zestio_users')
+              .update({ credits: newCredits })
+              .eq('id', userId);
+
+            if (updateError) {
+              console.error(`[Stripe] Top-up failed:`, updateError);
+            } else {
+              console.log(`[Stripe] Top-up: added ${topUpAmount} credits to user ${userId}. New total: ${newCredits}`);
+            }
+          }
+          break;
+        }
 
         if (userId && plan) {
+          // ── New subscription ──
           const { error: updateError } = await supabaseAdmin
             .from('zestio_users')
             .update({

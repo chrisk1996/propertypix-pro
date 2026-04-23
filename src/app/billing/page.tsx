@@ -199,6 +199,27 @@ export default function BillingPage() {
     }
   };
 
+  const handleTopUp = async (credits: number) => {
+    setCheckoutLoading(`topup-${credits}`);
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topUpCredits: credits }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setError(data.error || 'Failed to start checkout');
+      }
+    } catch {
+      setError('Failed to start checkout');
+    } finally {
+      setCheckoutLoading(null);
+    }
+  };
+
   if (loading) {
     return (
       <AppLayout title="Billing">
@@ -282,23 +303,44 @@ export default function BillingPage() {
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-indigo-200">Credits Remaining</span>
               <span className="text-lg font-bold">
-                {user?.plan === 'enterprise' ? '∞ Unlimited' : `${user?.credits_remaining} / ${user?.credits_total}`}
+                {`${user?.credits_remaining} / ${user?.credits_total}`}
               </span>
             </div>
-            {user?.plan !== 'enterprise' && (
-              <>
-                <div className="h-3 bg-white/20 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-white rounded-full transition-all duration-500"
-                    style={{ width: `${getCreditPercentage()}%` }}
-                  />
-                </div>
-                <div className="flex justify-between mt-2 text-xs text-indigo-200">
-                  <span>{user?.credits_used} used</span>
-                  <span>{getCreditPercentage()}% remaining</span>
-                </div>
-              </>
-            )}
+            <div className="h-3 bg-white/20 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-white rounded-full transition-all duration-500"
+                style={{ width: `${getCreditPercentage()}%` }}
+              />
+            </div>
+            <div className="flex justify-between mt-2 text-xs text-indigo-200">
+              <span>{user?.credits_used} used</span>
+              <span>{getCreditPercentage()}% remaining</span>
+            </div>
+          </div>
+
+          {/* Top Up Credits */}
+          <div className="mt-4 bg-white/10 rounded-lg p-4">
+            <span className="text-sm text-indigo-200 block mb-3">Need more credits?</span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleTopUp(50)}
+                className="flex-1 py-2 px-3 bg-white/10 hover:bg-white/20 rounded-lg text-sm text-white transition-all"
+              >
+                +50 cr / €9
+              </button>
+              <button
+                onClick={() => handleTopUp(200)}
+                className="flex-1 py-2 px-3 bg-white/20 hover:bg-white/30 rounded-lg text-sm text-white font-medium transition-all"
+              >
+                +200 cr / €29
+              </button>
+              <button
+                onClick={() => handleTopUp(500)}
+                className="flex-1 py-2 px-3 bg-white/10 hover:bg-white/20 rounded-lg text-sm text-white transition-all"
+              >
+                +500 cr / €59
+              </button>
+            </div>
           </div>
 
           {/* Subscription Details */}
