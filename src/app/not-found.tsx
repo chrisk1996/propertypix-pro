@@ -1,24 +1,29 @@
 import { Header } from '@/components/Header';
 import Link from 'next/link';
-import { Home } from 'lucide-react';
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f7f9ff]">
       <Header />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-        <div className="text-center">
-          <h1 className="text-9xl font-bold text-indigo-600">404</h1>
-          <h2 className="mt-4 text-3xl font-bold text-gray-900">Page not found</h2>
-          <p className="mt-4 text-lg text-gray-600">
-            Sorry, we couldn&apos;t find the page you&apos;re looking for.
-          </p>
+      <main className="max-w-lg mx-auto px-4 pt-32 pb-16 text-center">
+        <span className="material-symbols-outlined text-[#c4c6cd] text-8xl mb-6 block">explore_off</span>
+        <h1 className="font-serif text-5xl text-[#1d2832] mb-3">404</h1>
+        <h2 className="font-serif text-2xl text-[#1d2832] mb-3">Page not found</h2>
+        <p className="text-[#43474c] mb-8">
+          The page you&apos;re looking for doesn&apos;t exist or has been moved.
+        </p>
+        <div className="flex gap-3 justify-center">
           <Link
             href="/dashboard"
-            className="mt-8 inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            className="px-6 py-3 bg-[#006c4d] text-white rounded-lg font-medium hover:opacity-90 transition-all"
           >
-            <Home className="w-5 h-5" />
-            Back to Dashboard
+            Go to Dashboard
+          </Link>
+          <Link
+            href="/"
+            className="px-6 py-3 bg-[#edf4ff] text-[#1d2832] rounded-lg font-medium hover:bg-[#e3efff] transition-all"
+          >
+            Back to Home
           </Link>
         </div>
       </main>

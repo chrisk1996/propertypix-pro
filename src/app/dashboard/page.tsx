@@ -1,320 +1,179 @@
-"use client";
-import Link from "next/link";
-import { AppLayout } from "@/components/layout";
+'use client';
 
-const quickActions = [
-  {
-    title: "Image Enhancer",
-    description:
-      "Studio-grade visual elevation. Perfect exposure, sky replacement, and color correction.",
-    icon: "auto_awesome",
-    href: "/enhance",
-    gradient: "from-blue-600 to-cyan-500",
-    featured: true,
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBp8KPlQNUhm7IMfuJe2CRwP1IGjm__C9on2QcYpkY1DxCrfcsnacSnvowGBiG2vCdnudgpHTzde52x9N5a6-7xESu8QukvPT8V4Wa5n7S-RanersX25Ci6prIpuKu1ZKynRSKEoGMXlkfQsnjye2vxk_3ygtyzntFLR8_pzSFfAcSQlGGMfb6heR5p-SA9wWKhStotrqWfA3py-KmYXvZyrlP_lxWuOoY6hMMjExcPC8gp5ek2oSFmjBH7CXBUgB-XfvgPtFf0RG4",
-  },
-  {
-    title: "Virtual Staging",
-    description: "Turn empty properties into curated luxury homes.",
-    icon: "chair",
-    href: "/staging",
-    badge: "98% Accuracy",
-  },
-  {
-    title: "Video Creator",
-    description:
-      "Generate cinematic drone-style tours from static imagery.",
-    icon: "movie_filter",
-    href: "/video",
-    tags: ["4K Cinematic", "AI Voice"],
-  },
-  {
-    title: "3D Floor Plans",
-    description: "Convert 2D blueprints into immersive 3D models.",
-    icon: "polyline",
-    href: "/floorplan",
-    featured: true,
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBqVVyT2G-fQcIVDK-vN9z78cVlt_Oqx91HsQmmjnM-_GyEqipU9fqlrfIyLx-QWEVSc1P38kABenrLydpMpS9s1fQnpKRtVs6OzQphiRKFggq9ifvj5E09V09F2Cc2-yN-FSRln8GvljBavQOoWbOUs9d_VF1EnO89PfKtIBhPZo55A4PMvx5xImpZTYFv2HanToN4JEE-sQ88KT5SXLZ0amxzfnVfA_-HSPxzIpbVgM53LVD1OSHpsHFUZniuwAe9UHqJH7_G3iM",
-  },
-];
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { AppLayout } from '@/components/layout';
+import { createClient } from '@/utils/supabase/client';
 
-const recentProjects = [
+interface DashboardData {
+  credits: number;
+  creditsUsed: number;
+  creditsTotal: number;
+  plan: string;
+  recentVideos: number;
+  recentListings: number;
+}
+
+const tools = [
   {
-    title: "Azure Horizon Estate",
-    location: "Beverly Hills, CA",
-    time: "2h ago",
-    status: "processing",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuCsLKRvmaZ8ohnrTW3b0pulDJq5gcNeboPq9e8e1e_k80StODXJfEknDfO0wWrICFP6uTTcqS5hsfpzlZqpkhHUdvndl7A5dMK5nQMogGDEjLdpqzzl39flSx6Jj6tZ0XgXfSp8D6iIXDKOKQQ9U7SAw9eeDtnAyUU_yNjcTk3iv4ddDh5QJpmOgZQkI9yaCPfJ-R2DO0zqOHxevlszV58HUYRax5JjbfgqjYHuzq25FhU35CJEy72uxJu47WMFvLSxqkQo0WVojZI",
+    title: 'Image Studio',
+    description: 'Enhance, stage, replace skies, change seasons — 13 AI tools in one.',
+    icon: 'auto_awesome',
+    href: '/studio',
+    color: 'bg-emerald-50 text-emerald-600',
   },
   {
-    title: "The Obsidian Penthouse",
-    location: "Manhattan, NY",
-    time: "1d ago",
-    status: "completed",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuBsAnQSRE5rEnkayRAfqoHCAVwWmL2S9FLoi7JpAENOUIryE277aGnZH4hisZJcFT9MQcUs1rNF3lrZVsr9LRX6ET_8lix7cyJ-N-2bneEFEi-fSIDqqXd5Zg64zKUOegbt5EClt91B_fAsJhaqYf3nu1mjC7x-N9S__fjlBlVmxsq8C531OM5WPC44faMU7DHayM1GPfv87mT8CwPArCdxETSbAuCkNFqRqOZcy1KrWb_IqoL_qKa4ObfnOIGncVn_RCzF0dwev0M",
+    title: 'Video Creator',
+    description: 'Upload photos → get a cinematic video. AI sorts, stages, animates.',
+    icon: 'movie',
+    href: '/video',
+    color: 'bg-blue-50 text-blue-600',
   },
   {
-    title: "Willow Creek Retreat",
-    location: "Aspen, CO",
-    time: "3d ago",
-    status: "inactive",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAC5e07NET2nwhaStrXK6YeCE_pb2cLnQPATR2DYwWPmeNTECWEA6FAl-5qEBz0NdyjocSh1bmigxNeh9ChS8fwxrIX6CvIeRrILfAPDDcUUhcn-i_jdCJZLTczpJMx8wqt42O23vbRw3gN4A5Z9BfEzckkD7fGuNHfXoj7YIZljRpckawryf_RkAHdqmP3CD8VueX3_6nAoJRq2ZpcicO80L8joRNOVNYn-n68ahwv-KS9ph5WrFmOV1k7FwcXUQmKkQRnp_Umr8k",
+    title: 'Listing Builder',
+    description: 'AI-generated property descriptions in English & German.',
+    icon: 'description',
+    href: '/listing/new',
+    color: 'bg-purple-50 text-purple-600',
+  },
+  {
+    title: 'Smart Captions',
+    description: 'AI captions for Instagram, Facebook & more. Free, no credits.',
+    icon: 'share',
+    href: '/social',
+    color: 'bg-orange-50 text-orange-600',
+  },
+  {
+    title: '3D Floor Plans',
+    description: 'Convert 2D blueprints into interactive 3D models.',
+    icon: 'architecture',
+    href: '/floorplan',
+    color: 'bg-teal-50 text-teal-600',
+  },
+  {
+    title: 'API Docs',
+    description: 'Build with Zestio. REST API, keys, full documentation.',
+    icon: 'code',
+    href: '/docs',
+    color: 'bg-slate-100 text-slate-600',
   },
 ];
 
 export default function DashboardPage() {
+  const [data, setData] = useState<DashboardData>({
+    credits: 0,
+    creditsUsed: 0,
+    creditsTotal: 0,
+    plan: 'free',
+    recentVideos: 0,
+    recentListings: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const [creditsRes, videosRes, listingsRes] = await Promise.all([
+          fetch('/api/credits'),
+          supabase.from('video_jobs').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+          supabase.from('listings').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+        ]);
+
+        const creditsData = await creditsRes.json();
+        setData({
+          credits: creditsData.credits || 0,
+          creditsUsed: creditsData.used || 0,
+          creditsTotal: creditsData.total || 5,
+          plan: creditsData.plan || 'free',
+          recentVideos: videosRes.count || 0,
+          recentListings: listingsRes.count || 0,
+        });
+      } catch (err) {
+        console.error('Dashboard load error:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  const creditPercent = data.creditsTotal > 0 ? Math.round((data.credits / data.creditsTotal) * 100) : 0;
+
   return (
     <AppLayout title="Dashboard" hideTopNav>
-      <div className="px-12 py-8">
-        {/* Hero Section */}
-        <section className="mb-16">
-          <h1 className="font-['Plus_Jakarta_Sans'] font-extrabold text-slate-900 text-5xl tracking-tight mb-4 leading-tight">
-            Elevating listings, <br />
-            <span className="text-blue-600">Pixel by pixel.</span>
+      <div className="px-6 md:px-12 py-8 max-w-7xl mx-auto">
+
+        {/* Welcome */}
+        <section className="mb-10">
+          <h1 className="font-serif text-4xl md:text-5xl text-[#1d2832] mb-3 leading-tight">
+            What are we<br />creating today?
           </h1>
-          <p className="text-slate-600 max-w-xl text-lg">
-            Professional AI toolset designed for modern real estate marketing.
-            Transform your visuals into high-converting assets instantly.
+          <p className="text-[#43474c] max-w-xl">
+            Pick a tool below to get started. Everything runs on AI credits — you have {loading ? '...' : <span className="font-medium text-[#006c4d]">{data.credits} credits</span>} remaining.
           </p>
         </section>
 
-        {/* Bento Grid: Quick Actions */}
-        <section className="grid grid-cols-12 gap-6 mb-20">
-          {/* Image Enhancer - Primary Card */}
-          <div className="col-span-12 lg:col-span-7 group relative overflow-hidden bg-slate-900 rounded-2xl aspect-[16/7] p-10 flex flex-col justify-between shadow-xl transition-all hover:shadow-2xl">
-            <div className="absolute inset-0 z-0 opacity-60">
-              <img
-                src={quickActions[0].image!}
-                alt="Luxury modern house exterior with perfect lighting"
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
+        {/* Stats Bar */}
+        {!loading && (
+          <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+            <div className="bg-white rounded-xl p-5 border border-[#c4c6cd]/10">
+              <span className="text-xs text-[#43474c] font-manrope uppercase tracking-wider">Plan</span>
+              <p className="text-xl font-bold text-[#1d2832] mt-1 capitalize">{data.plan}</p>
             </div>
-            <div className="relative z-10">
-              <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-600/20 text-white text-[10px] font-bold tracking-widest uppercase mb-4 backdrop-blur-md border border-white/20">
-                SMART ENGINE V4
-              </span>
-              <h3 className="text-white font-['Plus_Jakarta_Sans'] text-4xl font-extrabold mb-3">
-                Image Enhancer
-              </h3>
-              <p className="text-slate-300 text-sm max-w-sm leading-relaxed">
-                Studio-grade visual elevation. Perfect exposure, sky
-                replacement, and color correction in seconds.
-              </p>
-            </div>
-            <div className="relative z-10 flex justify-end">
-              <Link
-                href="/enhance"
-                className="group/btn flex items-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-xl font-bold text-sm transition-all hover:bg-blue-700 shadow-lg shadow-blue-600/30 active:scale-95"
-              >
-                Launch Studio
-                <span className="material-symbols-outlined text-sm group-hover/btn:translate-x-1 transition-transform">
-                  arrow_forward
-                </span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Virtual Staging */}
-          <div className="col-span-12 md:col-span-6 lg:col-span-5 bg-white rounded-2xl p-8 flex flex-col justify-between shadow-sm hover:shadow-md transition-all border border-slate-200">
-            <div className="flex justify-between items-start">
-              <div className="bg-blue-50 w-14 h-14 rounded-2xl flex items-center justify-center">
-                <span className="material-symbols-outlined text-blue-600 text-3xl">
-                  chair
-                </span>
+            <div className="bg-white rounded-xl p-5 border border-[#c4c6cd]/10">
+              <span className="text-xs text-[#43474c] font-manrope uppercase tracking-wider">Credits Left</span>
+              <p className="text-xl font-bold text-[#006c4d] mt-1">{data.credits} <span className="text-sm text-[#43474c] font-normal">/ {data.creditsTotal}</span></p>
+              <div className="h-1.5 bg-[#edf4ff] rounded-full mt-2 overflow-hidden">
+                <div className="h-full bg-[#006c4d] rounded-full transition-all" style={{ width: `${creditPercent}%` }} />
               </div>
-              <span className="text-emerald-600 font-bold text-xs bg-emerald-50 px-3 py-1 rounded-full">
-                98% Accuracy
-              </span>
             </div>
-            <div className="mt-8">
-              <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-2xl text-slate-900 mb-2">
-                Virtual Staging
-              </h3>
-              <p className="text-slate-600 text-sm leading-relaxed">
-                Turn empty properties into curated luxury homes with our
-                advanced neural furniture rendering.
-              </p>
+            <div className="bg-white rounded-xl p-5 border border-[#c4c6cd]/10">
+              <span className="text-xs text-[#43474c] font-manrope uppercase tracking-wider">Videos Created</span>
+              <p className="text-xl font-bold text-[#1d2832] mt-1">{data.recentVideos}</p>
             </div>
-            <div className="mt-8 pt-6 border-t border-slate-100">
+            <div className="bg-white rounded-xl p-5 border border-[#c4c6cd]/10">
+              <span className="text-xs text-[#43474c] font-manrope uppercase tracking-wider">Listings</span>
+              <p className="text-xl font-bold text-[#1d2832] mt-1">{data.recentListings}</p>
+            </div>
+          </section>
+        )}
+
+        {/* Tool Grid */}
+        <section className="mb-16">
+          <h2 className="font-serif text-2xl text-[#1d2832] mb-6">Tools</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {tools.map((tool) => (
               <Link
-                href="/staging"
-                className="text-blue-600 font-bold text-sm flex items-center gap-2 hover:gap-3 transition-all"
+                key={tool.href}
+                href={tool.href}
+                className="bg-white rounded-xl p-6 border border-[#c4c6cd]/10 hover:shadow-md hover:border-[#006c4d]/20 transition-all group"
               >
-                Start New Session
-                <span className="material-symbols-outlined">chevron_right</span>
-              </Link>
-            </div>
-          </div>
-
-          {/* Video Creator */}
-          <div className="col-span-12 md:col-span-6 lg:col-span-4 bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition-all border border-slate-200">
-            <div className="bg-slate-100 w-14 h-14 rounded-2xl flex items-center justify-center mb-6">
-              <span className="material-symbols-outlined text-slate-700 text-3xl">
-                movie_filter
-              </span>
-            </div>
-            <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-xl text-slate-900 mb-2">
-              Video Creator
-            </h3>
-            <p className="text-slate-600 text-sm mb-6 leading-relaxed">
-              Generate cinematic drone-style tours from static imagery
-              automatically.
-            </p>
-            <div className="flex gap-2">
-              <span className="px-3 py-1.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded-lg uppercase tracking-wider">
-                4K Cinematic
-              </span>
-              <span className="px-3 py-1.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded-lg uppercase tracking-wider">
-                AI Voice
-              </span>
-            </div>
-          </div>
-
-          {/* 3D Floor Plans */}
-          <div className="col-span-12 lg:col-span-8 bg-slate-50 rounded-2xl p-1 overflow-hidden flex flex-col md:flex-row shadow-sm hover:shadow-md transition-all border border-slate-200">
-            <div className="p-10 flex-1 flex flex-col justify-center">
-              <div className="bg-white w-14 h-14 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
-                <span className="material-symbols-outlined text-blue-600 text-3xl">
-                  polyline
-                </span>
-              </div>
-              <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-xl text-slate-900 mb-2">
-                3D Floor Plan Editor
-              </h3>
-              <p className="text-slate-600 text-sm mb-8 max-w-xs leading-relaxed">
-                Convert 2D blueprints into immersive 3D dollhouse models and
-                interactive walkthroughs.
-              </p>
-              <Link
-                href="/floorplan"
-                className="bg-slate-900 text-white w-fit px-8 py-3 rounded-xl font-bold text-sm hover:bg-black active:scale-95 transition-all"
-              >
-                Open Editor
-              </Link>
-            </div>
-            <div className="md:w-1/2 min-h-[250px] relative">
-              <img
-                src={quickActions[3].image!}
-                alt="Stylized 3D architectural floor plan visualization"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-slate-50 to-transparent" />
-            </div>
-          </div>
-        </section>
-
-        {/* Recent Projects Section */}
-        <section>
-          <div className="flex items-end justify-between mb-8">
-            <div>
-              <h2 className="font-['Plus_Jakarta_Sans'] font-extrabold text-3xl text-slate-900 tracking-tight">
-                Recent Projects
-              </h2>
-              <p className="text-slate-600 text-sm mt-1">
-                Review your latest property marketing materials.
-              </p>
-            </div>
-            <Link
-              href="/library"
-              className="text-blue-600 text-sm font-bold flex items-center gap-1 group"
-            >
-              View All Library
-              <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">
-                arrow_forward
-              </span>
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-            {recentProjects.map((project, idx) => (
-              <div
-                key={idx}
-                className="group bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-xl transition-all duration-300"
-              >
-                <div className="relative overflow-hidden aspect-[16/10]">
-                  <img
-                    src={project.image}
-                    alt={project.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                  />
-                  <div
-                    className={`absolute top-4 right-4 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-sm ${
-                      project.status === "processing"
-                        ? "bg-white/80 backdrop-blur border border-white/50"
-                        : project.status === "completed"
-                          ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-                          : "bg-slate-100 text-slate-600"
-                    }`}
-                  >
-                    {project.status === "processing" && (
-                      <>
-                        <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" />
-                        <span className="text-[10px] font-bold text-slate-800 tracking-wider uppercase">
-                          Processing...
-                        </span>
-                      </>
-                    )}
-                    {project.status === "completed" && (
-                      <>
-                        <span
-                          className="material-symbols-outlined text-[14px]"
-                          style={{ fontVariationSettings: "'FILL' 1" }}
-                        >
-                          check_circle
-                        </span>
-                        <span className="text-[10px] font-bold tracking-wider uppercase">
-                          Completed
-                        </span>
-                      </>
-                    )}
-                    {project.status === "inactive" && (
-                      <>
-                        <span className="w-2 h-2 bg-slate-400 rounded-full" />
-                        <span className="text-[10px] font-bold tracking-wider uppercase">
-                          Inactive
-                        </span>
-                      </>
-                    )}
-                  </div>
+                <div className={`w-12 h-12 rounded-xl ${tool.color} flex items-center justify-center mb-4`}>
+                  <span className="material-symbols-outlined text-2xl">{tool.icon}</span>
                 </div>
-                <div className="p-6">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-['Plus_Jakarta_Sans'] font-bold text-slate-900 text-lg">
-                        {project.title}
-                      </h4>
-                      <p className="text-slate-500 text-xs mt-1">
-                        Edited {project.time} • {project.location}
-                      </p>
-                    </div>
-                    <button className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center transition-colors">
-                      <span className="material-symbols-outlined text-slate-400">
-                        more_vert
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              </div>
+                <h3 className="font-medium text-[#1d2832] mb-1 group-hover:text-[#006c4d] transition-colors">{tool.title}</h3>
+                <p className="text-sm text-[#43474c] leading-relaxed">{tool.description}</p>
+              </Link>
             ))}
           </div>
         </section>
-      </div>
 
-      {/* Floating AI Assistant */}
-      <div className="fixed bottom-10 right-10 z-50">
-        <button className="w-16 h-16 bg-slate-900 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 hover:bg-black transition-all active:scale-95 group">
-          <span className="material-symbols-outlined text-3xl">
-            auto_fix_high
-          </span>
-          <div className="absolute right-full mr-4 bg-slate-900 text-white text-[11px] font-bold py-2.5 px-5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-xl border border-white/10">
-            Expert AI Assistant
-          </div>
-        </button>
+        {/* Quick Links */}
+        <section className="flex flex-wrap gap-3">
+          <Link href="/billing" className="px-5 py-2.5 bg-white border border-[#c4c6cd]/20 rounded-lg text-sm text-[#1d2832] hover:bg-[#edf4ff] transition-all">
+            Manage Billing
+          </Link>
+          <Link href="/settings" className="px-5 py-2.5 bg-white border border-[#c4c6cd]/20 rounded-lg text-sm text-[#1d2832] hover:bg-[#edf4ff] transition-all">
+            Settings & API Keys
+          </Link>
+          <Link href="/help" className="px-5 py-2.5 bg-white border border-[#c4c6cd]/20 rounded-lg text-sm text-[#1d2832] hover:bg-[#edf4ff] transition-all">
+            Help & Support
+          </Link>
+        </section>
       </div>
     </AppLayout>
   );

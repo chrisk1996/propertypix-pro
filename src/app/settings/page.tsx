@@ -442,21 +442,24 @@ export default function SettingsPage() {
           <p className="text-xs text-gray-400 mt-3">Maximum 5 active keys per account.</p>
         </div>
 
-        {/* Billing Quick Link */}
+        {/* Credits & Billing */}
         <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Shield className="w-5 h-5 text-gray-500" />
-              <div>
-                <p className="font-medium text-gray-900">Billing & Credits</p>
-                <p className="text-sm text-gray-500">Manage subscription and payment</p>
-              </div>
+          <div className="flex items-center gap-3 mb-4">
+            <span className="material-symbols-outlined text-[#006c4d]">account_balance_wallet</span>
+            <div>
+              <p className="font-medium text-gray-900">Credits & Billing</p>
+              <p className="text-sm text-gray-500">Manage your subscription and top up credits</p>
             </div>
-            <a
-              href="/billing"
-              className="px-4 py-2 bg-gray-100 text-gray-900 rounded-lg hover:bg-gray-200 transition-colors text-sm"
-            >
-              Manage
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <a href="/billing" className="p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+              <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Manage Subscription</span>
+              <span className="block mt-1 text-sm text-gray-900">Billing portal →</span>
+            </a>
+            <a href="/pricing" className="p-4 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors">
+              <span className="text-xs text-emerald-600 font-medium uppercase tracking-wider">Buy Credits</span>
+              <span className="block mt-1 text-sm text-gray-900">Top up packs →</span>
             </a>
           </div>
         </div>
