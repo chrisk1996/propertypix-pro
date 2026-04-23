@@ -358,7 +358,6 @@ async function handleAnimating(supabase: Awaited<ReturnType<typeof createClient>
 async function handleStitching(supabase: Awaited<ReturnType<typeof createClient>>, job: Record<string, unknown>) {
   const metadata = (job.metadata as Record<string, unknown>) || {};
   const clips = (metadata.clips as string[]) || [];
-  const images = (metadata.renovatedImages as string[]) || [];
 
   // If no clips were generated, fail
   if (clips.length === 0) {
@@ -369,22 +368,76 @@ async function handleStitching(supabase: Awaited<ReturnType<typeof createClient>
     return NextResponse.json({ status: 'failed', error: 'No video clips generated' });
   }
 
-  const outputUrl = clips[0];
-
-  await supabase
-    .from('video_jobs')
-    .update({
+  // Single clip — no stitching needed
+  if (clips.length === 1) {
+    const outputUrl = clips[0];
+    await supabase.from('video_jobs').update({
       status: 'done',
       output_video_url: outputUrl,
-    })
-    .eq('id', job.id);
+    }).eq('id', job.id);
+    return NextResponse.json({ status: 'done', message: 'Video complete!', outputUrl, hasVideo: true });
+  }
 
-  return NextResponse.json({
-    status: 'done',
-    message: `Video complete! ${clips.length} clips generated.`,
-    outputUrl,
-    hasVideo: true,
-  });
+  // Multiple clips — stitch together using binary concat (works for same-codec MP4s)
+  try {
+    console.log(`[Stitch] Downloading ${clips.length} clips...`);
+    
+    // Download all clips
+    const clipBuffers: Buffer[] = [];
+    for (const clipUrl of clips) {
+      const response = await fetch(clipUrl);
+      if (!response.ok) throw new Error(`Failed to download clip: ${response.status}`);
+      const arrayBuffer = await response.arrayBuffer();
+      clipBuffers.push(Buffer.from(arrayBuffer));
+    }
+
+    // Concatenate MP4 clips (binary concat works for SVD clips — same codec/resolution)
+    const combined = Buffer.concat(clipBuffers);
+    console.log(`[Stitch] Combined ${clipBuffers.length} clips, ${(combined.length / 1024 / 1024).toFixed(1)}MB`);
+
+    // Upload to Supabase Storage
+    const fileName = `video-${job.id}-${Date.now()}.mp4`;
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('job-assets')
+      .upload(fileName, combined, {
+        contentType: 'video/mp4',
+        upsert: true,
+      });
+
+    if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
+
+    const { data: urlData } = supabase.storage
+      .from('job-assets')
+      .getPublicUrl(fileName);
+
+    const outputUrl = urlData.publicUrl;
+
+    await supabase.from('video_jobs').update({
+      status: 'done',
+      output_video_url: outputUrl,
+    }).eq('id', job.id);
+
+    return NextResponse.json({
+      status: 'done',
+      message: `Video complete! ${clips.length} clips stitched.`,
+      outputUrl,
+      hasVideo: true,
+    });
+  } catch (err) {
+    console.error('[Stitch] Stitching failed:', err);
+    // Fallback: use first clip
+    const outputUrl = clips[0];
+    await supabase.from('video_jobs').update({
+      status: 'done',
+      output_video_url: outputUrl,
+    }).eq('id', job.id);
+    return NextResponse.json({
+      status: 'done',
+      message: `Video complete (1 of ${clips.length} clips — stitching failed).`,
+      outputUrl,
+      hasVideo: true,
+    });
+  }
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────
