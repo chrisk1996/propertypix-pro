@@ -134,10 +134,17 @@ export default function HelpPage() {
             <div className="space-y-4">
               <div className="flex justify-between items-center py-3 border-b border-[#c4c6cd]/10">
                 <div>
-                  <h3 className="font-medium text-[#1d2832]">Image Enhancement</h3>
-                  <p className="text-xs text-[#43474c]">Sky replace, seasons, HDR, cleanup, etc.</p>
+                  <h3 className="font-medium text-[#1d2832]">Image Enhancement (Basic)</h3>
+                  <p className="text-xs text-[#43474c]">Auto, HDR, Sharpen, Denoise</p>
                 </div>
                 <span className="font-manrope text-sm text-[#006c4d] font-medium">1 credit</span>
+              </div>
+              <div className="flex justify-between items-center py-3 border-b border-[#c4c6cd]/10">
+                <div>
+                  <h3 className="font-medium text-[#1d2832]">Image Enhancement (Premium)</h3>
+                  <p className="text-xs text-[#43474c]">Sky replace, seasons, object removal</p>
+                </div>
+                <span className="font-manrope text-sm text-[#006c4d] font-medium">2 credits</span>
               </div>
               <div className="flex justify-between items-center py-3 border-b border-[#c4c6cd]/10">
                 <div>
@@ -151,7 +158,7 @@ export default function HelpPage() {
                   <h3 className="font-medium text-[#1d2832]">Video Generation</h3>
                   <p className="text-xs text-[#43474c]">Full pipeline: sort → stage → animate → stitch</p>
                 </div>
-                <span className="font-manrope text-sm text-[#006c4d] font-medium">1 credit</span>
+                <span className="font-manrope text-sm text-[#006c4d] font-medium">5 credits</span>
               </div>
               <div className="flex justify-between items-center py-3 border-b border-[#c4c6cd]/10">
                 <div>

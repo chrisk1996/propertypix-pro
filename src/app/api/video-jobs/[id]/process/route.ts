@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Replicate from 'replicate';
 import { createClient } from '@/utils/supabase/server';
+import { CREDIT_COSTS } from '@/lib/pricing';
 
 export const dynamic = 'force-dynamic';
 
@@ -589,7 +590,7 @@ async function refundCredit(supabase: Awaited<ReturnType<typeof createClient>>, 
     if (ud && ud.used_credits > 0) {
       await supabase
         .from('zestio_users')
-        .update({ used_credits: ud.used_credits - 1 })
+        .update({ used_credits: ud.used_credits - CREDIT_COSTS.VIDEO_GENERATION })
         .eq('id', userId);
     }
   } catch {}

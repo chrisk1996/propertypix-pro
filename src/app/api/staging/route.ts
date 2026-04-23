@@ -3,6 +3,7 @@ import Replicate from 'replicate';
 export const dynamic = 'force-dynamic';
 import { createClient } from '@/utils/supabase/server';
 import { authenticateRequest, logApiUsage } from '@/lib/api-auth';
+import { CREDIT_COSTS } from '@/lib/pricing';
 
 const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN! });
 
@@ -191,7 +192,7 @@ export async function POST(request: NextRequest) {
     }
 
     let outputUrl: string | null = null;
-    let creditsUsed = 2;
+    let creditsUsed = CREDIT_COSTS.ENHANCE_PREMIUM;
     let usedModel = model;
 
     try {

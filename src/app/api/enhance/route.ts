@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Replicate from 'replicate';
+import { CREDIT_COSTS } from '@/lib/pricing';
 // Force dynamic rendering - uses cookies/auth
 export const dynamic = 'force-dynamic';
 import { createClient } from '@/utils/supabase/server';
@@ -132,7 +133,7 @@ export async function POST(request: NextRequest) {
 
     try {
       let resultUrl: string;
-      let creditsUsed = 1;
+      let creditsUsed = CREDIT_COSTS.ENHANCE_BASIC;
 
       // Select model based on user choice
       if (model === 'flux-kontext') {
@@ -160,7 +161,7 @@ export async function POST(request: NextRequest) {
         } else {
           throw new Error('Invalid output from FLUX Kontext');
         }
-        creditsUsed = 2;
+        creditsUsed = CREDIT_COSTS.ENHANCE_PREMIUM;
       } else if (model === 'ideogram') {
         console.log('Using Ideogram v2 for enhancement');
         const result = await replicate.run(
@@ -185,7 +186,7 @@ export async function POST(request: NextRequest) {
         } else {
           throw new Error('Invalid output from Ideogram');
         }
-        creditsUsed = 2;
+        creditsUsed = CREDIT_COSTS.ENHANCE_PREMIUM;
       } else {
         console.log('Using SDXL for enhancement (auto/default)');
         const result = await replicate.run(
@@ -212,7 +213,7 @@ export async function POST(request: NextRequest) {
         } else {
           throw new Error('Invalid output from SDXL');
         }
-        creditsUsed = 1;
+        creditsUsed = CREDIT_COSTS.ENHANCE_BASIC;
       }
 
       // Deduct credits if not unlimited (enterprise)

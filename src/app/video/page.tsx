@@ -199,8 +199,8 @@ export default function VideoPage() {
       return;
     }
     const hasUnlimited = credits.total === -1;
-    if (!hasUnlimited && credits.total - credits.used < 1) {
-      setCreateError('Not enough credits. Please purchase more.');
+    if (!hasUnlimited && credits.total - credits.used < 5) {
+      setCreateError('Not enough credits. Video generation requires 5 credits. Please purchase more.');
       return;
     }
     
@@ -227,7 +227,7 @@ export default function VideoPage() {
       setListingUrl('');
       setUploadedImages([]);
       refetchJobs();
-      setCredits(prev => ({ ...prev, used: prev.used + 1 }));
+      setCredits(prev => ({ ...prev, used: prev.used + 5 }));
 
       // Trigger first processing step immediately
       setTimeout(() => {
@@ -251,7 +251,7 @@ export default function VideoPage() {
   
   const remainingCredits = credits.total - credits.used;
   const hasCredit = credits.total === -1 || credits.total > credits.used;
-  const canSubmit = hasCredit && ((mode === 'url' && listingUrl.length > 0) || (mode === 'manual' && uploadedImages.length >= 5));
+  const canSubmit = hasCredit && credits.total - credits.used >= 5 && ((mode === 'url' && listingUrl.length > 0) || (mode === 'manual' && uploadedImages.length >= 5));
   const currentStageInfo = activeJob ? statusToStage(activeJob.status) : null;
   const isJobComplete = activeJob?.status === 'done';
   const isJobFailed = activeJob?.status === 'failed' || activeJob?.status === 'needs_images';
@@ -384,7 +384,7 @@ export default function VideoPage() {
                   <span className="material-symbols-outlined">auto_awesome</span>{isCreating ? 'Creating...' : 'Generate Video'}
                 </button>
                 
-                {!hasCredit && (<p className="text-center text-sm text-red-600">You need at least 1 credit to generate a video. Please purchase more credits.</p>)}
+                {!hasCredit || credits.total - credits.used < 5 ? (<p className="text-center text-sm text-red-600">You need at least 5 credits to generate a video. Please purchase more credits.</p>) : null}
               </div>
             )}
           </main>

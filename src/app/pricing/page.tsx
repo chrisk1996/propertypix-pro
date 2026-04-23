@@ -1,265 +1,141 @@
-'use client';
-
-import { useState } from 'react';
 import { Header } from '@/components/Header';
-import { Check, Sparkles, Zap, Crown, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { PLANS, CREDIT_BREAKDOWN } from '@/lib/pricing';
 
-const plans = [
-  {
-    id: 'free',
-    name: 'Free',
-    price: '€0',
-    period: 'forever',
-    description: 'Perfect for trying out Zestio Pro',
-    icon: <Zap className="w-6 h-6" />,
-    features: [
-      '5 photo enhancements per month',
-      'Auto enhance feature',
-      'Basic sky replacement',
-      '3D Floor Plan Editor',
-      'Export floor plans as JSON',
-      'Community support',
-    ],
-    limitations: ['No virtual staging', 'No object removal', 'Watermark on downloads'],
-    cta: 'Get Started Free',
-    ctaLink: '/auth',
-    popular: false,
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    price: '€29',
-    period: 'per month',
-    description: 'For serious real estate professionals',
-    icon: <Sparkles className="w-6 h-6" />,
-    features: [
-      '100 photo enhancements per month',
-      'All enhancement types',
-      'Virtual staging included',
-      'Object removal',
-      'HD quality output',
-      'Priority processing',
-      '3D Floor Plans with GLB/STL export',
-      'Listing Builder with AI descriptions',
-      'Email support',
-      'No watermarks',
-    ],
-    limitations: [],
-    cta: 'Start Pro Trial',
-    ctaLink: '/auth',
-    popular: true,
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    price: '€199',
-    period: 'per month',
-    description: 'For teams and agencies',
-    icon: <Crown className="w-6 h-6" />,
-    features: [
-      'Unlimited photo enhancements',
-      'All Pro features',
-      'API access',
-      'Team collaboration (up to 10 users)',
-      'Custom branding',
-      'White-label options',
-      'Custom floor plan templates',
-      'Priority support',
-      'SLA guarantee',
-      'Onboarding support',
-    ],
-    limitations: [],
-    cta: 'Contact Sales',
-    ctaLink: 'mailto:sales@zestio.ai',
-    popular: false,
-  },
-];
+export const metadata = {
+  title: 'Pricing - Zestio',
+  description: 'Simple credit-based pricing for Zestio AI real estate tools',
+};
 
 export default function PricingPage() {
-  const [loading, setLoading] = useState<string | null>(null);
-
-  const handleCheckout = async (planId: string) => {
-    if (planId === 'free') {
-      window.location.href = '/auth';
-      return;
-    }
-    if (planId === 'enterprise') {
-      window.location.href = 'mailto:sales@zestio.ai?subject=Enterprise Plan Inquiry';
-      return;
-    }
-    setLoading(planId);
-    // TODO: Integrate with Stripe checkout
-    // For now, redirect to auth
-    setTimeout(() => {
-      setLoading(null);
-      window.location.href = '/auth';
-    }, 1000);
-  };
+  const plansList = Object.values(PLANS);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f7f9ff]">
       <Header />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16">
-        {/* Header */}
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Simple, Transparent Pricing
+          <h1 className="font-serif text-4xl md:text-5xl text-[#1d2832] mb-4">
+            Simple Credit-Based Pricing
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Start free, upgrade when you need more. No hidden fees, cancel anytime.
+          <p className="text-xl text-[#43474c] max-w-2xl mx-auto">
+            Buy credits, use them across all tools. No hidden fees, no surprises.
           </p>
         </div>
 
-        {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {plans.map((plan) => (
+        {/* Credit costs */}
+        <div className="max-w-2xl mx-auto mb-16">
+          <h2 className="font-serif text-2xl text-[#1d2832] mb-6 text-center">What Credits Buy</h2>
+          <div className="bg-white rounded-xl border border-[#c4c6cd]/20 overflow-hidden">
+            {CREDIT_BREAKDOWN.map((item, i) => (
+              <div
+                key={i}
+                className={`flex items-center justify-between px-6 py-4 ${i < CREDIT_BREAKDOWN.length - 1 ? 'border-b border-[#c4c6cd]/10' : ''}`}
+              >
+                <div>
+                  <span className="font-medium text-[#1d2832]">{item.action}</span>
+                  <span className="block text-xs text-[#43474c]">{item.note}</span>
+                </div>
+                <span className={`font-manrope text-sm font-bold ${item.cost === 0 ? 'text-[#006c4d]' : 'text-[#1d2832]'}`}>
+                  {item.cost === 0 ? 'Free' : `${item.cost} credit${item.cost > 1 ? 's' : ''}`}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Plan Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          {plansList.map((plan) => (
             <div
-              key={plan.id}
-              className={`bg-white rounded-2xl shadow-lg overflow-hidden ${
-                plan.popular ? 'ring-2 ring-indigo-600 scale-105' : ''
+              key={plan.name}
+              className={`bg-white rounded-xl overflow-hidden border ${
+                plan.name === 'Pro'
+                  ? 'border-[#006c4d] ring-2 ring-[#006c4d]/20 scale-[1.02]'
+                  : 'border-[#c4c6cd]/20'
               }`}
             >
-              {plan.popular && (
-                <div className="bg-indigo-600 text-white text-center py-2 text-sm font-medium">
+              {plan.name === 'Pro' && (
+                <div className="bg-[#006c4d] text-white text-center py-2 text-xs font-manrope uppercase tracking-widest">
                   Most Popular
                 </div>
               )}
               <div className="p-8">
-                <div className="flex items-center gap-3 mb-4">
-                  <div
-                    className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                      plan.popular ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-600'
-                    }`}
-                  >
-                    {plan.icon}
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-900">{plan.name}</h2>
-                    <p className="text-sm text-gray-500">{plan.description}</p>
-                  </div>
-                </div>
+                <h2 className="font-serif text-2xl text-[#1d2832] mb-1">{plan.name}</h2>
+                <p className="text-sm text-[#43474c] mb-6">{plan.description}</p>
 
                 <div className="mb-6">
-                  <span className="text-4xl font-bold text-gray-900">{plan.price}</span>
-                  <span className="text-gray-500 ml-2">{plan.period}</span>
+                  <span className="text-4xl font-bold text-[#1d2832]">{plan.priceLabel}</span>
+                  <span className="text-[#43474c] ml-2">{plan.period}</span>
+                  {plan.credits > 0 && (
+                    <span className="block text-sm text-[#006c4d] font-medium mt-1">
+                      {plan.credits} credits/month
+                    </span>
+                  )}
+                  {plan.credits === -1 && (
+                    <span className="block text-sm text-[#006c4d] font-medium mt-1">
+                      Unlimited credits
+                    </span>
+                  )}
                 </div>
 
                 <ul className="space-y-3 mb-8">
                   {plan.features.map((feature, i) => (
                     <li key={i} className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-600">{feature}</span>
-                    </li>
-                  ))}
-                  {plan.limitations.map((limitation, i) => (
-                    <li key={i} className="flex items-start gap-3 opacity-60">
-                      <span className="w-5 h-5 flex-shrink-0 mt-0.5 text-center text-gray-400">✕</span>
-                      <span className="text-gray-400">{limitation}</span>
+                      <span className="material-symbols-outlined text-sm text-[#006c4d] mt-0.5">check</span>
+                      <span className="text-sm text-[#43474c]">{feature}</span>
                     </li>
                   ))}
                 </ul>
 
-                <button
-                  onClick={() => handleCheckout(plan.id)}
-                  disabled={loading === plan.id}
-                  className={`w-full py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 ${
-                    plan.popular
-                      ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                <Link
+                  href={plan.name === 'Enterprise' ? 'mailto:sales@zestio.pro?subject=Enterprise Plan Inquiry' : '/auth'}
+                  className={`block w-full text-center py-3 rounded-lg font-medium transition-all ${
+                    plan.name === 'Pro'
+                      ? 'bg-[#006c4d] text-white hover:opacity-90'
+                      : 'bg-[#edf4ff] text-[#1d2832] hover:bg-[#e3efff]'
                   }`}
                 >
-                  {loading === plan.id ? (
-                    <span className="animate-spin">⏳</span>
-                  ) : (
-                    <>
-                      {plan.cta}
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
+                  {plan.name === 'Free' ? 'Get Started Free' : plan.name === 'Enterprise' ? 'Contact Sales' : 'Start Pro Trial'}
+                </Link>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Feature Comparison */}
-        <div className="mt-20">
-          <h2 className="text-2xl font-bold text-gray-900 text-center mb-8">
-            Feature Comparison
-          </h2>
-          <div className="bg-white rounded-2xl shadow overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-medium text-gray-500">Feature</th>
-                  <th className="px-6 py-4 text-center text-sm font-medium text-gray-500">Free</th>
-                  <th className="px-6 py-4 text-center text-sm font-medium text-indigo-600">Pro</th>
-                  <th className="px-6 py-4 text-center text-sm font-medium text-gray-500">Enterprise</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {[
-                  ['Photo Enhancements', '5/month', '100/month', 'Unlimited'],
-                  ['Auto Enhance', '✓', '✓', '✓'],
-                  ['Sky Replacement', 'Basic', '✓', '✓'],
-                  ['Virtual Staging', '—', '✓', '✓'],
-                  ['Object Removal', '—', '✓', '✓'],
-                  ['3D Floor Plan Editor', '✓', '✓', '✓'],
-                  ['GLB/STL Export', '—', '✓', '✓'],
-                  ['Listing Builder', '—', '✓', '✓'],
-                  ['AI Descriptions', '—', '✓', '✓'],
-                  ['Team Collaboration', '—', '—', '✓'],
-                  ['API Access', '—', '—', '✓'],
-                  ['Custom Branding', '—', '—', '✓'],
-                ].map(([feature, free, pro, enterprise], i) => (
-                  <tr key={i}>
-                    <td className="px-6 py-4 text-sm text-gray-900">{feature}</td>
-                    <td className="px-6 py-4 text-center text-sm text-gray-600">
-                      {free === '✓' ? <Check className="w-4 h-4 text-green-500 mx-auto" /> : free}
-                    </td>
-                    <td className="px-6 py-4 text-center text-sm text-gray-900 font-medium">
-                      {pro === '✓' ? <Check className="w-4 h-4 text-green-500 mx-auto" /> : pro}
-                    </td>
-                    <td className="px-6 py-4 text-center text-sm text-gray-600">
-                      {enterprise === '✓' ? <Check className="w-4 h-4 text-green-500 mx-auto" /> : enterprise}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
         {/* FAQ */}
-        <div className="mt-16 text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8">Frequently Asked Questions</h2>
-          <div className="grid md:grid-cols-2 gap-8 text-left max-w-4xl mx-auto">
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Can I try before paying?</h3>
-              <p className="text-gray-600">
-                Yes! The Free plan gives you 5 enhancements per month at no cost. No credit card required.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">What export formats are supported?</h3>
-              <p className="text-gray-600">
-                Floor plans can be exported as JSON (Free), or GLB/STL/OBJ 3D models (Pro and above).
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Can I cancel anytime?</h3>
-              <p className="text-gray-600">
-                Yes, you can cancel your subscription at any time. You'll keep access until the end of your billing period.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-2">Do you offer custom plans?</h3>
-              <p className="text-gray-600">
-                Yes! Contact us for custom enterprise solutions tailored to your agency's needs.
-              </p>
-            </div>
+        <div className="mt-20 max-w-2xl mx-auto">
+          <h2 className="font-serif text-2xl text-[#1d2832] mb-8 text-center">Pricing FAQ</h2>
+          <div className="space-y-3">
+            <details className="bg-white rounded-lg border border-[#c4c6cd]/20 p-6 group">
+              <summary className="font-medium text-[#1d2832] cursor-pointer list-none flex justify-between items-center">
+                How many videos can I make with 100 credits?
+                <span className="material-symbols-outlined text-[#43474c] text-sm group-open:rotate-180 transition-transform">expand_more</span>
+              </summary>
+              <p className="text-sm text-[#43474c] mt-3">Each video costs 5 credits. So 100 credits = 20 videos per month. You could also use those credits for 100 basic enhancements, 50 sky replacements, or any mix.</p>
+            </details>
+            <details className="bg-white rounded-lg border border-[#c4c6cd]/20 p-6 group">
+              <summary className="font-medium text-[#1d2832] cursor-pointer list-none flex justify-between items-center">
+                Do credits roll over?
+                <span className="material-symbols-outlined text-[#43474c] text-sm group-open:rotate-180 transition-transform">expand_more</span>
+              </summary>
+              <p className="text-sm text-[#43474c] mt-3">Credits reset each billing cycle. Unused credits don&apos;t roll over to the next month.</p>
+            </details>
+            <details className="bg-white rounded-lg border border-[#c4c6cd]/20 p-6 group">
+              <summary className="font-medium text-[#1d2832] cursor-pointer list-none flex justify-between items-center">
+                Can I cancel anytime?
+                <span className="material-symbols-outlined text-[#43474c] text-sm group-open:rotate-180 transition-transform">expand_more</span>
+              </summary>
+              <p className="text-sm text-[#43474c] mt-3">Yes. Cancel anytime and you&apos;ll keep access until the end of your billing period. No cancellation fees.</p>
+            </details>
+            <details className="bg-white rounded-lg border border-[#c4c6cd]/20 p-6 group">
+              <summary className="font-medium text-[#1d2832] cursor-pointer list-none flex justify-between items-center">
+                What&apos;s free?
+                <span className="material-symbols-outlined text-[#43474c] text-sm group-open:rotate-180 transition-transform">expand_more</span>
+              </summary>
+              <p className="text-sm text-[#43474c] mt-3">AI listing descriptions, smart captions, and the social media kit are completely free — no credits needed. The free plan also gives you 5 credits to try paid features.</p>
+            </details>
           </div>
         </div>
       </main>

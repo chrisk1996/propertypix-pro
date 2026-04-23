@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { CREDIT_COSTS } from '@/lib/pricing';
 
 // Force dynamic rendering - uses cookies/auth
 export const dynamic = 'force-dynamic';
@@ -185,7 +186,7 @@ export async function DELETE(
     if (userData && userData.used_credits > 0) {
       await supabase
         .from('zestio_users')
-        .update({ used_credits: userData.used_credits - 1 })
+        .update({ used_credits: userData.used_credits - CREDIT_COSTS.VIDEO_GENERATION })
         .eq('id', user.id);
     }
 

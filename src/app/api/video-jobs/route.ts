@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
+import { CREDIT_COSTS } from '@/lib/pricing';
 import { detectPlatform } from '@/lib/video-pipeline-queue';
 
 export const dynamic = 'force-dynamic';
@@ -86,13 +87,13 @@ export async function POST(request: NextRequest) {
     // Deduct credit
     if (!hasUnlimited) {
       try {
-        await supabase.rpc('deduct_credits', { p_user_id: user.id, p_amount: 1 });
+        await supabase.rpc('deduct_credits', { p_user_id: user.id, p_amount: CREDIT_COSTS.VIDEO_GENERATION });
       } catch {
         await supabase
           .from('zestio_users')
           .update({
-            credits: Math.max(0, (userData?.credits ?? 0) - 1),
-            used_credits: (userData?.used_credits ?? 0) + 1,
+            credits: Math.max(0, (userData?.credits ?? 0) - CREDIT_COSTS.VIDEO_GENERATION),
+            used_credits: (userData?.used_credits ?? 0) + CREDIT_COSTS.VIDEO_GENERATION,
           })
           .eq('id', user.id);
       }
