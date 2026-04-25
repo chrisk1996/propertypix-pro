@@ -326,7 +326,7 @@ export async function POST(request: NextRequest) {
         output: outputUrl,
         model: usedModel,
         creditsUsed,
-        creditsRemaining: hasUnlimitedCredits ? -1 : remainingCredits,
+        creditsRemaining: userData?.credits === -1 ? -1 : remainingCredits,
       });
     } catch (apiError: any) {
       console.error('API error:', apiError);

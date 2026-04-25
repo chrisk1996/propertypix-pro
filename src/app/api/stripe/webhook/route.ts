@@ -296,26 +296,35 @@ export async function POST(request: NextRequest) {
           plan = price ? getPlanFromPrice(price) : 'pro';
         }
 
-        const { data: user } = await supabaseAdmin
-          .from('zestio_users')
-          .select('id, subscription_tier')
-          .eq('stripe_customer_id', customerId)
-          .single();
+    const { data: user } = await supabaseAdmin
+      .from('zestio_users')
+      .select('id, subscription_tier, credits, used_credits')
+      .eq('stripe_customer_id', customerId)
+      .single();
 
-        if (user && plan !== 'free') {
-          await supabaseAdmin
-            .from('zestio_users')
-            .update({
-              used_credits: 0,
-              credits: plan === 'enterprise' ? 500 : 100,
-            })
-            .eq('id', user.id);
-          console.log(`[Stripe] Credits reset for user ${user.id} based on plan: ${plan}`);
-          logCreditTransaction({ userId: user.id, type: 'reset', amount: plan === 'enterprise' ? 500 : 100, description: `Monthly credit reset (${plan})` });
-        }
-        break;
-      }
+    if (user && plan !== 'free') {
+      const planCredits = plan === 'enterprise' ? 500 : 100;
+      // Preserve unused top-up credits: any credits beyond the plan allocation are top-ups
+      const currentCredits = user.credits ?? 0;
+      const currentUsed = user.used_credits ?? 0;
+      const remainingCredits = currentCredits === -1 ? 0 : Math.max(0, currentCredits - currentUsed);
+      // Top-up credits = whatever remains beyond what the plan would have provided
+      const previousPlanCredits = user.subscription_tier === 'enterprise' ? 500 : (user.subscription_tier === 'pro' ? 100 : 10);
+      const extraCredits = Math.max(0, remainingCredits - previousPlanCredits);
+      const newTotalCredits = planCredits + extraCredits;
 
+      await supabaseAdmin
+        .from('zestio_users')
+        .update({
+          used_credits: 0,
+          credits: newTotalCredits,
+        })
+        .eq('id', user.id);
+      console.log(`[Stripe] Credits reset for user ${user.id}: ${planCredits} plan + ${extraCredits} top-up = ${newTotalCredits} total`);
+      logCreditTransaction({ userId: user.id, type: 'reset', amount: planCredits, description: `Monthly credit reset (${plan}) — ${extraCredits} top-up credits preserved` });
+    }
+    break;
+  }
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
         const customerId = invoice.customer as string;
