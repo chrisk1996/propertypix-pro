@@ -445,6 +445,7 @@ export default function BillingPage() {
               );
             })}
           </div>
+      </div>
 
         {/* Upgrade Info for existing subscribers */}
         {user?.plan !== 'free' && user?.stripe_customer_id && (
