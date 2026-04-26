@@ -445,7 +445,6 @@ export default function BillingPage() {
               );
             })}
           </div>
-        </div>
 
         {/* Upgrade Info for existing subscribers */}
         {user?.plan !== 'free' && user?.stripe_customer_id && (
@@ -463,6 +462,7 @@ export default function BillingPage() {
             <code className="bg-yellow-100 px-1 rounded">4242 4242 4242 4242</code> with any future expiry date and CVC.
           </p>
         </div>
+      </div>
     </AppLayout>
   );
 }
