@@ -4,27 +4,12 @@ export const dynamic = 'force-dynamic';
 import { createClient } from '@/utils/supabase/server';
 import { authenticateRequest, logApiUsage } from '@/lib/api-auth';
 import { CREDIT_COSTS } from '@/lib/pricing';
+import { logCreditTransaction } from '@/lib/credit-transactions';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN! });
 
-// Rate limiting by IP (in-memory, resets on deploy)
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
-const RATE_LIMIT = 10; // requests per hour
-const RATE_WINDOW = 60 * 60 * 1000; // 1 hour
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const record = rateLimitMap.get(ip);
-  if (!record || now > record.resetTime) {
-    rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_WINDOW });
-    return true;
-  }
-  if (record.count >= RATE_LIMIT) {
-    return false;
-  }
-  record.count++;
-  return true;
-}
+const RATE_LIMIT_OPTIONS = { limit: 10, windowMs: 60 * 60 * 1000 }; // 10 req/hour
 
 // Room type prompts for virtual staging
 const ROOM_PROMPTS: Record<string, string> = {
@@ -151,7 +136,7 @@ export async function POST(request: NextRequest) {
     // Rate limiting
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
       || request.headers.get('x-real-ip') || 'unknown';
-    if (!checkRateLimit(ip)) {
+    if (!(await checkRateLimit(ip, RATE_LIMIT_OPTIONS)).allowed) {
       return NextResponse.json(
         { error: 'Rate limit exceeded. Please try again later.' },
         { status: 429 }
@@ -318,6 +303,8 @@ export async function POST(request: NextRequest) {
         statusCode: 200,
         ipAddress: ip,
       }).catch(() => {});
+
+      logCreditTransaction({ userId, type: 'usage', amount: -creditsUsed, description: `Virtual staging (${usedModel})` }).catch(() => {});
 
       return NextResponse.json({
         success: true,

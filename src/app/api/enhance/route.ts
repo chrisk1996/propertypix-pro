@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Replicate from 'replicate';
 import { CREDIT_COSTS } from '@/lib/pricing';
+import { logCreditTransaction } from '@/lib/credit-transactions';
+import { checkRateLimit } from '@/lib/rate-limit';
 // Force dynamic rendering - uses cookies/auth
 export const dynamic = 'force-dynamic';
 import { createClient } from '@/utils/supabase/server';
@@ -8,30 +10,13 @@ import { authenticateRequest, logApiUsage } from '@/lib/api-auth';
 
 const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN! });
 
-// Rate limiting by IP (in-memory, resets on deploy)
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
-const RATE_LIMIT = 10; // requests per hour
-const RATE_WINDOW = 60 * 60 * 1000; // 1 hour
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const record = rateLimitMap.get(ip);
-  if (!record || now > record.resetTime) {
-    rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_WINDOW });
-    return true;
-  }
-  if (record.count >= RATE_LIMIT) {
-    return false;
-  }
-  record.count++;
-  return true;
-}
+const RATE_LIMIT_OPTIONS = { limit: 10, windowMs: 60 * 60 * 1000 }; // 10 req/hour
 
 export async function POST(request: NextRequest) {
   try {
     // Get client IP for rate limiting
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown';
-    if (!checkRateLimit(ip)) {
+    if (!(await checkRateLimit(ip, RATE_LIMIT_OPTIONS)).allowed) {
       return NextResponse.json(
         { error: 'Rate limit exceeded. Please try again later.' },
         { status: 429 }
@@ -53,27 +38,15 @@ export async function POST(request: NextRequest) {
       .eq('id', userId)
       .single();
 
-    if (userError) {
-      console.error('[Enhance] Error fetching user:', userError.message);
-      // User might not exist in zestio_users yet, create record
-      const { error: insertError } = await supabase
-        .from('zestio_users')
-        .insert({
-          id: userId,
-          credits: 5, // Free tier default
-          used_credits: 0,
-          subscription_tier: 'free'
-        });
-      if (insertError) {
-        console.error('[Enhance] Failed to create user record:', insertError.message);
-        return NextResponse.json({ error: 'Failed to create user record' }, { status: 500 });
-      }
+    if (userError || !userData) {
+      console.error('[Enhance] Error fetching user:', userError?.message);
+      return NextResponse.json({ error: 'User profile not found. Please try signing in again.' }, { status: 404 });
     }
 
-    // Check if user has credits (Model A: credits = remaining balance)
-    if (userData && userData.credits <= 0) {
+    // Check credits before AI call (Model A: credits = remaining balance)
+    if (userData && userData.credits < CREDIT_COSTS.ENHANCE_BASIC) {
       return NextResponse.json(
-        { error: 'No credits remaining. Please upgrade your plan.' },
+        { error: 'Not enough credits. Please upgrade your plan.' },
         { status: 402 }
       );
     }
@@ -234,6 +207,8 @@ export async function POST(request: NextRequest) {
         statusCode: 200,
         ipAddress: ip,
       }).catch(() => {});
+
+      logCreditTransaction({ userId, type: 'usage', amount: -creditsUsed, description: `Photo enhancement (${model})` }).catch(() => {});
 
       return NextResponse.json({
         success: true,

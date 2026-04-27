@@ -60,7 +60,7 @@ export async function processStaging(
       })
       .eq('id', jobId);
 
-    // Deduct credits (virtual staging costs 2 credits)
+    // Deduct credits atomically via RPC (virtual staging costs 2 credits)
     await deductCredits(supabase, userId, 2);
 
     console.log(`[Staging] Job ${jobId} completed successfully`);
@@ -107,18 +107,30 @@ function generateStagingPrompt(roomType: string, style: string): string {
   return `${styleDesc}, ${roomDesc}, professional real estate photography, bright and inviting, 4k, photorealistic`;
 }
 
+/**
+ * Atomically deduct credits via RPC.
+ * Fallback to manual update if RPC unavailable.
+ */
 async function deductCredits(
   supabase: SupabaseClient,
   userId: string,
   amount: number
 ): Promise<void> {
-  const { data: user } = await supabase
-    .from('zestio_users')
-    .select('credits, used_credits')
-    .eq('id', userId)
-    .single();
+  const { error } = await supabase.rpc('deduct_credits', {
+    p_user_id: userId,
+    p_amount: amount,
+  });
 
-  if (user && user.credits >= amount) {
+  if (error) {
+    console.warn('[StagingWorker] RPC deduct_credits failed, using fallback:', error.message);
+    const { data: user } = await supabase
+      .from('zestio_users')
+      .select('credits, used_credits')
+      .eq('id', userId)
+      .single();
+
+    if (!user || user.credits < amount) return;
+
     await supabase
       .from('zestio_users')
       .update({

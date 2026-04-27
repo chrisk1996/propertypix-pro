@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { logCreditTransaction } from '@/lib/credit-transactions';
+import { getPlanCredits } from '@/lib/credits-shared';
 
 export const dynamic = 'force-dynamic';
 
@@ -141,7 +142,7 @@ export async function POST(request: NextRequest) {
             .update({
               subscription_tier: plan,
               subscription_status: 'active',
-              credits: plan === 'pro' ? 100 : 500,
+              credits: getPlanCredits(plan),
               used_credits: 0,
               stripe_subscription_id: session.subscription as string,
               // Clear any cancellation dates on new subscription
@@ -228,8 +229,8 @@ export async function POST(request: NextRequest) {
               subscription_tier: effectivePlan,
               subscription_status: effectiveStatus,
               credits: status === 'cancel_at_period_end' || status === 'active'
-                ? (plan === 'enterprise' ? 500 : 100)
-                : 5,
+                ? getPlanCredits(plan)
+                : getPlanCredits('free'),
               subscription_current_period_end: periodEnd,
               subscription_cancel_at: cancelAt,
               // Clear canceled_at if reactivating
@@ -263,7 +264,7 @@ export async function POST(request: NextRequest) {
             .update({
               subscription_tier: 'free',
               subscription_status: 'canceled',
-              credits: 5,
+              credits: getPlanCredits('free'),
               // Clear Stripe subscription ID and dates
               stripe_subscription_id: null,
               subscription_cancel_at: null,
@@ -303,11 +304,10 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (user && plan !== 'free') {
-      const planCredits = plan === 'enterprise' ? 500 : 100;
-      // Model A: credits = remaining balance. Any credits still remaining are preserved as top-up credits.
+      const planCredits = getPlanCredits(plan);
+      // Preserve unused top-up credits: any credits beyond the plan allocation are top-ups
       const remainingCredits = Math.max(0, user.credits ?? 0);
-      // Estimate how many were from the previous plan allocation vs top-ups
-      const previousPlanCredits = user.subscription_tier === 'enterprise' ? 500 : (user.subscription_tier === 'pro' ? 100 : 5);
+      const previousPlanCredits = getPlanCredits(user.subscription_tier || 'free');
       const extraCredits = Math.max(0, remainingCredits - previousPlanCredits);
       const newTotalCredits = planCredits + extraCredits;
 

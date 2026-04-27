@@ -580,18 +580,22 @@ function extractUrl(output: unknown): string | null {
 
 async function refundCredit(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
   try {
+    // Model A: credits = remaining balance, so add back the cost
+    await supabase.rpc('refund_credits', { p_user_id: userId, p_amount: CREDIT_COSTS.VIDEO_GENERATION });
+  } catch {
+    // Fallback if RPC doesn't exist
     const { data: ud } = await supabase
       .from('zestio_users')
-      .select('used_credits')
+      .select('credits')
       .eq('id', userId)
       .single();
-    if (ud && ud.used_credits > 0) {
+    if (ud) {
       await supabase
         .from('zestio_users')
-        .update({ used_credits: ud.used_credits - CREDIT_COSTS.VIDEO_GENERATION })
+        .update({ credits: ud.credits + CREDIT_COSTS.VIDEO_GENERATION })
         .eq('id', userId);
     }
-  } catch {}
+  }
 }
 
 async function scrapeListingImages(url: string): Promise<string[]> {

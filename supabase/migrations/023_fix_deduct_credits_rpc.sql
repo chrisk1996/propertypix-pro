@@ -32,3 +32,28 @@ BEGIN
   RETURN v_credits - p_amount;
 END;
 $$;
+
+-- Add refund_credits RPC for video job refunds
+CREATE OR REPLACE FUNCTION refund_credits(p_user_id UUID, p_amount INTEGER)
+RETURNS INTEGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_credits INTEGER;
+BEGIN
+  SELECT credits INTO v_credits
+  FROM zestio_users
+  WHERE id = p_user_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'User not found';
+  END IF;
+
+  UPDATE zestio_users
+  SET credits = credits + p_amount
+  WHERE id = p_user_id;
+
+  RETURN v_credits + p_amount;
+END;
+$$;

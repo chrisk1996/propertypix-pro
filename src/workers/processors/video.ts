@@ -59,7 +59,7 @@ export async function processVideo(
       })
       .eq('id', jobId);
 
-    // Deduct credits (video costs 3 credits)
+    // Deduct credits atomically via RPC (video costs 3 credits)
     await deductCredits(supabase, userId, 3);
 
     console.log(`[Video] Job ${jobId} completed successfully`);
@@ -81,18 +81,30 @@ export async function processVideo(
   }
 }
 
+/**
+ * Atomically deduct credits via RPC.
+ * Fallback to manual update if RPC unavailable.
+ */
 async function deductCredits(
   supabase: SupabaseClient,
   userId: string,
   amount: number
 ): Promise<void> {
-  const { data: user } = await supabase
-    .from('zestio_users')
-    .select('credits, used_credits')
-    .eq('id', userId)
-    .single();
+  const { error } = await supabase.rpc('deduct_credits', {
+    p_user_id: userId,
+    p_amount: amount,
+  });
 
-  if (user && user.credits >= amount) {
+  if (error) {
+    console.warn('[VideoWorker] RPC deduct_credits failed, using fallback:', error.message);
+    const { data: user } = await supabase
+      .from('zestio_users')
+      .select('credits, used_credits')
+      .eq('id', userId)
+      .single();
+
+    if (!user || user.credits < amount) return;
+
     await supabase
       .from('zestio_users')
       .update({

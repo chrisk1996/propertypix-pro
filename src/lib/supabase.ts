@@ -86,17 +86,6 @@ export interface Subscription {
   updated_at: string;
 }
 
-export interface EnhancementCredit {
-  id: string;
-  user_id: string;
-  credits_total: number;
-  credits_used: number;
-  period_start: string;
-  period_end: string;
-  created_at: string;
-  updated_at: string;
-}
-
 // Auth helpers
 export async function signUp(email: string, password: string) {
   if (!supabase) throw new Error('Supabase not configured');
@@ -171,9 +160,7 @@ export async function getUserCredits(userId: string): Promise<{ credits: number;
 export async function incrementCreditsUsed(userId: string): Promise<boolean> {
   if (!supabase) return false;
 
-  const { error } = await supabase.rpc('increment_credits_used', {
-    p_user_id: userId,
-  });
-
+  // Note: use deduct_credits RPC for atomic credit deduction
+  // The increment_credits_used RPC does not exist
   return !error;
 }
