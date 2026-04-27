@@ -29,13 +29,13 @@ CREATE INDEX IF NOT EXISTS idx_zestio_jobs_type ON public.zestio_jobs(job_type);
 ALTER TABLE public.zestio_jobs ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can view their own jobs" ON public.zestio_jobs
-  FOR SELECT USING (user_id = auth.uid()::text);
+  FOR SELECT USING (user_id::text = auth.uid()::text);
 
 CREATE POLICY "Users can create jobs" ON public.zestio_jobs
-  FOR INSERT WITH CHECK (user_id = auth.uid()::text);
+  FOR INSERT WITH CHECK (user_id::text = auth.uid()::text);
 
 CREATE POLICY "Users can delete their own jobs" ON public.zestio_jobs
-  FOR DELETE USING (user_id = auth.uid()::text);
+  FOR DELETE USING (user_id::text = auth.uid()::text);
 
 -- Comments
 COMMENT ON TABLE public.zestio_jobs IS 'AI processing job history — enhancements, staging, video, floor plans';
