@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import AIModelSelector, { type AIModel } from '@/components/AIModelSelector';
+import { useTranslations } from 'next-intl';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type StudioTab = 'enhance' | 'stage' | 'renovate' | 'cleanup';
@@ -9,60 +10,60 @@ type StudioTab = 'enhance' | 'stage' | 'renovate' | 'cleanup';
 interface ToolDef {
   id: string;
   icon: string;
-  label: string;
+  labelKey: string;
   apiType: string;
   tab: StudioTab;
 }
 
-// ── Tool definitions ───────────────────────────────────────────────────────
+// ── Tool definitions (keys resolved in render via t()) ─────────────────────
 const tools: ToolDef[] = [
-  { id: 'auto-lighting', icon: 'light_mode', label: 'Auto-Lighting', apiType: 'auto', tab: 'enhance' },
-  { id: 'denoise', icon: 'grain', label: 'Denoise & Sharp', apiType: 'denoise', tab: 'enhance' },
-  { id: 'upscale-4k', icon: 'hd', label: 'Upscale 4K', apiType: 'upscale', tab: 'enhance' },
-  { id: 'sky-blue', icon: 'wb_sunny', label: 'Blue Sky', apiType: 'sky', tab: 'enhance' },
-  { id: 'sky-sunset', icon: 'wb_twilight', label: 'Golden Sunset', apiType: 'sky_sunset', tab: 'enhance' },
-  { id: 'sky-dramatic', icon: 'cloud', label: 'Dramatic Clouds', apiType: 'sky_dramatic', tab: 'enhance' },
-  { id: 'twilight', icon: 'dark_mode', label: 'Virtual Twilight', apiType: 'twilight', tab: 'enhance' },
-  { id: 'season-summer', icon: 'local_florist', label: 'Summer', apiType: 'season_summer', tab: 'enhance' },
-  { id: 'season-autumn', icon: 'eco', label: 'Autumn', apiType: 'season_autumn', tab: 'enhance' },
-  { id: 'season-winter', icon: 'ac_unit', label: 'Winter', apiType: 'season_winter', tab: 'enhance' },
-  { id: 'stage-living', icon: 'weekend', label: 'Living Room', apiType: 'living', tab: 'stage' },
-  { id: 'stage-bedroom', icon: 'bed', label: 'Bedroom', apiType: 'bedroom', tab: 'stage' },
-  { id: 'stage-kitchen', icon: 'countertops', label: 'Kitchen', apiType: 'kitchen', tab: 'stage' },
-  { id: 'stage-dining', icon: 'table_restaurant', label: 'Dining Room', apiType: 'dining', tab: 'stage' },
-  { id: 'stage-bathroom', icon: 'bathtub', label: 'Bathroom', apiType: 'bathroom', tab: 'stage' },
-  { id: 'stage-office', icon: 'desk', label: 'Office', apiType: 'office', tab: 'stage' },
-  { id: 'stage-basement', icon: 'foundation', label: 'Basement', apiType: 'basement', tab: 'stage' },
-  { id: 'stage-patio', icon: 'deck', label: 'Patio', apiType: 'patio', tab: 'stage' },
-  { id: 'reno-kitchen', icon: 'kitchen', label: 'Kitchen Remodel', apiType: 'kitchen_renovate', tab: 'renovate' },
-  { id: 'reno-bathroom', icon: 'shower', label: 'Bathroom Remodel', apiType: 'bathroom_renovate', tab: 'renovate' },
-  { id: 'reno-living', icon: 'chair', label: 'Living Room', apiType: 'living_renovate', tab: 'renovate' },
-  { id: 'reno-bedroom', icon: 'king_bed', label: 'Bedroom Refresh', apiType: 'bedroom_renovate', tab: 'renovate' },
-  { id: 'reno-exterior', icon: 'home', label: 'Exterior Facelift', apiType: 'exterior_renovate', tab: 'renovate' },
-  { id: 'reno-flooring', icon: 'grid_on', label: 'New Flooring', apiType: 'flooring_renovate', tab: 'renovate' },
-  { id: 'reno-paint', icon: 'format_paint', label: 'Repaint Walls', apiType: 'paint_renovate', tab: 'renovate' },
-  { id: 'object-removal', icon: 'delete_sweep', label: 'Object Removal', apiType: 'object_removal', tab: 'cleanup' },
-  { id: 'declutter', icon: 'cleaning_services', label: 'Declutter', apiType: 'declutter', tab: 'cleanup' },
-  { id: 'curb-appeal', icon: 'yard', label: 'Curb Appeal', apiType: 'curb_appeal', tab: 'cleanup' },
-  { id: 'facade-refresh', icon: 'home_repair_service', label: 'Facade Refresh', apiType: 'facade_refresh', tab: 'cleanup' },
+  { id: 'auto-lighting', icon: 'light_mode', labelKey: 'toolAutoLighting', apiType: 'auto', tab: 'enhance' },
+  { id: 'denoise', icon: 'grain', labelKey: 'toolDenoise', apiType: 'denoise', tab: 'enhance' },
+  { id: 'upscale-4k', icon: 'hd', labelKey: 'toolUpscale4k', apiType: 'upscale', tab: 'enhance' },
+  { id: 'sky-blue', icon: 'wb_sunny', labelKey: 'toolBlueSky', apiType: 'sky', tab: 'enhance' },
+  { id: 'sky-sunset', icon: 'wb_twilight', labelKey: 'toolGoldenSunset', apiType: 'sky_sunset', tab: 'enhance' },
+  { id: 'sky-dramatic', icon: 'cloud', labelKey: 'toolDramaticClouds', apiType: 'sky_dramatic', tab: 'enhance' },
+  { id: 'twilight', icon: 'dark_mode', labelKey: 'toolVirtualTwilight', apiType: 'twilight', tab: 'enhance' },
+  { id: 'season-summer', icon: 'local_florist', labelKey: 'toolSummer', apiType: 'season_summer', tab: 'enhance' },
+  { id: 'season-autumn', icon: 'eco', labelKey: 'toolAutumn', apiType: 'season_autumn', tab: 'enhance' },
+  { id: 'season-winter', icon: 'ac_unit', labelKey: 'toolWinter', apiType: 'season_winter', tab: 'enhance' },
+  { id: 'stage-living', icon: 'weekend', labelKey: 'toolLivingRoom', apiType: 'living', tab: 'stage' },
+  { id: 'stage-bedroom', icon: 'bed', labelKey: 'toolBedroom', apiType: 'bedroom', tab: 'stage' },
+  { id: 'stage-kitchen', icon: 'countertops', labelKey: 'toolKitchen', apiType: 'kitchen', tab: 'stage' },
+  { id: 'stage-dining', icon: 'table_restaurant', labelKey: 'toolDiningRoom', apiType: 'dining', tab: 'stage' },
+  { id: 'stage-bathroom', icon: 'bathtub', labelKey: 'toolBathroom', apiType: 'bathroom', tab: 'stage' },
+  { id: 'stage-office', icon: 'desk', labelKey: 'toolOffice', apiType: 'office', tab: 'stage' },
+  { id: 'stage-basement', icon: 'foundation', labelKey: 'toolBasement', apiType: 'basement', tab: 'stage' },
+  { id: 'stage-patio', icon: 'deck', labelKey: 'toolPatio', apiType: 'patio', tab: 'stage' },
+  { id: 'reno-kitchen', icon: 'kitchen', labelKey: 'toolKitchenRemodel', apiType: 'kitchen_renovate', tab: 'renovate' },
+  { id: 'reno-bathroom', icon: 'shower', labelKey: 'toolBathroomRemodel', apiType: 'bathroom_renovate', tab: 'renovate' },
+  { id: 'reno-living', icon: 'chair', labelKey: 'toolLivingRoomReno', apiType: 'living_renovate', tab: 'renovate' },
+  { id: 'reno-bedroom', icon: 'king_bed', labelKey: 'toolBedroomRefresh', apiType: 'bedroom_renovate', tab: 'renovate' },
+  { id: 'reno-exterior', icon: 'home', labelKey: 'toolExteriorFacelift', apiType: 'exterior_renovate', tab: 'renovate' },
+  { id: 'reno-flooring', icon: 'grid_on', labelKey: 'toolNewFlooring', apiType: 'flooring_renovate', tab: 'renovate' },
+  { id: 'reno-paint', icon: 'format_paint', labelKey: 'toolRepaintWalls', apiType: 'paint_renovate', tab: 'renovate' },
+  { id: 'object-removal', icon: 'delete_sweep', labelKey: 'toolObjectRemoval', apiType: 'object_removal', tab: 'cleanup' },
+  { id: 'declutter', icon: 'cleaning_services', labelKey: 'toolDeclutter', apiType: 'declutter', tab: 'cleanup' },
+  { id: 'curb-appeal', icon: 'yard', labelKey: 'toolCurbAppeal', apiType: 'curb_appeal', tab: 'cleanup' },
+  { id: 'facade-refresh', icon: 'home_repair_service', labelKey: 'toolFacadeRefresh', apiType: 'facade_refresh', tab: 'cleanup' },
 ];
 
-const tabDefs: { id: StudioTab; label: string; icon: string }[] = [
-  { id: 'enhance', label: 'Enhance', icon: 'auto_awesome' },
-  { id: 'stage', label: 'Stage', icon: 'chair' },
-  { id: 'renovate', label: 'Renovate', icon: 'construction' },
-  { id: 'cleanup', label: 'Cleanup', icon: 'cleaning_services' },
+const tabDefs: { id: StudioTab; labelKey: string; icon: string }[] = [
+  { id: 'enhance', labelKey: 'tabEnhance', icon: 'auto_awesome' },
+  { id: 'stage', labelKey: 'tabStage', icon: 'chair' },
+  { id: 'renovate', labelKey: 'tabRenovate', icon: 'construction' },
+  { id: 'cleanup', labelKey: 'tabCleanup', icon: 'cleaning_services' },
 ];
 
 const styleOptions = [
-  { value: 'modern', label: 'Modern' },
-  { value: 'scandinavian', label: 'Scandi' },
-  { value: 'luxury', label: 'Luxury' },
-  { value: 'minimalist', label: 'Minimal' },
-  { value: 'industrial', label: 'Industrial' },
-  { value: 'bohemian', label: 'Boho' },
-  { value: 'midcentury', label: 'Mid-Century' },
-  { value: 'farmhouse', label: 'Farmhouse' },
+  { value: 'modern', labelKey: 'styleModern' },
+  { value: 'scandinavian', labelKey: 'styleScandi' },
+  { value: 'luxury', labelKey: 'styleLuxury' },
+  { value: 'minimalist', labelKey: 'styleMinimal' },
+  { value: 'industrial', labelKey: 'styleIndustrial' },
+  { value: 'bohemian', labelKey: 'styleBoho' },
+  { value: 'midcentury', labelKey: 'styleMidCentury' },
+  { value: 'farmhouse', labelKey: 'styleFarmhouse' },
 ];
 
 // ── Batch item ────────────────────────────────────────────────────────────
@@ -75,7 +76,7 @@ interface BatchItem {
 }
 
 // ── Before/After Slider Component ──────────────────────────────────────────
-function BeforeAfterSlider({ before, after }: { before: string; after: string }) {
+function BeforeAfterSlider({ before, after, beforeLabel, afterLabel }: { before: string; after: string; beforeLabel: string; afterLabel: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState(50);
   const [dragging, setDragging] = useState(false);
@@ -111,9 +112,9 @@ function BeforeAfterSlider({ before, after }: { before: string; after: string })
       onMouseDown={(e) => { e.stopPropagation(); setDragging(true); updatePosition(e.clientX); }}
       onTouchStart={(e) => { e.stopPropagation(); setDragging(true); updatePosition(e.touches[0].clientX); }}
     >
-      <img src={after} alt="After" className="absolute inset-0 w-full h-full object-cover" draggable={false} />
+      <img src={after} alt={afterLabel} className="absolute inset-0 w-full h-full object-cover" draggable={false} />
       <div className="absolute inset-0 overflow-hidden" style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}>
-        <img src={before} alt="Before" className="absolute inset-0 w-full h-full object-cover" draggable={false} />
+        <img src={before} alt={beforeLabel} className="absolute inset-0 w-full h-full object-cover" draggable={false} />
       </div>
       <div className="absolute top-0 bottom-0" style={{ left: `${position}%` }}>
         <div className="absolute -translate-x-1/2 top-0 bottom-0 w-0.5 bg-white shadow-lg" />
@@ -121,14 +122,17 @@ function BeforeAfterSlider({ before, after }: { before: string; after: string })
           <span className="text-slate-600 text-sm font-bold">⟷</span>
         </div>
       </div>
-      <div className="absolute top-3 left-3 bg-black/50 text-white text-xs px-2 py-1 rounded-md font-medium">Before</div>
-      <div className="absolute top-3 right-3 bg-black/50 text-white text-xs px-2 py-1 rounded-md font-medium">After</div>
+      <div className="absolute top-3 left-3 bg-black/50 text-white text-xs px-2 py-1 rounded-md font-medium">{beforeLabel}</div>
+      <div className="absolute top-3 right-3 bg-black/50 text-white text-xs px-2 py-1 rounded-md font-medium">{afterLabel}</div>
     </div>
   );
 }
 
 // ── Main Studio Component ──────────────────────────────────────────────────
 export function ImageStudio({ className = '' }: { className?: string }) {
+  const ts = useTranslations('studio');
+  const tc = useTranslations('common');
+
   // Single image mode
   const [image, setImage] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
@@ -226,12 +230,12 @@ export function ImageStudio({ className = '' }: { className?: string }) {
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Processing failed');
+      if (!res.ok) throw new Error(data.error || ts('processingFailed'));
 
       setResult(data.output);
-      setHistory(prev => [{ before: inputImage, after: data.output, tool: tool.label }, ...prev].slice(0, 10));
+      setHistory(prev => [{ before: inputImage, after: data.output, tool: ts(tool.labelKey) }, ...prev].slice(0, 10));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to process image');
+      setError(err instanceof Error ? err.message : ts('processImageFailed'));
     } finally {
       setIsProcessing(false);
     }
@@ -244,7 +248,6 @@ export function ImageStudio({ className = '' }: { className?: string }) {
     setIsProcessing(true);
     setError(null);
 
-    // Mark all pending as processing
     setBatchItems(prev => prev.map(i =>
       i.status === 'pending' ? { ...i, status: 'processing' as const } : i
     ));
@@ -254,7 +257,6 @@ export function ImageStudio({ className = '' }: { className?: string }) {
       : tool.tab === 'stage' ? '/api/staging' : '/api/enhance';
     let failedCount = 0;
 
-    // Process sequentially to avoid rate limits
     for (const item of pending) {
       try {
         const body: Record<string, unknown> = { image: item.input, model: selectedModel };
@@ -280,22 +282,20 @@ export function ImageStudio({ className = '' }: { className?: string }) {
         const data = await res.json();
 
         if (!res.ok) {
-          // If out of credits, stop the batch
           if (res.status === 402) {
             setBatchItems(prev => prev.map(i =>
-              i.id === item.id ? { ...i, status: 'failed' as const, error: 'Insufficient credits' } : i
+              i.id === item.id ? { ...i, status: 'failed' as const, error: ts('insufficientCredits') } : i
             ));
-            // Mark remaining as failed
             const remainingIds = pending.filter(p => p.id !== item.id && batchItems.find(b => b.id === p.id)?.status === 'processing').map(p => p.id);
             if (remainingIds.length > 0) {
               setBatchItems(prev => prev.map(i =>
                 remainingIds.includes(i.id) ? { ...i, status: 'pending' as const } : i
               ));
             }
-            setError(`Out of credits. ${failedCount} images failed. Remaining images not processed.`);
+            setError(ts('outOfCredits', { failedCount }));
             break;
           }
-          throw new Error(data.error || 'Processing failed');
+          throw new Error(data.error || ts('processingFailed'));
         }
 
         setBatchItems(prev => prev.map(i =>
@@ -304,13 +304,13 @@ export function ImageStudio({ className = '' }: { className?: string }) {
       } catch (err) {
         failedCount++;
         setBatchItems(prev => prev.map(i =>
-          i.id === item.id ? { ...i, status: 'failed' as const, error: err instanceof Error ? err.message : 'Failed' } : i
+          i.id === item.id ? { ...i, status: 'failed' as const, error: err instanceof Error ? err.message : ts('failed') } : i
         ));
       }
     }
 
     if (failedCount > 0 && !error) {
-      setError(`${failedCount} of ${pending.length} images failed.`);
+      setError(ts('batchSomeFailed', { failedCount, total: pending.length }));
     }
     setIsProcessing(false);
   };
@@ -372,7 +372,6 @@ export function ImageStudio({ className = '' }: { className?: string }) {
   const batchPending = batchTotal - batchCompleted - batchFailed;
   const allBatchDone = batchTotal > 0 && batchPending === 0;
 
-  // Selected batch item for preview
   const activeBatchItem = selectedBatchItem
     ? batchItems.find(i => i.id === selectedBatchItem)
     : batchItems[0];
@@ -389,7 +388,7 @@ export function ImageStudio({ className = '' }: { className?: string }) {
               !batchMode ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            Single Image
+            {ts('singleImage')}
           </button>
           <button
             onClick={() => batchMode || toggleBatchMode()}
@@ -397,11 +396,11 @@ export function ImageStudio({ className = '' }: { className?: string }) {
               batchMode ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            Batch ({batchTotal})
+            {ts('batch')} ({batchTotal})
           </button>
           {!batchMode && history.length > 0 && (
             <button onClick={() => setShowHistory(!showHistory)} className="ml-auto px-3 py-1.5 text-xs text-slate-600 hover:text-slate-800 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
-              History ({history.length})
+              {ts('history')} ({history.length})
             </button>
           )}
         </div>
@@ -416,20 +415,19 @@ export function ImageStudio({ className = '' }: { className?: string }) {
           onDrop={handleDrop}
         >
           {batchMode ? (
-            // Batch mode preview
             batchItems.length === 0 ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                 <span className="material-symbols-outlined text-5xl text-slate-300">collections</span>
-                <p className="text-slate-400 text-sm">Drop multiple images for batch processing</p>
+                <p className="text-slate-400 text-sm">{ts('dropMultiple')}</p>
                 <button
                   onClick={() => fileRef.current?.click()}
                   className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700"
                 >
-                  Browse Files
+                  {ts('browseFiles')}
                 </button>
               </div>
             ) : activeBatchItem?.output && activeBatchItem.input ? (
-              <BeforeAfterSlider before={activeBatchItem.input} after={activeBatchItem.output} />
+              <BeforeAfterSlider before={activeBatchItem.input} after={activeBatchItem.output} beforeLabel={ts('before')} afterLabel={ts('after')} />
             ) : activeBatchItem?.input ? (
               <div className="relative w-full h-full">
                 <img src={activeBatchItem.input} alt="Preview" className="w-full h-full object-contain" />
@@ -440,26 +438,25 @@ export function ImageStudio({ className = '' }: { className?: string }) {
                 )}
                 {activeBatchItem.status === 'failed' && (
                   <div className="absolute inset-0 bg-red-500/20 flex items-center justify-center">
-                    <span className="bg-red-600 text-white px-3 py-1 rounded-lg text-sm font-medium">Failed</span>
+                    <span className="bg-red-600 text-white px-3 py-1 rounded-lg text-sm font-medium">{ts('failed')}</span>
                   </div>
                 )}
               </div>
             ) : null
           ) : (
-            // Single image mode preview (unchanged)
             result && image ? (
-              <BeforeAfterSlider before={image} after={result} />
+              <BeforeAfterSlider before={image} after={result} beforeLabel={ts('before')} afterLabel={ts('after')} />
             ) : image ? (
               <img src={image} alt="Uploaded" className="w-full h-full object-contain" />
             ) : (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                 <span className="material-symbols-outlined text-5xl text-slate-300">add_photo_alternate</span>
-                <p className="text-slate-400 text-sm">Drop an image or click to upload</p>
+                <p className="text-slate-400 text-sm">{ts('dropImage')}</p>
                 <button
                   onClick={() => fileRef.current?.click()}
                   className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700"
                 >
-                  Browse Files
+                  {ts('browseFiles')}
                 </button>
               </div>
             )
@@ -518,13 +515,13 @@ export function ImageStudio({ className = '' }: { className?: string }) {
           </div>
         )}
 
-        {/* Bottom bar */}
+        {/* Bottom bar — single mode */}
         {!batchMode && (image || result) && (
           <div className="flex items-center justify-between py-3 gap-3">
             <div className="flex items-center gap-2">
               {image && (
                 <button onClick={() => fileRef.current?.click()} className="px-3 py-1.5 text-sm text-slate-600 hover:text-slate-800 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
-                  New Image
+                  {ts('newImage')}
                 </button>
               )}
             </div>
@@ -534,14 +531,14 @@ export function ImageStudio({ className = '' }: { className?: string }) {
                   onClick={() => { setResult(null); }}
                   className="px-3 py-1.5 text-sm text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
                 >
-                  Edit Again
+                  {ts('editAgain')}
                 </button>
                 <button
                   onClick={downloadResult}
                   className="px-4 py-1.5 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-1.5"
                 >
                   <span className="material-symbols-outlined text-sm">download</span>
-                  Download
+                  {ts('download')}
                 </button>
               </div>
             )}
@@ -558,8 +555,8 @@ export function ImageStudio({ className = '' }: { className?: string }) {
               />
             </div>
             <span className="text-xs text-slate-500 font-medium whitespace-nowrap">
-              {batchCompleted}/{batchTotal} done
-              {batchFailed > 0 && ` (${batchFailed} failed)`}
+              {ts('batchDone', { completed: batchCompleted, total: batchTotal })}
+              {batchFailed > 0 && ts('batchFailed', { failed: batchFailed })}
             </span>
             {allBatchDone && batchCompleted > 0 && (
               <button
@@ -567,18 +564,18 @@ export function ImageStudio({ className = '' }: { className?: string }) {
                 className="px-3 py-1.5 text-xs font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-1"
               >
                 <span className="material-symbols-outlined text-xs">download</span>
-                Download All
+                {ts('downloadAll')}
               </button>
             )}
           </div>
         )}
 
-        {/* History panel (single mode) */}
+        {/* History panel — single mode */}
         {!batchMode && showHistory && history.length > 0 && (
           <div className="bg-white border border-slate-200 rounded-xl p-3 mt-2">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-slate-500">Recent Edits</span>
-              <button onClick={() => { setHistory([]); setShowHistory(false); }} className="text-xs text-slate-400 hover:text-red-500">Clear</button>
+              <span className="text-xs font-semibold text-slate-500">{ts('recentEdits')}</span>
+              <button onClick={() => { setHistory([]); setShowHistory(false); }} className="text-xs text-slate-400 hover:text-red-500">{ts('clear')}</button>
             </div>
             <div className="flex gap-2 overflow-x-auto">
               {history.map((item, i) => (
@@ -607,7 +604,7 @@ export function ImageStudio({ className = '' }: { className?: string }) {
               }`}
             >
               <span className="material-symbols-outlined text-lg">{tab.icon}</span>
-              {tab.label}
+              {ts(tab.labelKey)}
             </button>
           ))}
         </div>
@@ -627,7 +624,7 @@ export function ImageStudio({ className = '' }: { className?: string }) {
                 }`}
               >
                 <span className="material-symbols-outlined text-lg">{tool.icon}</span>
-                <span className="text-[11px] font-medium leading-tight text-center">{tool.label}</span>
+                <span className="text-[11px] font-medium leading-tight text-center">{ts(tool.labelKey)}</span>
               </button>
             ))}
           </div>
@@ -635,7 +632,7 @@ export function ImageStudio({ className = '' }: { className?: string }) {
           {/* Style Picker */}
           {showStylePicker && (
             <div>
-              <label className="text-xs font-semibold text-slate-500 mb-2 block">Style</label>
+              <label className="text-xs font-semibold text-slate-500 mb-2 block">{ts('style')}</label>
               <div className="flex flex-wrap gap-1.5">
                 {styleOptions.map(s => (
                   <button
@@ -647,7 +644,7 @@ export function ImageStudio({ className = '' }: { className?: string }) {
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     }`}
                   >
-                    {s.label}
+                    {ts(s.labelKey)}
                   </button>
                 ))}
               </div>
@@ -662,7 +659,7 @@ export function ImageStudio({ className = '' }: { className?: string }) {
           )}
         </div>
 
-        {/* Generate Button (fixed bottom) */}
+        {/* Generate Button */}
         <div className="p-4 border-t border-slate-200">
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg text-xs mb-3 flex justify-between items-center">
@@ -683,12 +680,16 @@ export function ImageStudio({ className = '' }: { className?: string }) {
             {isProcessing ? (
               <>
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                {batchMode ? `Processing ${batchCompleted + 1}/${batchTotal}...` : 'Processing...'}
+                {batchMode
+                  ? ts('processingBatch', { current: batchCompleted + 1, total: batchTotal })
+                  : ts('processing')}
               </>
             ) : (
               <>
                 <span className="material-symbols-outlined text-base">auto_awesome</span>
-                {batchMode ? `Process ${batchItems.filter(i => i.status === 'pending').length} Images` : 'Generate'}
+                {batchMode
+                  ? ts('processImages', { count: batchItems.filter(i => i.status === 'pending').length })
+                  : ts('generate')}
               </>
             )}
           </button>

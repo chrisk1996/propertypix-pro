@@ -15,49 +15,13 @@ interface DashboardData {
   recentListings: number;
 }
 
-const tools = [
-  {
-    title: 'Image Studio',
-    description: 'Enhance, stage, replace skies, change seasons — 13 AI tools in one.',
-    icon: 'auto_awesome',
-    href: '/studio',
-    color: 'bg-emerald-50 text-emerald-600',
-  },
-  {
-    title: 'Video Creator',
-    description: 'Upload photos → get a cinematic video. AI sorts, stages, animates.',
-    icon: 'movie',
-    href: '/video',
-    color: 'bg-blue-50 text-blue-600',
-  },
-  {
-    title: 'Listing Builder',
-    description: 'AI-generated property descriptions in English & German.',
-    icon: 'description',
-    href: '/listing/new',
-    color: 'bg-purple-50 text-purple-600',
-  },
-  {
-    title: 'Smart Captions',
-    description: 'AI captions for Instagram, Facebook & more. Free, no credits.',
-    icon: 'share',
-    href: '/social',
-    color: 'bg-orange-50 text-orange-600',
-  },
-  {
-    title: '3D Floor Plans',
-    description: 'Convert 2D blueprints into interactive 3D models.',
-    icon: 'architecture',
-    href: '/floorplan',
-    color: 'bg-teal-50 text-teal-600',
-  },
-  {
-    title: 'API Docs',
-    description: 'Build with Zestio. REST API, keys, full documentation.',
-    icon: 'code',
-    href: '/docs',
-    color: 'bg-slate-100 text-slate-600',
-  },
+const toolDefs = [
+  { titleKey: 'tools.imageStudio' as const, descKey: 'tools.imageStudioDesc' as const, icon: 'auto_awesome', href: '/studio', color: 'bg-emerald-50 text-emerald-600' },
+  { titleKey: 'tools.videoCreator' as const, descKey: 'tools.videoCreatorDesc' as const, icon: 'movie', href: '/video', color: 'bg-blue-50 text-blue-600' },
+  { titleKey: 'tools.listingBuilder' as const, descKey: 'tools.listingBuilderDesc' as const, icon: 'description', href: '/listing/new', color: 'bg-purple-50 text-purple-600' },
+  { titleKey: 'tools.smartCaptions' as const, descKey: 'tools.smartCaptionsDesc' as const, icon: 'share', href: '/social', color: 'bg-orange-50 text-orange-600' },
+  { titleKey: 'tools.floorPlans' as const, descKey: 'tools.floorPlansDesc' as const, icon: 'architecture', href: '/floorplan', color: 'bg-teal-50 text-teal-600' },
+  { titleKey: 'tools.apiDocs' as const, descKey: 'tools.apiDocsDesc' as const, icon: 'code', href: '/docs', color: 'bg-slate-100 text-slate-600' },
 ];
 
 export default function DashboardPage() {
@@ -146,9 +110,9 @@ export default function DashboardPage() {
 
         {/* Tool Grid */}
         <section className="mb-16">
-          <h2 className="font-serif text-2xl text-[#1d2832] mb-6">{t('tools')}</h2>
+          <h2 className="font-serif text-2xl text-[#1d2832] mb-6">{t('toolsLabel')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {tools.map((tool) => (
+            {toolDefs.map((tool) => (
               <Link
                 key={tool.href}
                 href={tool.href}
@@ -157,8 +121,8 @@ export default function DashboardPage() {
                 <div className={`w-12 h-12 rounded-xl ${tool.color} flex items-center justify-center mb-4`}>
                   <span className="material-symbols-outlined text-2xl">{tool.icon}</span>
                 </div>
-                <h3 className="font-medium text-[#1d2832] mb-1 group-hover:text-[#006c4d] transition-colors">{tool.title}</h3>
-                <p className="text-sm text-[#43474c] leading-relaxed">{tool.description}</p>
+                <h3 className="font-medium text-[#1d2832] mb-1 group-hover:text-[#006c4d] transition-colors">{t(tool.titleKey)}</h3>
+                <p className="text-sm text-[#43474c] leading-relaxed">{t(tool.descKey)}</p>
               </Link>
             ))}
           </div>

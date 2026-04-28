@@ -66,7 +66,7 @@ export default function SettingsPage() {
       setLanguage(data?.language || 'de');
     } catch (err) {
       console.error('Error loading user:', err);
-      setError('Failed to load settings');
+      setError(t('loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -89,7 +89,7 @@ export default function SettingsPage() {
       if (updateError) throw updateError;
 
       setLanguage(newLanguage);
-      setSuccess('Language updated successfully');
+      setSuccess(t('languageSaved'));
       
       // Store in localStorage for immediate use
       localStorage.setItem('locale', newLanguage);
@@ -98,7 +98,7 @@ export default function SettingsPage() {
       setTimeout(() => window.location.reload(), 500);
     } catch (err) {
       console.error('Error updating language:', err);
-      setError('Failed to update language');
+      setError(t('languageSaveFailed'));
     } finally {
       setSavingLanguage(false);
     }
@@ -120,10 +120,10 @@ export default function SettingsPage() {
 
       if (updateError) throw updateError;
 
-      setSuccess('Profile updated successfully');
+      setSuccess(t('profileSaved'));
     } catch (err) {
       console.error('Error saving profile:', err);
-      setError('Failed to save changes');
+      setError(t('profileSaveFailed'));
     } finally {
       setSaving(false);
     }
@@ -150,30 +150,30 @@ export default function SettingsPage() {
         body: JSON.stringify({ name: newKeyName.trim() }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to create key');
+      if (!res.ok) throw new Error(data.error || t('loadFailed'));
       setRevealedKey(data.secret);
       setNewKeyName('');
       setShowCreateKey(false);
       loadApiKeys();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create key');
+      setError(err instanceof Error ? err.message : t('loadFailed'));
     } finally {
       setCreatingKey(false);
     }
   };
 
   const handleRevokeKey = async (keyId: string) => {
-    if (!confirm('Revoke this API key? Any apps using it will lose access.')) return;
+    if (!confirm(t('revokeConfirm'))) return;
     try {
       const res = await fetch('/api/keys', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key_id: keyId }),
       });
-      if (!res.ok) throw new Error('Failed to revoke key');
+      if (!res.ok) throw new Error(t('loadFailed'));
       loadApiKeys();
     } catch {
-      setError('Failed to revoke key');
+      setError(t('loadFailed'));
     }
   };
 
@@ -241,7 +241,7 @@ export default function SettingsPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Enter your name"
+                placeholder={t('namePlaceholder')}
               />
             </div>
 
@@ -361,7 +361,7 @@ export default function SettingsPage() {
                   type="text"
                   value={newKeyName}
                   onChange={(e) => setNewKeyName(e.target.value)}
-                  placeholder="Key name (e.g. 'My App')"
+                  placeholder={t('keyNamePlaceholder')}
                   className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   onKeyDown={(e) => e.key === 'Enter' && handleCreateKey()}
                 />
@@ -376,7 +376,7 @@ export default function SettingsPage() {
                   onClick={() => { setShowCreateKey(false); setNewKeyName(''); }}
                   className="px-3 py-2 text-gray-500 hover:text-gray-700 text-sm"
                 >
-                  Cancel
+                  {t('cancel')}
                 </button>
               </div>
             </div>
@@ -424,7 +424,7 @@ export default function SettingsPage() {
                       <p className="text-xs text-gray-400">
                         {key.last_used_at
                           ? `Last used ${new Date(key.last_used_at).toLocaleDateString()}`
-                          : 'Never used'}
+                          : t('neverUsed')}
                       </p>
                       <p className="text-xs text-gray-400">Created {new Date(key.created_at).toLocaleDateString()}</p>
                     </div>

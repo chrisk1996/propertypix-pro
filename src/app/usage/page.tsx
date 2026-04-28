@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout';
+import { useTranslations } from 'next-intl';
 
 interface Transaction {
   id: string;
@@ -23,58 +24,59 @@ const featureColors: Record<string, string> = {
   Other: 'bg-gray-400',
 };
 
-const typeLabels: Record<string, { label: string; color: string }> = {
-  purchase: { label: 'Subscription', color: 'text-blue-600 bg-blue-50' },
-  topup: { label: 'Top Up', color: 'text-emerald-600 bg-emerald-50' },
-  usage: { label: 'Usage', color: 'text-orange-600 bg-orange-50' },
-  refund: { label: 'Refund', color: 'text-purple-600 bg-purple-50' },
-  reset: { label: 'Monthly Reset', color: 'text-gray-600 bg-gray-50' },
-  subscription: { label: 'New Subscription', color: 'text-blue-600 bg-blue-50' },
-};
-
 export default function UsagePage() {
+  const t = useTranslations('usage');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [breakdown, setBreakdown] = useState<UsageBreakdown>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const typeLabels: Record<string, { labelKey: string; color: string }> = {
+    purchase: { labelKey: 'typeSubscription', color: 'text-blue-600 bg-blue-50' },
+    topup: { labelKey: 'typeTopup', color: 'text-emerald-600 bg-emerald-50' },
+    usage: { labelKey: 'typeUsage', color: 'text-orange-600 bg-orange-50' },
+    refund: { labelKey: 'typeRefund', color: 'text-purple-600 bg-purple-50' },
+    reset: { labelKey: 'typeReset', color: 'text-gray-600 bg-gray-50' },
+    subscription: { labelKey: 'typeNewSubscription', color: 'text-blue-600 bg-blue-50' },
+  };
+
   useEffect(() => {
     async function load() {
       try {
         const res = await fetch('/api/credits/transactions');
-        if (!res.ok) throw new Error('Failed to load');
+        if (!res.ok) throw new Error(t('loadFailed'));
         const data = await res.json();
         setTransactions(data.transactions || []);
         setBreakdown(data.breakdown || {});
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load transactions');
+        setError(err instanceof Error ? err.message : t('loadFailed'));
       } finally {
         setLoading(false);
       }
     }
     load();
-  }, []);
+  }, [t]);
 
-  const totalSpent = transactions.filter(t => t.amount < 0).reduce((sum, t) => sum + t.amount, 0);
-  const totalGained = transactions.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0);
+  const totalSpent = transactions.filter(tr => tr.amount < 0).reduce((sum, tr) => sum + tr.amount, 0);
+  const totalGained = transactions.filter(tr => tr.amount > 0).reduce((sum, tr) => sum + tr.amount, 0);
 
   return (
-    <AppLayout title="Usage History">
+    <AppLayout title={t('title')}>
       <div className="max-w-4xl mx-auto px-4 md:px-8 py-8">
-        <h1 className="font-serif text-3xl text-[#1d2832] mb-6">Credit Usage</h1>
+        <h1 className="font-serif text-3xl text-[#1d2832] mb-6">{t('title')}</h1>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           <div className="bg-white rounded-xl p-5 border border-gray-100">
-            <span className="text-xs text-gray-500 uppercase tracking-wider">Credits Spent</span>
+            <span className="text-xs text-gray-500 uppercase tracking-wider">{t('creditsSpent')}</span>
             <p className="text-2xl font-bold text-orange-600 mt-1">{Math.abs(totalSpent)}</p>
           </div>
           <div className="bg-white rounded-xl p-5 border border-gray-100">
-            <span className="text-xs text-gray-500 uppercase tracking-wider">Credits Added</span>
+            <span className="text-xs text-gray-500 uppercase tracking-wider">{t('creditsAdded')}</span>
             <p className="text-2xl font-bold text-emerald-600 mt-1">+{totalGained}</p>
           </div>
           <div className="bg-white rounded-xl p-5 border border-gray-100">
-            <span className="text-xs text-gray-500 uppercase tracking-wider">Transactions</span>
+            <span className="text-xs text-gray-500 uppercase tracking-wider">{t('transactions')}</span>
             <p className="text-2xl font-bold text-[#1d2832] mt-1">{transactions.length}</p>
           </div>
         </div>
@@ -82,7 +84,7 @@ export default function UsagePage() {
         {/* Usage Breakdown */}
         {Object.keys(breakdown).length > 0 && (
           <div className="bg-white rounded-xl border border-gray-100 p-6 mb-8">
-            <h2 className="text-sm font-semibold text-gray-700 mb-4">Usage Breakdown</h2>
+            <h2 className="text-sm font-semibold text-gray-700 mb-4">{t('usageBreakdown')}</h2>
             <div className="space-y-3">
               {Object.entries(breakdown)
                 .sort(([, a], [, b]) => b - a)
@@ -96,7 +98,7 @@ export default function UsagePage() {
                           <div className={`w-2.5 h-2.5 rounded-full ${featureColors[feature] || 'bg-gray-400'}`} />
                           <span className="text-gray-700">{feature}</span>
                         </div>
-                        <span className="font-medium text-gray-900">{credits} credits ({Math.round(pct)}%)</span>
+                        <span className="font-medium text-gray-900">{credits} {t('creditsUnit')} ({Math.round(pct)}%)</span>
                       </div>
                       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                         <div
@@ -121,46 +123,47 @@ export default function UsagePage() {
         ) : error ? (
           <div className="bg-red-50 rounded-xl p-6 text-center text-red-600">
             {error}
-            <p className="text-sm text-red-400 mt-2">Make sure credit_transactions table exists.</p>
+            <p className="text-sm text-red-400 mt-2">{t('tableHint')}</p>
           </div>
         ) : transactions.length === 0 ? (
           <div className="bg-gray-50 rounded-xl p-12 text-center">
             <span className="material-symbols-outlined text-4xl text-gray-300 block mb-3">receipt_long</span>
-            <p className="text-gray-500">No transactions yet. Start using tools to see your history here.</p>
+            <p className="text-gray-500">{t('noTransactions')}</p>
           </div>
         ) : (
           <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
             <div className="divide-y divide-gray-50">
-              {transactions.map(t => {
-                const meta = typeLabels[t.type] || { label: t.type, color: 'text-gray-600 bg-gray-50' };
+              {transactions.map(tr => {
+                const meta = typeLabels[tr.type] || { labelKey: tr.type, color: 'text-gray-600 bg-gray-50' };
+                const label = t(meta.labelKey) || tr.type;
                 return (
-                  <div key={t.id} className="flex items-center justify-between px-5 py-4">
+                  <div key={tr.id} className="flex items-center justify-between px-5 py-4">
                     <div className="flex items-center gap-4">
                       <span className={`px-2.5 py-1 rounded-lg text-xs font-medium ${meta.color}`}>
-                        {meta.label}
+                        {label}
                       </span>
                       <div>
-                        <p className="text-sm text-[#1d2832]">{t.description || meta.label}</p>
+                        <p className="text-sm text-[#1d2832]">{tr.description || label}</p>
                         <p className="text-xs text-gray-400">
-                          {new Date(t.created_at).toLocaleDateString('en-US', {
+                          {new Date(tr.created_at).toLocaleDateString('en-US', {
                             month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit',
                           })}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      {['topup', 'purchase', 'subscription'].includes(t.type) && (
+                      {['topup', 'purchase', 'subscription'].includes(tr.type) && (
                         <a
-                          href={`/api/invoice?id=${t.id}`}
+                          href={`/api/invoice?id=${tr.id}`}
                           target="_blank"
                           className="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1"
                         >
                           <span className="material-symbols-outlined text-sm">receipt_long</span>
-                          Invoice
+                          {t('invoice')}
                         </a>
                       )}
-                      <span className={`font-medium text-sm ${t.amount > 0 ? 'text-emerald-600' : 'text-gray-900'}`}>
-                        {t.amount > 0 ? '+' : ''}{t.amount} cr
+                      <span className={`font-medium text-sm ${tr.amount > 0 ? 'text-emerald-600' : 'text-gray-900'}`}>
+                        {tr.amount > 0 ? '+' : ''}{tr.amount} {t('creditsUnit')}
                       </span>
                     </div>
                   </div>

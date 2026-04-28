@@ -26,17 +26,17 @@ export default function AuthPage() {
     setSuccess(null);
 
     if (!email || !password) {
-      setError('Please fill in all fields');
+      setError(t('fillAllFields'));
       return;
     }
 
     if (!isLogin && password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('passwordsNoMatch'));
       return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+      setError(t('passwordTooShort'));
       return;
     }
 
@@ -60,10 +60,10 @@ export default function AuthPage() {
           },
         });
         if (signUpError) throw signUpError;
-        setSuccess('Check your email for a confirmation link. You can close this page.');
+        setSuccess(t('checkEmail'));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Authentication failed. Please try again.');
+      setError(err instanceof Error ? err.message : t('authFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -82,7 +82,7 @@ export default function AuthPage() {
       });
       if (oauthError) throw oauthError;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google authentication failed. Please try again.');
+      setError(err instanceof Error ? err.message : t('googleAuthFailed'));
       setIsLoading(false);
     }
   };
@@ -96,7 +96,7 @@ export default function AuthPage() {
             {isLogin ? t('signIn') : t('signUp')}
           </h1>
           <p className="text-[#43474c]">
-            {isLogin ? 'Sign in to access your Zestio account' : 'Start transforming your property photos today'}
+            {isLogin ? t('signInSubtitle') : t('signUpSubtitle')}
           </p>
         </div>
 
@@ -210,7 +210,7 @@ export default function AuthPage() {
 
           {!isLogin && (
             <p className="mt-4 text-xs text-center text-[#43474c]">
-              You&apos;ll receive a confirmation email. Click the link to activate your account.
+              {t('confirmEmail')}
             </p>
           )}
 
@@ -240,13 +240,13 @@ export default function AuthPage() {
         </div>
 
         <p className="mt-6 text-center text-xs text-[#43474c]">
-          By continuing, you agree to our{' '}
+          {t('byContinuing')}{' '}
           <Link href="/terms" className="text-[#1d2832] hover:underline">
-            Terms of Service
+            {t('termsOfService')}
           </Link>{' '}
-          and{' '}
+          {t('and')}{' '}
           <Link href="/privacy" className="text-[#1d2832] hover:underline">
-            Privacy Policy
+            {t('privacyPolicy')}
           </Link>
         </p>
       </main>

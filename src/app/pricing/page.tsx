@@ -22,10 +22,10 @@ export default function PricingPage() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert(data.error || 'Failed to start checkout');
+        alert(data.error || t('startCheckoutFailed'));
       }
     } catch {
-      alert('Failed to start checkout');
+      alert(t('startCheckoutFailed'));
     } finally {
       setLoadingPack(null);
     }
@@ -61,7 +61,7 @@ export default function PricingPage() {
                   <span className="block text-xs text-[#43474c]">{item.note}</span>
                 </div>
                 <span className={`font-manrope text-sm font-bold ${item.cost === 0 ? 'text-[#006c4d]' : 'text-[#1d2832]'}`}>
-                  {item.cost === 0 ? 'Free' : `${item.cost} credit${item.cost > 1 ? 's' : ''}`}
+                  {item.cost === 0 ? t('freeCredit') : `${item.cost} ${item.cost > 1 ? t('creditPlural') : t('creditSingular')}`}
                 </span>
               </div>
             ))}

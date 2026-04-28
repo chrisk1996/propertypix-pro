@@ -48,7 +48,7 @@ export default function LibraryPage() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        setError('Please log in to view your library');
+        setError(t('loginRequired'));
         setLoading(false);
         return;
       }
@@ -64,7 +64,7 @@ export default function LibraryPage() {
       setJobs(data || []);
     } catch (err) {
       console.error('Error loading jobs:', err);
-      setError('Failed to load library');
+      setError(t('loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -90,7 +90,7 @@ export default function LibraryPage() {
   };
 
   const handleDelete = async (jobId: string) => {
-    if (!confirm('Are you sure you want to delete this item?')) return;
+    if (!confirm(t('deleteConfirm'))) return;
 
     try {
       const { error: deleteError } = await supabase
@@ -102,7 +102,7 @@ export default function LibraryPage() {
       setJobs(jobs.filter(j => j.id !== jobId));
     } catch (err) {
       console.error('Error deleting job:', err);
-      alert('Failed to delete item');
+      alert(t('deleteFailed'));
     }
   };
 
@@ -114,7 +114,7 @@ export default function LibraryPage() {
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 1) return 'Just now';
+    if (minutes < 1) return t('justNow');
     if (minutes < 60) return `${minutes}m ago`;
     if (hours < 24) return `${hours}h ago`;
     if (days < 7) return `${days}d ago`;

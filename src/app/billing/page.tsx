@@ -90,7 +90,7 @@ export default function BillingPage() {
       });
     } catch (err) {
       console.error('Error loading user:', err);
-      setError('Failed to load billing details');
+      setError(t('loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -102,7 +102,7 @@ export default function BillingPage() {
   };
 
   const formatDate = (dateStr: string | undefined) => {
-    if (!dateStr) return 'N/A';
+    if (!dateStr) return '—';
     return new Date(dateStr).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -123,7 +123,7 @@ export default function BillingPage() {
         if (data.url) {
           window.location.href = data.url;
         } else {
-          setError(data.error || 'Failed to open billing portal');
+          setError(data.error || t('portalFailed'));
         }
         return;
       }
@@ -143,11 +143,11 @@ export default function BillingPage() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        setError(data.error || 'Failed to create checkout session');
+        setError(data.error || t('checkoutFailed'));
       }
     } catch (err) {
       console.error('Checkout error:', err);
-      setError('Failed to start checkout');
+      setError(t('startCheckoutFailed'));
     } finally {
       setCheckoutLoading(null);
     }
@@ -163,11 +163,11 @@ export default function BillingPage() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        setError(data.error || 'Failed to open billing portal');
+        setError(data.error || t('portalFailed'));
       }
     } catch (err) {
       console.error('Portal error:', err);
-      setError('Failed to open billing portal');
+      setError(t('portalFailed'));
     } finally {
       setCheckoutLoading(null);
     }
@@ -185,10 +185,10 @@ export default function BillingPage() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        setError(data.error || 'Failed to start checkout');
+        setError(data.error || t('startCheckoutFailed'));
       }
     } catch {
-      setError('Failed to start checkout');
+      setError(t('startCheckoutFailed'));
     } finally {
       setCheckoutLoading(null);
     }
@@ -301,19 +301,19 @@ export default function BillingPage() {
                 onClick={() => handleTopUp(50)}
                 className="flex-1 py-2 px-3 bg-white/10 hover:bg-white/20 rounded-lg text-sm text-white transition-all"
               >
-                +50 cr / €9
+                {t('topUp50')}
               </button>
               <button
                 onClick={() => handleTopUp(200)}
                 className="flex-1 py-2 px-3 bg-white/20 hover:bg-white/30 rounded-lg text-sm text-white font-medium transition-all"
               >
-                +200 cr / €29
+                {t('topUp200')}
               </button>
               <button
                 onClick={() => handleTopUp(500)}
                 className="flex-1 py-2 px-3 bg-white/10 hover:bg-white/20 rounded-lg text-sm text-white transition-all"
               >
-                +500 cr / €59
+                {t('topUp500')}
               </button>
             </div>
       </div>
@@ -324,13 +324,13 @@ export default function BillingPage() {
               {user?.subscription_current_period_end && !isCancelAtPeriodEnd && (
                 <div className="flex items-center gap-2 text-indigo-200">
                   <Calendar className="w-4 h-4" />
-                  <span>Renews: {formatDate(user.subscription_current_period_end)}</span>
+                  <span>{t('renews')} {formatDate(user.subscription_current_period_end)}</span>
                 </div>
               )}
               {user?.subscription_cancel_at && isCancelAtPeriodEnd && (
                 <div className="flex items-center gap-2 text-yellow-200">
                   <Clock className="w-4 h-4" />
-                  <span>Ends: {formatDate(user.subscription_cancel_at)}</span>
+                  <span>{t('ends')} {formatDate(user.subscription_cancel_at)}</span>
                 </div>
               )}
             </div>
@@ -438,7 +438,7 @@ export default function BillingPage() {
         {user?.plan !== 'free' && user?.stripe_customer_id && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
             <p className="text-blue-800 text-sm">
-              <strong>💡 Upgrading?</strong> Click "Switch Plan" to open the billing portal where you can upgrade with prorated pricing. You'll only pay the difference for the remaining time in your billing cycle.
+              {t("upgradingInfo")}
             </p>
           </div>
         )}
@@ -446,8 +446,8 @@ export default function BillingPage() {
         {/* Stripe Test Mode Notice */}
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
           <p className="text-yellow-800 text-sm">
-            <strong>Test Mode:</strong> You're in Stripe test mode. Use test card number{' '}
-            <code className="bg-yellow-100 px-1 rounded">4242 4242 4242 4242</code> with any future expiry date and CVC.
+            <strong>{t('testModeNotice')}</strong>{' '}
+            <code className="bg-yellow-100 px-1 rounded">4242 4242 4242 4242</code> {t('testCardAny')}
           </p>
         </div>
       </div>
