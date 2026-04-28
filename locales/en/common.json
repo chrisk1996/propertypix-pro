@@ -375,7 +375,10 @@
     "goToDashboard": "Go to Dashboard",
     "switchPlan": "Switch Plan",
     "currentPlanLabel": "Current Plan",
-    "startEnterpriseTrial": "Start Enterprise Trial"
+    "startEnterpriseTrial": "Start Enterprise Trial",
+    "topUp50": "50 Credits",
+    "topUp200": "200 Credits",
+    "topUp500": "500 Credits"
   },
   "auth": {
     "signIn": "Sign In",

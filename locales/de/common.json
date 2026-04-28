@@ -375,7 +375,10 @@
     "goToDashboard": "Zum Dashboard",
     "switchPlan": "Tarif wechseln",
     "currentPlanLabel": "Aktueller Tarif",
-    "startEnterpriseTrial": "Enterprise testen"
+    "startEnterpriseTrial": "Enterprise testen",
+    "topUp50": "50 Credits",
+    "topUp200": "200 Credits",
+    "topUp500": "500 Credits"
   },
   "auth": {
     "signIn": "Anmelden",

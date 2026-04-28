@@ -178,35 +178,35 @@ export default function PricingPage() {
           <div className="space-y-3">
             <details className="bg-white rounded-lg border border-[#c4c6cd]/20 p-6 group">
               <summary className="font-medium text-[#1d2832] cursor-pointer list-none flex justify-between items-center">
-                How many videos can I make with 100 credits?
+                {t('faq1Q')}
                 <span className="material-symbols-outlined text-[#43474c] text-sm group-open:rotate-180 transition-transform">expand_more</span>
               </summary>
               <p className="text-sm text-[#43474c] mt-3">{t('faq1A')}</p>
             </details>
             <details className="bg-white rounded-lg border border-[#c4c6cd]/20 p-6 group">
               <summary className="font-medium text-[#1d2832] cursor-pointer list-none flex justify-between items-center">
-                Do credits roll over?
+                {t('faq2Q')}
                 <span className="material-symbols-outlined text-[#43474c] text-sm group-open:rotate-180 transition-transform">expand_more</span>
               </summary>
               <p className="text-sm text-[#43474c] mt-3">{t('faq2A')}</p>
             </details>
             <details className="bg-white rounded-lg border border-[#c4c6cd]/20 p-6 group">
               <summary className="font-medium text-[#1d2832] cursor-pointer list-none flex justify-between items-center">
-                Can I cancel anytime?
+                {t('faq3Q')}
                 <span className="material-symbols-outlined text-[#43474c] text-sm group-open:rotate-180 transition-transform">expand_more</span>
               </summary>
               <p className="text-sm text-[#43474c] mt-3">{t('faq3A')}</p>
             </details>
             <details className="bg-white rounded-lg border border-[#c4c6cd]/20 p-6 group">
               <summary className="font-medium text-[#1d2832] cursor-pointer list-none flex justify-between items-center">
-                What if I run out of credits?
+                {t('faq4Q')}
                 <span className="material-symbols-outlined text-[#43474c] text-sm group-open:rotate-180 transition-transform">expand_more</span>
               </summary>
               <p className="text-sm text-[#43474c] mt-3">{t('faq4A')}</p>
             </details>
             <details className="bg-white rounded-lg border border-[#c4c6cd]/20 p-6 group">
               <summary className="font-medium text-[#1d2832] cursor-pointer list-none flex justify-between items-center">
-                What&apos;s free?
+                {t('faq5Q')}
                 <span className="material-symbols-outlined text-[#43474c] text-sm group-open:rotate-180 transition-transform">expand_more</span>
               </summary>
               <p className="text-sm text-[#43474c] mt-3">{t('faq5A')}</p>
