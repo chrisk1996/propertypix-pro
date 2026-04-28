@@ -1,14 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import Link from 'next/link';
 import { PLANS, CREDIT_BREAKDOWN, TOP_UP_PACKS } from '@/lib/pricing';
 import { useTranslations } from 'next-intl';
+import { createClient } from '@/utils/supabase/client';
 
 export default function PricingPage() {
   const t = useTranslations('pricing');
   const [loadingPack, setLoadingPack] = useState<number | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setIsLoggedIn(!!data.user));
+  }, []);
 
   const handleTopUp = async (credits: number) => {
     setLoadingPack(credits);
@@ -106,7 +113,10 @@ export default function PricingPage() {
                 </ul>
 
                 <Link
-                  href={plan.nameKey === 'pricing.enterprise' ? 'mailto:sales@zestio.pro?subject=Enterprise Plan Inquiry' : '/auth'}
+                  href={plan.nameKey === 'pricing.enterprise'
+                    ? (isLoggedIn ? '/billing' : 'mailto:sales@zestio.pro?subject=Enterprise Plan Inquiry')
+                    : (isLoggedIn ? '/billing' : '/auth')
+                  }
                   className={`block w-full text-center py-3 rounded-lg font-medium transition-all ${
                     plan.popular
                       ? 'bg-[#006c4d] text-white hover:opacity-90'
@@ -114,7 +124,7 @@ export default function PricingPage() {
                   }`
                 }
                 >
-                  {plan.nameKey === 'pricing.free' ? t('getStartedFree') : plan.nameKey === 'pricing.enterprise' ? t('contactSales') : t('startProTrial')}
+                  {plan.nameKey === 'pricing.free' ? (isLoggedIn ? t('goToDashboard') : t('getStartedFree')) : plan.nameKey === 'pricing.enterprise' ? t('contactSales') : (isLoggedIn ? t('switchPlan') : t('startProTrial'))}
                 </Link>
               </div>
             </div>

@@ -370,7 +370,9 @@
     "breakdownListing": "Listing Description",
     "breakdownListingNote": "Free — EN & DE",
     "breakdownCaptions": "Smart Captions",
-    "breakdownCaptionsNote": "Free — all platforms"
+    "breakdownCaptionsNote": "Free — all platforms",
+    "goToDashboard": "Go to Dashboard",
+    "switchPlan": "Switch Plan"
   },
   "auth": {
     "signIn": "Sign In",

@@ -370,7 +370,9 @@
     "breakdownListing": "Exposé-Beschreibung",
     "breakdownListingNote": "Kostenlos — DE & EN",
     "breakdownCaptions": "Smart Captions",
-    "breakdownCaptionsNote": "Kostenlos — alle Plattformen"
+    "breakdownCaptionsNote": "Kostenlos — alle Plattformen",
+    "goToDashboard": "Zum Dashboard",
+    "switchPlan": "Tarif wechseln"
   },
   "auth": {
     "signIn": "Anmelden",
