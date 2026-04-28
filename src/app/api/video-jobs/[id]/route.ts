@@ -150,13 +150,13 @@ export async function PATCH(
     if (metaError) {
       const failedStage = metaError.split(':')[0].trim();
       if (failedStage === 'animating') {
-        // Keep existing clips, retry remaining animations
         retryStatus = 'animating';
       } else if (failedStage === 'stitching') {
         retryStatus = 'stitching';
-      } else if (failedStage === 'renovating') {
-        retryStatus = 'renovating';
       }
+    } else if (Array.isArray(metadata.clips) && metadata.clips.length > 0) {
+      // Has clips but no error — likely failed during animation
+      retryStatus = 'animating';
     }
 
     // Reset status but keep progress (clips, renovated images)
@@ -165,6 +165,8 @@ export async function PATCH(
     // For animating retry, preserve clips but reset animate prediction
     if (retryStatus === 'animating') {
       delete cleanMetadata.animatePredictionId;
+      // Reset animateIndex to retry from where we left off
+      // (clips are preserved, animateIndex stays at last attempted position)
     }
     if (retryStatus === 'renovating') {
       delete cleanMetadata.renovatePredictionId;

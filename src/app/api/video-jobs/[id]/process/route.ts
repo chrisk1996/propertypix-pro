@@ -376,9 +376,11 @@ async function handleAnimating(supabase: Awaited<ReturnType<typeof createClient>
 
           const nextIndex = currentIndex + 1;
           const isDone = nextIndex >= images.length;
+          const nextMeta: Record<string, unknown> = { ...metadata, animateIndex: nextIndex, clips };
+          delete nextMeta.animatePredictionId;
           await supabase.from('video_jobs').update({
             status: isDone ? 'stitching' : 'animating',
-            metadata: { animateIndex: nextIndex, clips },
+            metadata: nextMeta,
           }).eq('id', job.id);
           return NextResponse.json({
             status: isDone ? 'stitching' : 'animating',
@@ -388,9 +390,15 @@ async function handleAnimating(supabase: Awaited<ReturnType<typeof createClient>
           console.warn(`[Animate] Prediction failed: ${prediction.error}`);
           const nextIndex = currentIndex + 1;
           const isDone = nextIndex >= images.length;
+          const nextMeta: Record<string, unknown> = { ...metadata, animateIndex: nextIndex, clips };
+          delete nextMeta.animatePredictionId;
+          // If all remaining images fail and we have no clips, store the error
+          if (isDone && clips.length === 0) {
+            nextMeta.error = `animating: All predictions failed — ${prediction.error || 'unknown'}`;
+          }
           await supabase.from('video_jobs').update({
-            status: isDone ? 'stitching' : 'animating',
-            metadata: { animateIndex: nextIndex, clips },
+            status: isDone && clips.length === 0 ? 'failed' : (isDone ? 'stitching' : 'animating'),
+            metadata: nextMeta,
           }).eq('id', job.id);
           return NextResponse.json({ status: isDone ? 'stitching' : 'animating', message: `Animation ${nextIndex}/${images.length} (skipped failed).` });
         }
@@ -402,7 +410,7 @@ async function handleAnimating(supabase: Awaited<ReturnType<typeof createClient>
     }
 
     // Start new prediction
-    console.log(`[Animate] Starting image ${currentIndex + 1}/${images.length}`);
+    console.log(`[Animate] Starting image ${currentIndex + 1}/${images.length}`, `URL: ${images[currentIndex]?.substring(0, 100)}...`);
     try {
       const prediction = await createPredictionWithRetry({
         version: "3f0457e4619daac51203dedb472816fd4af51f3149fa7a9e0b5ffcf1b8172438",
@@ -437,7 +445,7 @@ async function handleAnimating(supabase: Awaited<ReturnType<typeof createClient>
       }
       await supabase.from('video_jobs').update({
         status: isDone ? 'stitching' : 'animating',
-        metadata: { animateIndex: nextIndex, clips },
+        metadata: { ...metadata, animateIndex: nextIndex, clips },
       }).eq('id', job.id);
       return NextResponse.json({ status: isDone ? 'stitching' : 'animating', message: `Skipped failed animation ${nextIndex}/${images.length}. Clips so far: ${clips.length}` });
     }
