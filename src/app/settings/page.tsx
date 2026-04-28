@@ -339,7 +339,7 @@ export default function SettingsPage() {
               <a
                 href="/docs"
                 className="p-2 text-gray-400 hover:text-indigo-600 transition-colors"
-                title="API Docs"
+                title={t('apiDocs')}
               >
                 <ExternalLink className="w-4 h-4" />
               </a>
@@ -423,15 +423,15 @@ export default function SettingsPage() {
                     <div className="text-right">
                       <p className="text-xs text-gray-400">
                         {key.last_used_at
-                          ? `Last used ${new Date(key.last_used_at).toLocaleDateString()}`
+                          ? `${t("lastUsed")} ${new Date(key.last_used_at).toLocaleDateString()}`
                           : t('neverUsed')}
                       </p>
-                      <p className="text-xs text-gray-400">Created {new Date(key.created_at).toLocaleDateString()}</p>
+                      <p className="text-xs text-gray-400">{t('created')} {new Date(key.created_at).toLocaleDateString()}</p>
                     </div>
                     <button
                       onClick={() => handleRevokeKey(key.id)}
                       className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
-                      title="Revoke key"
+                      title={t('revokeKey')}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

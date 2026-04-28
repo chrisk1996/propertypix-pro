@@ -137,7 +137,7 @@ export default function PricingPage() {
               >
                 <h3 className="font-medium text-[#1d2832] mb-1">{pack.label}</h3>
                 <span className="text-2xl font-bold text-[#1d2832]">{pack.priceLabel}</span>
-                <span className="block text-xs text-[#43474c] mt-1">{pack.perCredit}/credit</span>
+                <span className="block text-xs text-[#43474c] mt-1">{pack.perCredit}/{t('creditSingular')}</span>
                 <button
                   onClick={() => handleTopUp(pack.credits)}
                   disabled={loadingPack !== null}

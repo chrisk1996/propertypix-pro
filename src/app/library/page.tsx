@@ -20,12 +20,12 @@ interface EnhancementJob {
 
 type FilterType = 'all' | 'enhance' | 'staging' | 'video' | 'floorplan';
 
-const filterOptions: { id: FilterType; label: string; icon: React.ReactNode }[] = [
-  { id: 'all', label: 'All', icon: null },
-  { id: 'enhance', label: 'Image Enhance', icon: <Sparkles className="w-4 h-4" /> },
-  { id: 'staging', label: 'Virtual Staging', icon: <Sofa className="w-4 h-4" /> },
-  { id: 'video', label: 'Video Creation', icon: <Video className="w-4 h-4" /> },
-  { id: 'floorplan', label: 'Floor Plans', icon: <Image className="w-4 h-4" /> },
+const filterOptions: { id: FilterType; labelKey: string; icon: React.ReactNode }[] = [
+  { id: 'all', labelKey: 'filterAll', icon: null },
+  { id: 'enhance', labelKey: 'filterEnhance', icon: <Sparkles className="w-4 h-4" /> },
+  { id: 'staging', labelKey: 'typeStaging', icon: <Sofa className="w-4 h-4" /> },
+  { id: 'video', labelKey: 'filterVideo', icon: <Video className="w-4 h-4" /> },
+  { id: 'floorplan', labelKey: 'filterFloorplan', icon: <Image className="w-4 h-4" /> },
 ];
 
 export default function LibraryPage() {
@@ -115,20 +115,20 @@ export default function LibraryPage() {
     const days = Math.floor(diff / 86400000);
 
     if (minutes < 1) return t('justNow');
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    if (days < 7) return `${days}d ago`;
+    if (minutes < 60) return t('minAgo', { min: minutes });
+    if (hours < 24) return t('hourAgo', { hours: hours });
+    if (days < 7) return t('dayAgo', { days: days });
     return date.toLocaleDateString();
   };
 
   const getTypeInfo = (type: string) => {
-    const typeMap: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
-      auto: { label: 'Auto Enhance', icon: <Wand2 className="w-4 h-4" />, color: 'text-purple-600 bg-purple-100' },
-      sky: { label: 'Sky Replace', icon: <Sparkles className="w-4 h-4" />, color: 'text-blue-600 bg-blue-100' },
-      staging: { label: 'Virtual Staging', icon: <Sofa className="w-4 h-4" />, color: 'text-amber-600 bg-amber-100' },
-      video: { label: 'Video Creation', icon: <Video className="w-4 h-4" />, color: 'text-red-600 bg-red-100' },
-      floorplan: { label: 'Floor Plan', icon: <Image className="w-4 h-4" />, color: 'text-green-600 bg-green-100' },
-      object_removal: { label: 'Object Removal', icon: <Wand2 className="w-4 h-4" />, color: 'text-gray-600 bg-gray-100' },
+    const typeMap: Record<string, { labelKey: string; icon: React.ReactNode; color: string }> = {
+      auto: { labelKey: 'typeAuto', icon: <Wand2 className="w-4 h-4" />, color: 'text-purple-600 bg-purple-100' },
+      sky: { labelKey: 'typeSky', icon: <Sparkles className="w-4 h-4" />, color: 'text-blue-600 bg-blue-100' },
+      staging: { labelKey: 'typeStaging', icon: <Sofa className="w-4 h-4" />, color: 'text-amber-600 bg-amber-100' },
+      video: { labelKey: 'typeVideo', icon: <Video className="w-4 h-4" />, color: 'text-red-600 bg-red-100' },
+      floorplan: { labelKey: 'typeFloorplan', icon: <Image className="w-4 h-4" />, color: 'text-green-600 bg-green-100' },
+      object_removal: { labelKey: 'typeObjectRemoval', icon: <Wand2 className="w-4 h-4" />, color: 'text-gray-600 bg-gray-100' },
     };
     return typeMap[type] || { label: type, icon: <Image className="w-4 h-4" />, color: 'text-gray-600 bg-gray-100' };
   };
@@ -258,7 +258,7 @@ export default function LibraryPage() {
         {/* No Results for Filter */}
         {!loading && jobs.length > 0 && filteredJobs.length === 0 && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-            <p className="text-gray-500">No items in this category</p>
+            <p className="text-gray-500">{t('noCategory')}</p>
           </div>
         )}
 
@@ -320,7 +320,7 @@ export default function LibraryPage() {
                         <span className={`p-1.5 rounded-lg ${typeInfo.color}`}>
                           {typeInfo.icon}
                         </span>
-                        <h3 className="font-medium text-gray-900">{typeInfo.label}</h3>
+                        <h3 className="font-medium text-gray-900">{t(typeInfo.labelKey)}</h3>
                       </div>
                       <span className="flex items-center gap-1 text-xs text-gray-500">
                         <Clock className="w-3 h-3" />
@@ -348,7 +348,7 @@ export default function LibraryPage() {
                     )}
 
                     {job.status === 'failed' && (
-                      <p className="text-sm text-red-600 mt-2">Processing failed. Please try again.</p>
+                      <p className="text-sm text-red-600 mt-2">{t('processingFailed')}</p>
                     )}
 
                     {job.status === 'processing' && (

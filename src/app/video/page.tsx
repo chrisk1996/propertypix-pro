@@ -9,6 +9,7 @@ import { useVideoJob, useVideoJobs } from '@/hooks/useVideoJob';
 import { useListingVideoContext } from '@/hooks/useListingVideoContext';
 import { createClient } from '@/utils/supabase/client';
 import { cn } from '@/utils/cn';
+import { useTranslations } from 'next-intl';
 import type { VideoJob } from '@/types/video-job';
 import { 
   PLATFORM_CONFIG, 
@@ -42,7 +43,7 @@ function CreditDisplay({ remaining, total }: { remaining: number; total: number 
             style={{ width: `${percentage}%` }}
           />
         </div>
-      <p className="text-xs text-slate-500 mt-1">{remaining} of {total} remaining</p>
+      <p className="text-xs text-slate-500 mt-1">{remaining} {t('of')} {total} {t('remaining')}</p>
     </div>
   );
 }
@@ -61,21 +62,22 @@ function getFailedMessage(job: Record<string, unknown>): string {
   const metadata = job.metadata as Record<string, unknown> | null;
   const metaError = metadata?.error as string | undefined;
   const stageLabels: Record<string, string> = {
-    scraping: 'Image extraction',
-    sorting: 'Image sorting',
-    renovating: 'AI renovation',
-    animating: 'Video animation',
-    stitching: 'Final assembly',
+    scraping: t('stageScraping'),
+    sorting: t('stageSorting'),
+    renovating: t('stageRenovating'),
+    animating: t('stageAnimating'),
+    stitching: t('stageStitching'),
   };
   if (metaError) {
     const stage = metaError.split(':')[0];
     const detail = metaError.split(':').slice(1).join(':').trim();
-    return `Failed at ${stageLabels[stage] || stage}: ${detail || 'Unknown error'}`;
+    return `${t('failedAt')} ${stageLabels[stage] || stage}: ${detail || t('unknownError')}`;
   }
-  return 'Processing failed. Please try again.';
+  return t('failedProcessing');
 }
 
 export default function VideoPage() {
+  const t = useTranslations('video');
   const [mode, setMode] = useState<Mode>('url');
   const [listingUrl, setListingUrl] = useState('');
   const [detectedPlatform, setDetectedPlatform] = useState<VideoPlatform | null>(null);
@@ -184,15 +186,15 @@ export default function VideoPage() {
   
   const handleCreateJob = useCallback(async () => {
     if (mode === 'url' && !listingUrl) {
-      setCreateError('Please enter a listing URL');
+      setCreateError(t('enterUrl'));
       return;
     }
     if (mode === 'manual' && uploadedImages.length < 5) {
-      setCreateError('Please upload at least 5 images');
+      setCreateError(t('uploadMin5'));
       return;
     }
     if (credits.remaining < 5) {
-      setCreateError('Not enough credits. Video generation requires 5 credits. Top up or upgrade your plan.');
+      setCreateError(t('notEnoughCredits'));
       return;
     }
     
@@ -213,7 +215,7 @@ export default function VideoPage() {
       });
       
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to create video job');
+      if (!response.ok) throw new Error(data.error || t('failedToCreate'));
       
       setActiveJobId(data.job_id);
       setListingUrl('');
@@ -228,7 +230,7 @@ export default function VideoPage() {
           .catch(err => console.error('Initial process trigger failed:', err));
       }, 1000);
     } catch (err) {
-      setCreateError(err instanceof Error ? err.message : 'Failed to create video job');
+      setCreateError(err instanceof Error ? err.message : t('failedToCreate'));
     } finally {
       setIsCreating(false);
     }
@@ -249,7 +251,7 @@ export default function VideoPage() {
   const isJobFailed = activeJob?.status === 'failed' || activeJob?.status === 'needs_images';
 
   return (
-    <AppLayout title="Video Creator">
+    <AppLayout title={t("title")}>
       <div className="max-w-[1600px] mx-auto p-8">
         <header className="mb-8">
           <span className="text-purple-600 font-bold tracking-widest uppercase text-xs mb-2 block">AI Video Production</span>
@@ -286,7 +288,7 @@ export default function VideoPage() {
                         <span className={cn('material-symbols-outlined text-lg', !isJobFailed && 'animate-spin')}>{(VIDEO_STATUS_CONFIG[activeJob.status] || VIDEO_STATUS_CONFIG.queued)?.icon}</span>
                         {(VIDEO_STATUS_CONFIG[activeJob.status] || VIDEO_STATUS_CONFIG.queued)?.label}
                       </span>
-                      <p className="text-slate-400 text-sm mt-2">{activeJob?.status === 'needs_images' ? 'Could not extract images from this URL. Please switch to manual mode and upload images.' : (activeJob?.status === 'failed' ? getFailedMessage(activeJob) : 'Processing your video...')}</p>
+                      <p className="text-slate-400 text-sm mt-2">{activeJob?.status === 'needs_images' ? t('couldNotExtract') : (activeJob?.status === 'failed' ? getFailedMessage(activeJob) : t('processing'))}</p>
                     </div>
                   </div>
                 )}
@@ -325,7 +327,7 @@ export default function VideoPage() {
                     <h3 className="font-bold text-slate-900 mb-4">Listing URL</h3>
                     <div className="space-y-4">
                       <div className="relative">
-                        <input type="url" value={listingUrl} onChange={(e) => setListingUrl(e.target.value)} placeholder="Paste Zillow, IS24, Redfin, or Rightmove URL..." className="w-full px-4 py-3 pr-12 rounded-xl border border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all" />
+                        <input type="url" value={listingUrl} onChange={(e) => setListingUrl(e.target.value)} placeholder={t('pasteUrl') } className="w-full px-4 py-3 pr-12 rounded-xl border border-slate-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all" />
                         <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">link</span>
                       </div>
                       {detectedPlatform && (<div className="flex items-center gap-2"><span className="text-sm text-slate-600">Detected:</span><PlatformBadge platform={detectedPlatform} /></div>)}
@@ -373,7 +375,7 @@ export default function VideoPage() {
                 {createError && (<div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3"><span className="material-symbols-outlined text-red-600">error</span><div><p className="font-semibold text-red-900">Failed to create video</p><p className="text-sm text-red-700 mt-1">{createError}</p></div></div>)}
                 
                 <button type="button" onClick={handleCreateJob} disabled={!canSubmit || isCreating} className="w-full py-4 bg-purple-600 text-white rounded-xl font-bold text-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-lg shadow-purple-600/20">
-                  <span className="material-symbols-outlined">auto_awesome</span>{isCreating ? 'Creating...' : 'Generate Video'}
+                  <span className="material-symbols-outlined">auto_awesome</span>{isCreating ? t('creating') : t('generateVideo')}
                 </button>
                 
                 {!hasCredit || credits.remaining < 5 ? (<p className="text-center text-sm text-red-600">You need at least 5 credits to generate a video. Please purchase more credits.</p>) : null}

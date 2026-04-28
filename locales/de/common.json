@@ -84,7 +84,9 @@
     "applyEnhancement": "Verbesserung anwenden",
     "download": "Herunterladen",
     "reset": "Zurücksetzen",
-    "newImage": "Neues Bild"
+    "newImage": "Neues Bild",
+    "aiEnhancement": "KI-Optimierung",
+    "furnitureCatalog": "Möbelkatalog"
   },
   "staging": {
     "title": "Virtual Staging",
@@ -100,7 +102,8 @@
     "luxury": "Luxus",
     "minimalist": "Minimalistisch",
     "applyStaging": "Staging anwenden",
-    "creditsCost": "Credits"
+    "creditsCost": "Credits",
+    "virtualStagingTitle": "Virtual Staging"
   },
   "floorplan": {
     "title": "Grundriss-Editor",
@@ -122,12 +125,46 @@
   },
   "video": {
     "title": "Video Creator",
-    "subtitle": "KI-Videos aus Bildern",
-    "createVideo": "Video erstellen",
-    "selectImages": "Bilder auswählen",
-    "duration": "Dauer",
-    "preview": "Vorschau",
-    "generating": "Video wird generiert..."
+    "subtitle": "Erstellen Sie kinoreife Immobilien-Videos aus Exposé-Links oder hochgeladenen Bildern. KI-gestützte virtuelle Renovierung inklusive.",
+    "aiVideoProduction": "KI-Videoproduktion",
+    "creditsAvailable": "Credits verfügbar",
+    "of": "von",
+    "remaining": "verbleibend",
+    "recentJobs": "Letzte Aufträge",
+    "inputMethod": "Eingabemethode",
+    "listingUrl": "Exposé-Link",
+    "pasteUrl": "Zillow, IS24, Redfin oder Rightmove Link einfügen...",
+    "detected": "Erkannt:",
+    "supported": "Unterstützt:",
+    "uploadImages": "Bilder hochladen",
+    "dropImages": "Eigenschaftsbilder hier ablegen",
+    "orClickBrowse": "oder klicken zum Durchsuchen (min. 5 Bilder)",
+    "uploading": "Hochladen...",
+    "minImagesUploaded": "/5 Mindestanzahl Bilder hochgeladen",
+    "renovationStyle": "Renovierungsstil",
+    "backgroundMusic": "Hintergrundmusik",
+    "generateVideo": "Video generieren",
+    "creating": "Erstelle...",
+    "downloadVideo": "Video herunterladen",
+    "share": "Teilen",
+    "createAnother": "Weiteres erstellen",
+    "tryAgain": "Erneut versuchen",
+    "closePage": "Sie können diese Seite schließen. Wir benachrichtigen Sie, wenn Ihr Video fertig ist.",
+    "processing": "Video wird verarbeitet...",
+    "needCredits": "Sie benötigen mindestens 5 Credits, um ein Video zu generieren. Bitte kaufen Sie weitere Credits.",
+    "enterUrl": "Bitte geben Sie einen Exposé-Link ein",
+    "uploadMin5": "Bitte laden Sie mindestens 5 Bilder hoch",
+    "notEnoughCredits": "Nicht genug Credits. Video-Erstellung benötigt 5 Credits. Laden Sie auf oder upgraden Sie Ihren Tarif.",
+    "failedToCreate": "Video-Erstellung fehlgeschlagen",
+    "couldNotExtract": "Bilder konnten nicht aus diesem Link extrahiert werden. Bitte wechseln Sie zum manuellen Modus und laden Sie Bilder hoch.",
+    "failedAt": "Fehler bei",
+    "unknownError": "Unbekannter Fehler",
+    "failedProcessing": "Verarbeitung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "stageScraping": "Bildextraktion",
+    "stageSorting": "Bildsortierung",
+    "stageRenovating": "KI-Renovierung",
+    "stageAnimating": "Video-Animation",
+    "stageStitching": "Finalisierung"
   },
   "library": {
     "title": "Bibliothek",
@@ -262,7 +299,8 @@
     "apiDocs": "API-Dokumentation",
     "lastUsed": "Zuletzt verwendet",
     "neverUsed": "Nie verwendet",
-    "created": "Erstellt"
+    "created": "Erstellt",
+    "cancel": "Abbrechen"
   },
   "pricing": {
     "title": "Preise",
@@ -448,5 +486,15 @@
     "featureFloorPlan": "Grundriss",
     "featureOther": "Sonstiges",
     "loadFailed": "Transaktionen konnten nicht geladen werden"
+  },
+  "social": {
+    "title": "Social Media Kit",
+    "propertyDetails": "Immobilien-Details",
+    "propertyTitle": "Immobilien-Titel",
+    "propertyPrice": "Preis",
+    "propertyType": "Immobilientyp",
+    "city": "Stadt",
+    "bedrooms": "Schlafzimmer",
+    "highlights": "Highlights"
   }
 }

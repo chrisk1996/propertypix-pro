@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { AppLayout } from '@/components/layout';
+import { useTranslations } from 'next-intl';
 import { StagingPanel } from '@/components/media/StagingPanel';
 
 function ImageCompareSlider({ beforeSrc, afterSrc }: { beforeSrc: string; afterSrc: string }) {
@@ -92,7 +93,7 @@ export default function VirtualStagingPage() {
   };
 
   return (
-    <AppLayout title="Virtual Staging">
+    <AppLayout title={ts("title")}>
       <div className="flex h-[calc(100vh-5rem)]">
         {/* Left Panel - Controls */}
         <div className="w-80 shrink-0 border-r border-slate-200 bg-white overflow-y-auto">

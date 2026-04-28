@@ -84,7 +84,9 @@
     "applyEnhancement": "Apply Enhancement",
     "download": "Download",
     "reset": "Reset",
-    "newImage": "New Image"
+    "newImage": "New Image",
+    "aiEnhancement": "AI Enhancement",
+    "furnitureCatalog": "Furniture Catalog"
   },
   "staging": {
     "title": "Virtual Staging",
@@ -100,7 +102,8 @@
     "luxury": "Luxury",
     "minimalist": "Minimalist",
     "applyStaging": "Apply Staging",
-    "creditsCost": "credits"
+    "creditsCost": "credits",
+    "virtualStagingTitle": "Virtual Staging"
   },
   "floorplan": {
     "title": "Floor Plan Editor",
@@ -122,12 +125,46 @@
   },
   "video": {
     "title": "Video Creator",
-    "subtitle": "AI videos from images",
-    "createVideo": "Create Video",
-    "selectImages": "Select Images",
-    "duration": "Duration",
-    "preview": "Preview",
-    "generating": "Generating video..."
+    "subtitle": "Generate cinematic property tour videos from listing URLs or uploaded images. AI-powered virtual renovation included.",
+    "aiVideoProduction": "AI Video Production",
+    "creditsAvailable": "Credits Available",
+    "of": "of",
+    "remaining": "remaining",
+    "recentJobs": "Recent Jobs",
+    "inputMethod": "Input Method",
+    "listingUrl": "Listing URL",
+    "pasteUrl": "Paste Zillow, IS24, Redfin, or Rightmove URL...",
+    "detected": "Detected:",
+    "supported": "Supported:",
+    "uploadImages": "Upload Images",
+    "dropImages": "Drop your property images here",
+    "orClickBrowse": "or click to browse (min 5 images)",
+    "uploading": "Uploading...",
+    "minImagesUploaded": "/5 minimum images uploaded",
+    "renovationStyle": "Renovation Style",
+    "backgroundMusic": "Background Music",
+    "generateVideo": "Generate Video",
+    "creating": "Creating...",
+    "downloadVideo": "Download Video",
+    "share": "Share",
+    "createAnother": "Create Another",
+    "tryAgain": "Try Again",
+    "closePage": "You can close this page. We'll notify you when your video is ready.",
+    "processing": "Processing your video...",
+    "needCredits": "You need at least 5 credits to generate a video. Please purchase more credits.",
+    "enterUrl": "Please enter a listing URL",
+    "uploadMin5": "Please upload at least 5 images",
+    "notEnoughCredits": "Not enough credits. Video generation requires 5 credits. Top up or upgrade your plan.",
+    "failedToCreate": "Failed to create video",
+    "couldNotExtract": "Could not extract images from this URL. Please switch to manual mode and upload images.",
+    "failedAt": "Failed at",
+    "unknownError": "Unknown error",
+    "failedProcessing": "Processing failed. Please try again.",
+    "stageScraping": "Image extraction",
+    "stageSorting": "Image sorting",
+    "stageRenovating": "AI renovation",
+    "stageAnimating": "Video animation",
+    "stageStitching": "Final assembly"
   },
   "library": {
     "title": "Library",
@@ -262,7 +299,8 @@
     "apiDocs": "API Docs",
     "lastUsed": "Last used",
     "neverUsed": "Never used",
-    "created": "Created"
+    "created": "Created",
+    "cancel": "Cancel"
   },
   "pricing": {
     "title": "Pricing",
@@ -448,5 +486,15 @@
     "featureFloorPlan": "Floor Plan",
     "featureOther": "Other",
     "loadFailed": "Failed to load transactions"
+  },
+  "social": {
+    "title": "Social Media Kit",
+    "propertyDetails": "Property Details",
+    "propertyTitle": "Property Title",
+    "propertyPrice": "Price",
+    "propertyType": "Property Type",
+    "city": "City",
+    "bedrooms": "Bedrooms",
+    "highlights": "Highlights"
   }
 }

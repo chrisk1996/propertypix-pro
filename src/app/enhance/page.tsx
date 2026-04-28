@@ -1,6 +1,7 @@
 'use client';
 import { useState, useRef } from 'react';
 import { AppLayout } from '@/components/layout';
+import { useTranslations } from 'next-intl';
 import AIModelSelector, { type AIModel } from '@/components/AIModelSelector';
 
 type EnhancementTool = 'auto-lighting' | 'denoise' | 'sky-replacement' | null;
@@ -67,6 +68,7 @@ function ImageCompareSlider({ beforeSrc, afterSrc }: { beforeSrc: string; afterS
 }
 
 export default function EnhancePage() {
+  const te = useTranslations('enhance');
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [enhancedImage, setEnhancedImage] = useState<string | null>(null);
   const [selectedTool, setSelectedTool] = useState<EnhancementTool>(null);
@@ -117,11 +119,11 @@ export default function EnhancePage() {
   const categories = Array.from(new Set(furnitureCatalog.map(item => item.category)));
 
   return (
-    <AppLayout title="Image Enhancer">
+    <AppLayout title={te("title")}>
       <div className="flex h-[calc(100vh-5rem)]">
         <div className="w-72 shrink-0 border-r border-slate-200 bg-white overflow-y-auto">
           <div className="p-6">
-            <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-slate-900 text-sm mb-1">AI Enhancement</h3>
+            <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-slate-900 text-sm mb-1">{te('aiEnhancement')}</h3>
             <p className="text-slate-500 text-xs mb-4">Studio-grade image processing</p>
             <div className="space-y-2">
               {enhancementTools.map(tool => (
@@ -145,7 +147,7 @@ export default function EnhancePage() {
             )}
           </div>
           <div className="p-6 border-t border-slate-200">
-            <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-slate-900 text-sm mb-1">Virtual Staging</h3>
+            <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-slate-900 text-sm mb-1">{te('title')}</h3>
             <p className="text-slate-500 text-xs mb-4">AI furniture placement</p>
             <div className="grid grid-cols-2 gap-2">
               {stagingRooms.map(room => (
@@ -222,7 +224,7 @@ export default function EnhancePage() {
           </button>
           {isRightPanelOpen && (
             <div className="p-6 pt-16 overflow-y-auto h-full">
-              <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-slate-900 text-lg mb-1">Furniture Catalog</h3>
+              <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-slate-900 text-lg mb-1">{te('furnitureCatalog')}</h3>
               <div className="flex flex-wrap gap-2 mb-4 mt-4">
                 <button onClick={() => setSelectedCategory(null)} className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${!selectedCategory ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}`}>All</button>
                 {categories.map(cat => (

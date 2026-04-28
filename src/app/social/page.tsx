@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { AppLayout } from '@/components/layout';
+import { useTranslations } from 'next-intl';
 import { SocialMediaPanel } from '@/components/media/SocialMediaPanel';
 import { createClient } from '@/utils/supabase/client';
 
@@ -40,11 +41,11 @@ export default function SocialPage() {
     .filter(Boolean);
 
   return (
-    <AppLayout title="Social Media Kit">
+    <AppLayout title={t("title")}>
       <div className="p-6 max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Social Media Kit</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
           <p className="text-gray-500 text-sm mt-1">Generate platform-ready captions and images for your listing</p>
         </div>
 
@@ -88,7 +89,7 @@ export default function SocialPage() {
 
             {/* Property Details */}
             <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3">
-              <h3 className="text-sm font-semibold text-slate-700">Property Details</h3>
+              <h3 className="text-sm font-semibold text-slate-700">{t("propertyDetails")}</h3>
               <input
                 type="text"
                 value={propertyTitle}
