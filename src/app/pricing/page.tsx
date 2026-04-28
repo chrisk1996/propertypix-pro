@@ -131,7 +131,7 @@ export default function PricingPage() {
                         : 'bg-[#edf4ff] text-[#1d2832] hover:bg-[#e3efff]'
                     }`}
                   >
-                    {plan.nameKey === 'free' ? (isLoggedIn ? t('goToDashboard') : t('getStartedFree')) : (isLoggedIn ? t('switchPlan') : t('startProTrial'))}
+                    {plan.nameKey === 'free' ? (isLoggedIn ? t('goToDashboard') : t('getStartedFree')) : plan.nameKey === 'enterprise' ? (isLoggedIn ? t('switchPlan') : t('startEnterpriseTrial')) : (isLoggedIn ? t('switchPlan') : t('startProTrial'))}
                   </Link>
                 )}
               </div>

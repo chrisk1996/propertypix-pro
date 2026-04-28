@@ -374,7 +374,8 @@
     "breakdownCaptionsNote": "Kostenlos — alle Plattformen",
     "goToDashboard": "Zum Dashboard",
     "switchPlan": "Tarif wechseln",
-    "currentPlanLabel": "Aktueller Tarif"
+    "currentPlanLabel": "Aktueller Tarif",
+    "startEnterpriseTrial": "Vertrieb kontaktieren"
   },
   "auth": {
     "signIn": "Anmelden",

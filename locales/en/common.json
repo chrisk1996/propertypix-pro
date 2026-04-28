@@ -374,7 +374,8 @@
     "breakdownCaptionsNote": "Free — all platforms",
     "goToDashboard": "Go to Dashboard",
     "switchPlan": "Switch Plan",
-    "currentPlanLabel": "Current Plan"
+    "currentPlanLabel": "Current Plan",
+    "startEnterpriseTrial": "Contact Sales"
   },
   "auth": {
     "signIn": "Sign In",
