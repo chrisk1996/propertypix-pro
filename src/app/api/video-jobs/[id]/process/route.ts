@@ -636,7 +636,6 @@ async function stitchWASM(clipPaths: string[], outputPath: string, tmpDir: strin
   await fs.writeFile(outputPath, outputBuffer);
   console.log(`[Stitch] WASM output: ${(outputBuffer.length / 1024).toFixed(0)}KB`);
 }
-}
 
 // Upload video buffer to Supabase Storage
 async function uploadVideo(job: Record<string, unknown>, buffer: Buffer): Promise<string> {
