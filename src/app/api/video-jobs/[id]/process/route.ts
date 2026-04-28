@@ -189,7 +189,7 @@ async function handleSorting(supabase: Awaited<ReturnType<typeof createClient>>,
     // Start new prediction
     try {
       const prediction = await createPredictionWithRetry({
-        model: "yorickvp/llava-13b",
+        version: "72ccb656353c348c1385df54b237eeb7bfa874bf11486cf0b9473e691b662d31",
         input: {
           image: inputImages[sortIndex],
           prompt: 'Classify this real estate photo. Choose EXACTLY one: exterior, living_room, kitchen, bedroom, bathroom, dining_room, office, hallway, balcony, garden, other. Reply with ONLY the label, nothing else.',
