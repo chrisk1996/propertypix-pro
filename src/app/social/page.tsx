@@ -7,6 +7,7 @@ import { SocialMediaPanel } from '@/components/media/SocialMediaPanel';
 import { createClient } from '@/utils/supabase/client';
 
 export default function SocialPage() {
+  const t = useTranslations('social');
   const [image, setImage] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [propertyTitle, setPropertyTitle] = useState('');
