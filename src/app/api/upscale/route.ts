@@ -64,15 +64,58 @@ export async function POST(request: NextRequest) {
     if (typeof result === 'string') {
       resultUrl = result;
     } else if (Array.isArray(result) && result.length > 0) {
-      resultUrl = String(result[0]);
+      const first = result[0];
+      resultUrl = typeof first === 'string' ? first : String((first as Record<string, unknown>)?.url || first);
     } else if (result && typeof result === 'object') {
       const out = result as Record<string, unknown>;
-      resultUrl = String(out.url || out.output);
+      // Handle FileOutput objects from Replicate SDK v1.4+
+      if (out.url && typeof out.url === 'string') {
+        resultUrl = out.url;
+      } else if (out.output) {
+        const output = out.output;
+        if (typeof output === 'string') {
+          resultUrl = output;
+        } else if (Array.isArray(output) && output.length > 0) {
+          resultUrl = typeof output[0] === 'string' ? output[0] : String(output[0]);
+        } else {
+          resultUrl = String(output);
+        }
+      } else {
+        // Check if result itself has a toString that gives a URL
+        const str = String(result);
+        resultUrl = str.startsWith('http') ? str : '';
+      }
+      if (!resultUrl) {
+        throw new Error('Could not extract output URL from Replicate response');
+      }
     } else {
       throw new Error('Invalid output from upscaler');
     }
 
-    // Deduct credits
+    console.log('[Upscale] Result URL type:', typeof result, '| URL:', resultUrl?.substring(0, 100));
+
+    // Upload result to Supabase storage for persistence (Replicate URLs expire)
+    let persistentUrl = resultUrl;
+    try {
+      const imageResponse = await fetch(resultUrl);
+      if (imageResponse.ok) {
+        const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+        const storagePath = `${userId}/upscale/${Date.now()}-upscale-${scale}x.png`;
+        const { error: uploadErr } = await supabase.storage
+          .from('user-uploads')
+          .upload(storagePath, imageBuffer, { contentType: 'image/png', upsert: false });
+        if (!uploadErr) {
+          const { data: urlData } = supabase.storage.from('user-uploads').getPublicUrl(storagePath);
+          if (urlData.publicUrl) {
+            persistentUrl = urlData.publicUrl;
+          }
+        } else {
+          console.warn('[Upscale] Storage upload failed, using Replicate URL:', uploadErr.message);
+        }
+      }
+    } catch (storageErr) {
+      console.warn('[Upscale] Storage upload error, using Replicate URL:', storageErr);
+    }
     const { error: deductError } = await supabase.rpc('deduct_credits', {
       p_user_id: userId,
       p_amount: CREDIT_COSTS.UPSCALE,
@@ -101,7 +144,7 @@ export async function POST(request: NextRequest) {
     supabase.from('zestio_jobs').insert({
       user_id: userId,
       input_url: image,
-      output_url: resultUrl,
+      output_url: persistentUrl,
       job_type: 'upscale',
       status: 'completed',
       completed_at: new Date().toISOString(),
@@ -110,7 +153,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      output: resultUrl,
+      output: persistentUrl,
       scale,
       creditsUsed: CREDIT_COSTS.UPSCALE,
     });
