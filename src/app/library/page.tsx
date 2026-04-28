@@ -16,6 +16,7 @@ interface EnhancementJob {
   status: 'pending' | 'processing' | 'completed' | 'failed';
   created_at: string;
   completed_at: string | null;
+  metadata: Record<string, unknown> | null;
 }
 
 type FilterType = 'all' | 'enhance' | 'staging' | 'video' | 'floorplan';
@@ -58,7 +59,7 @@ export default function LibraryPage() {
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(100);
 
       if (fetchError) throw fetchError;
       setJobs(data || []);
@@ -125,10 +126,16 @@ export default function LibraryPage() {
     const typeMap: Record<string, { labelKey: string; icon: React.ReactNode; color: string }> = {
       auto: { labelKey: 'typeAuto', icon: <Wand2 className="w-4 h-4" />, color: 'text-purple-600 bg-purple-100' },
       sky: { labelKey: 'typeSky', icon: <Sparkles className="w-4 h-4" />, color: 'text-blue-600 bg-blue-100' },
+      hdr: { labelKey: 'typeHdr', icon: <Sparkles className="w-4 h-4" />, color: 'text-indigo-600 bg-indigo-100' },
+      seasons: { labelKey: 'typeSeasons', icon: <Sparkles className="w-4 h-4" />, color: 'text-green-600 bg-green-100' },
+      declutter: { labelKey: 'typeDeclutter', icon: <Wand2 className="w-4 h-4" />, color: 'text-gray-600 bg-gray-100' },
       staging: { labelKey: 'typeStaging', icon: <Sofa className="w-4 h-4" />, color: 'text-amber-600 bg-amber-100' },
       video: { labelKey: 'typeVideo', icon: <Video className="w-4 h-4" />, color: 'text-red-600 bg-red-100' },
       floorplan: { labelKey: 'typeFloorplan', icon: <Image className="w-4 h-4" />, color: 'text-green-600 bg-green-100' },
+      upscale: { labelKey: 'typeUpscale', icon: <Sparkles className="w-4 h-4" />, color: 'text-cyan-600 bg-cyan-100' },
       object_removal: { labelKey: 'typeObjectRemoval', icon: <Wand2 className="w-4 h-4" />, color: 'text-gray-600 bg-gray-100' },
+      enhance: { labelKey: 'typeAuto', icon: <Sparkles className="w-4 h-4" />, color: 'text-purple-600 bg-purple-100' },
+      renovate: { labelKey: 'typeRenovate', icon: <Wand2 className="w-4 h-4" />, color: 'text-orange-600 bg-orange-100' },
     };
     return typeMap[type] || { label: type, icon: <Image className="w-4 h-4" />, color: 'text-gray-600 bg-gray-100' };
   };
@@ -146,7 +153,7 @@ export default function LibraryPage() {
   // Filter jobs based on active filter
   const filteredJobs = jobs.filter(job => {
     if (activeFilter === 'all') return true;
-    if (activeFilter === 'enhance') return ['auto', 'sky', 'object_removal'].includes(job.job_type);
+    if (activeFilter === 'enhance') return ['auto', 'sky', 'object_removal', 'hdr', 'seasons', 'declutter', 'upscale', 'enhance', 'renovate'].includes(job.job_type);
     if (activeFilter === 'staging') return job.job_type === 'staging';
     if (activeFilter === 'video') return job.job_type === 'video';
     if (activeFilter === 'floorplan') return job.job_type === 'floorplan';
@@ -157,7 +164,7 @@ export default function LibraryPage() {
   const getCounts = () => {
     return {
       all: jobs.length,
-      enhance: jobs.filter(j => ['auto', 'sky', 'object_removal'].includes(j.job_type)).length,
+      enhance: jobs.filter(j => ['auto', 'sky', 'object_removal', 'hdr', 'seasons', 'declutter', 'upscale', 'enhance', 'renovate'].includes(j.job_type)).length,
       staging: jobs.filter(j => j.job_type === 'staging').length,
       video: jobs.filter(j => j.job_type === 'video').length,
       floorplan: jobs.filter(j => j.job_type === 'floorplan').length,
@@ -327,6 +334,30 @@ export default function LibraryPage() {
                         {formatDate(job.created_at)}
                       </span>
                     </div>
+
+                    {/* Metadata details */}
+                    {job.metadata && typeof job.metadata === 'object' && (
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {job.metadata.enhancementType && (
+                          <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600">{String(job.metadata.enhancementType)}</span>
+                        )}
+                        {job.metadata.model && (
+                          <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600">{String(job.metadata.model)}</span>
+                        )}
+                        {job.metadata.scale && (
+                          <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600">{String(job.metadata.scale)}x upscale</span>
+                        )}
+                        {job.metadata.roomType && (
+                          <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600">{String(job.metadata.roomType)}</span>
+                        )}
+                        {job.metadata.furnitureStyle && (
+                          <span className="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600">{String(job.metadata.furnitureStyle)}</span>
+                        )}
+                        {job.metadata.creditsUsed && (
+                          <span className="text-xs px-2 py-0.5 rounded bg-indigo-50 text-indigo-600">{String(job.metadata.creditsUsed)} credits</span>
+                        )}
+                      </div>
+                    )}
 
                     {/* Actions */}
                     {job.status === 'completed' && job.output_url && (

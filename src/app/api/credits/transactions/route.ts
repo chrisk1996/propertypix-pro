@@ -29,10 +29,12 @@ export async function GET() {
     for (const t of usageRows) {
       const desc = t.description || 'Other';
       // Group by feature category
-      const feature = desc.includes('enhancement') ? 'Enhancement'
-        : desc.includes('staging') ? 'Virtual Staging'
-        : desc.includes('Video') ? 'Video'
-        : desc.includes('floorplan') ? 'Floor Plan'
+      const feature = desc.toLowerCase().includes('enhanc') ? 'Enhancement'
+        : desc.toLowerCase().includes('staging') ? 'Virtual Staging'
+        : desc.toLowerCase().includes('video') ? 'Video'
+        : desc.toLowerCase().includes('floorplan') || desc.toLowerCase().includes('floor plan') ? 'Floor Plan'
+        : desc.toLowerCase().includes('upscale') ? 'Enhancement'
+        : desc.toLowerCase().includes('renovat') ? 'Enhancement'
         : 'Other';
       breakdown[feature] = (breakdown[feature] || 0) + Math.abs(t.amount);
     }

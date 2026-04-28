@@ -201,7 +201,12 @@
     "loginRequired": "Bitte melden Sie sich an, um Ihre Bibliothek zu sehen",
     "loadFailed": "Bibliothek konnte nicht geladen werden",
     "deleteFailed": "Element konnte nicht gelöscht werden",
-    "deleteConfirm": "Möchten Sie dieses Element wirklich löschen?"
+    "deleteConfirm": "Möchten Sie dieses Element wirklich löschen?",
+    "typeHdr": "HDR",
+    "typeSeasons": "Jahreszeiten",
+    "typeDeclutter": "Entrümpeln",
+    "typeUpscale": "Upscale",
+    "typeRenovate": "Renovierung"
   },
   "billing": {
     "title": "Abrechnung & Credits",

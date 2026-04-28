@@ -201,7 +201,12 @@
     "loginRequired": "Please log in to view your library",
     "loadFailed": "Failed to load library",
     "deleteFailed": "Failed to delete item",
-    "deleteConfirm": "Are you sure you want to delete this item?"
+    "deleteConfirm": "Are you sure you want to delete this item?",
+    "typeHdr": "HDR",
+    "typeSeasons": "Seasons",
+    "typeDeclutter": "Declutter",
+    "typeUpscale": "Upscale",
+    "typeRenovate": "Renovate"
   },
   "billing": {
     "title": "Billing & Credits",
