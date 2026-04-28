@@ -527,7 +527,7 @@ async function handleStitching(supabase: Awaited<ReturnType<typeof createClient>
 
     // Stitch
     const outputPath = path.join(tmpDir, 'output.mp4');
-    await stitchWithFFmpeg(concatListPath, outputPath, clipPaths, tmpDir);
+    await stitchWithFFmpeg(concatListPath, outputPath);
 
     const outputBuffer = await fs.readFile(outputPath);
     console.log(`[Stitch] Output: ${(outputBuffer.length / 1024 / 1024).toFixed(1)}MB`);
@@ -565,33 +565,28 @@ async function handleStitching(supabase: Awaited<ReturnType<typeof createClient>
   }
 }
 
-// Stitch clips using FFmpeg (WASM on Vercel, native elsewhere)
-async function stitchWithFFmpeg(concatListPath: string, outputPath: string, clipPaths: string[], tmpDir: string): Promise<void> {
-  // Try native ffmpeg first
-  const nativeFfmpeg = await findNativeFFmpeg();
-  if (nativeFfmpeg) {
-    console.log('[Stitch] Using native FFmpeg:', nativeFfmpeg);
-    return stitchNative(concatListPath, outputPath, nativeFfmpeg);
+// Stitch clips using FFmpeg
+async function stitchWithFFmpeg(concatListPath: string, outputPath: string): Promise<void> {
+  // Get ffmpeg path: try static binary first, then system
+  let ffmpegPath: string | null = null;
+  try {
+    ffmpegPath = require('ffmpeg-static') as string;
+    if (ffmpegPath) console.log('[Stitch] Using ffmpeg-static:', ffmpegPath.substring(0, 60));
+  } catch {}
+
+  if (!ffmpegPath) {
+    const { existsSync } = await import('fs');
+    for (const p of ['/usr/bin/ffmpeg', '/bin/ffmpeg', '/opt/bin/ffmpeg']) {
+      if (existsSync(p)) { ffmpegPath = p; break; }
+    }
   }
 
-  // Fall back to WASM FFmpeg
-  console.log('[Stitch] Native FFmpeg not found, using WASM');
-  return stitchWASM(clipPaths, outputPath, tmpDir);
-}
+  if (!ffmpegPath) throw new Error('No ffmpeg binary found');
 
-async function findNativeFFmpeg(): Promise<string | null> {
-  const { existsSync } = await import('fs');
-  for (const p of ['/usr/bin/ffmpeg', '/bin/ffmpeg', '/opt/bin/ffmpeg', '/opt/homebrew/bin/ffmpeg']) {
-    if (existsSync(p)) return p;
-  }
-  return null;
-}
-
-function stitchNative(concatListPath: string, outputPath: string, ffmpegPath: string): Promise<void> {
   return new Promise((resolve, reject) => {
     import('fluent-ffmpeg').then(ffmpeg => {
       ffmpeg.default(concatListPath)
-        .setFfmpegPath(ffmpegPath)
+        .setFfmpegPath(ffmpegPath!)
         .inputOptions(['-f concat', '-safe 0'])
         .outputOptions(['-c:v libx264', '-preset fast', '-crf 23', '-movflags +faststart', '-pix_fmt yuv420p'])
         .output(outputPath)
@@ -601,41 +596,6 @@ function stitchNative(concatListPath: string, outputPath: string, ffmpegPath: st
         .run();
     });
   });
-}
-
-async function stitchWASM(clipPaths: string[], outputPath: string, tmpDir: string): Promise<void> {
-  const { FFmpeg } = await import('@ffmpeg/ffmpeg');
-  const { fetchFile } = await import('@ffmpeg/util');
-  const fs = await import('fs/promises');
-
-  const ffmpeg = new FFmpeg();
-  await ffmpeg.load({
-    coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
-    wasmURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm',
-  });
-
-  // Write clips to virtual FS
-  const inputNames: string[] = [];
-  for (let i = 0; i < clipPaths.length; i++) {
-    const data = await fs.readFile(clipPaths[i]);
-    const name = `clip${i}.mp4`;
-    await ffmpeg.writeFile(name, new Uint8Array(data));
-    inputNames.push(name);
-  }
-
-  // Create concat list in virtual FS
-  const concatContent = inputNames.map(n => `file '${n}'`).join('\n');
-  await ffmpeg.writeFile('concat.txt', concatContent);
-
-  // Run concat
-  await ffmpeg.exec(['-f', 'concat', '-safe', '0', '-i', 'concat.txt', '-c:v', 'libx264', '-preset', 'fast', '-crf', '23', '-movflags', '+faststart', '-pix_fmt', 'yuv420p', 'output.mp4']);
-
-  // Read output
-  const data = await ffmpeg.readFile('output.mp4');
-  const outputBuffer = Buffer.from(data);
-  await fs.writeFile(outputPath, outputBuffer);
-  console.log(`[Stitch] WASM output: ${(outputBuffer.length / 1024).toFixed(0)}KB`);
-}
 
 // Upload video buffer to Supabase Storage
 async function uploadVideo(job: Record<string, unknown>, buffer: Buffer): Promise<string> {
