@@ -375,7 +375,7 @@
     "goToDashboard": "Go to Dashboard",
     "switchPlan": "Switch Plan",
     "currentPlanLabel": "Current Plan",
-    "startEnterpriseTrial": "Contact Sales"
+    "startEnterpriseTrial": "Start Enterprise Trial"
   },
   "auth": {
     "signIn": "Sign In",
