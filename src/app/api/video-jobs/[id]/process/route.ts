@@ -419,13 +419,24 @@ async function handleAnimating(supabase: Awaited<ReturnType<typeof createClient>
 
       return NextResponse.json({ status: 'animating', message: `Animating image ${currentIndex + 1}/${images.length}...` });
     } catch (err) {
-      console.warn(`[Animate] Failed to start prediction:`, err);
-      const errMsg = err instanceof Error ? err.message : 'Animation failed';
+      console.warn(`[Animate] Failed to start prediction for image ${currentIndex + 1}:`, err);
+      // Skip this image instead of failing the whole job
+      const nextIndex = currentIndex + 1;
+      const isDone = nextIndex >= images.length;
+      if (isDone && clips.length === 0) {
+        // Only fail if we have zero clips after all attempts
+        const errMsg = err instanceof Error ? err.message : 'Animation failed';
+        await supabase.from('video_jobs').update({
+          status: 'failed',
+          metadata: { ...metadata, clips, error: `animating: ${errMsg}` },
+        }).eq('id', job.id);
+        return NextResponse.json({ status: 'failed', error: `Animation failed: ${errMsg}` });
+      }
       await supabase.from('video_jobs').update({
-        status: 'failed',
-        metadata: { ...metadata, clips, error: `animating: ${errMsg}` },
+        status: isDone ? 'stitching' : 'animating',
+        metadata: { animateIndex: nextIndex, clips },
       }).eq('id', job.id);
-      return NextResponse.json({ status: 'failed', error: `Animation failed at image ${currentIndex + 1}: ${errMsg}` });
+      return NextResponse.json({ status: isDone ? 'stitching' : 'animating', message: `Skipped failed animation ${nextIndex}/${images.length}. Clips so far: ${clips.length}` });
     }
   }
 
