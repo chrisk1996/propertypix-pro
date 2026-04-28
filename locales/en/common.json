@@ -236,7 +236,7 @@
     "freePlanDesc": "You're now on the Free plan.",
     "subscriptionAccess": "You'll still have access until then.",
     "toReactivate": "To reactivate, click Manage Subscription below.",
-    "upgradingInfo": "💡 Upgrading? Click \"Switch Plan\" to open the billing portal where you can upgrade with prorated pricing. You'll only pay the difference for the remaining time in your billing cycle.",
+    "upgradingInfo": "Plan changes are billed through the Stripe portal. Prorated charges apply.",
     "testModeNotice": "Test Mode: You're in Stripe test mode. Use test card number",
     "testCardAny": "with any future expiry date and CVC.",
     "loadFailed": "Failed to load billing details",
@@ -247,7 +247,8 @@
     "startCheckoutFailed": "Failed to start checkout",
     "topUp50": "+50 cr / €9",
     "topUp200": "+200 cr / €29",
-    "topUp500": "+500 cr / €59"
+    "topUp500": "+500 cr / €59",
+    "creditsPerMonth": "credits/month"
   },
   "settings": {
     "title": "Settings",

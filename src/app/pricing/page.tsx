@@ -113,10 +113,7 @@ export default function PricingPage() {
                 </ul>
 
                 <Link
-                  href={plan.nameKey === 'pricing.enterprise'
-                    ? (isLoggedIn ? '/billing' : 'mailto:sales@zestio.pro?subject=Enterprise Plan Inquiry')
-                    : (isLoggedIn ? '/billing' : '/auth')
-                  }
+                  href={isLoggedIn ? '/billing' : '/auth'}
                   className={`block w-full text-center py-3 rounded-lg font-medium transition-all ${
                     plan.popular
                       ? 'bg-[#006c4d] text-white hover:opacity-90'
@@ -124,7 +121,7 @@ export default function PricingPage() {
                   }`
                 }
                 >
-                  {plan.nameKey === 'pricing.free' ? (isLoggedIn ? t('goToDashboard') : t('getStartedFree')) : plan.nameKey === 'pricing.enterprise' ? t('contactSales') : (isLoggedIn ? t('switchPlan') : t('startProTrial'))}
+                  {plan.nameKey === 'free' ? (isLoggedIn ? t('goToDashboard') : t('getStartedFree')) : (isLoggedIn ? t('switchPlan') : t('startProTrial'))}
                 </Link>
               </div>
             </div>

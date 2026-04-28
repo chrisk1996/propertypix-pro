@@ -1,83 +1,81 @@
 // Centralized pricing configuration
 // Single source of truth for all credit costs and plan details
-// Display strings are translation keys — resolved via i18n
+// Display strings are i18n keys (resolved via useTranslations('pricing'))
 
 export const CREDIT_COSTS = {
-  ENHANCE_BASIC: 1,     // Auto, HDR, Sharpen, Denoise
-  ENHANCE_PREMIUM: 2,   // Sky Replace, Season, Staging, Object Removal
-  UPSCALE: 2,           // AI upscaling to 4K
-  VIDEO_GENERATION: 5,  // Full pipeline: sort → stage → animate → stitch
-  LISTING_DESCRIPTION: 0, // Free
-  SMART_CAPTIONS: 0,    // Free
-  SOCIAL_KIT: 0,        // Free
+  ENHANCE_BASIC: 1,
+  ENHANCE_PREMIUM: 2,
+  UPSCALE: 2,
+  VIDEO_GENERATION: 5,
+  LISTING_DESCRIPTION: 0,
+  SMART_CAPTIONS: 0,
+  SOCIAL_KIT: 0,
 } as const;
 
-// Plan data — features are i18n keys (resolved in components via t())
+// Plan data — features are i18n keys resolved via t() within 'pricing' namespace
 export const PLANS = {
   free: {
-    nameKey: 'pricing.free',
+    nameKey: 'free',
     price: 0,
     priceLabel: '€0',
-    periodKey: 'pricing.forever',
+    periodKey: 'forever',
     credits: 5,
-    descriptionKey: 'pricing.freeDesc',
+    descriptionKey: 'freeDesc',
     features: [
-      'pricing.freeFeature1',
-      'pricing.freeFeature2',
-      'pricing.freeFeature3',
-      'pricing.freeFeature4',
-      'pricing.freeFeature5',
+      'freeFeature1',
+      'freeFeature2',
+      'freeFeature3',
+      'freeFeature4',
+      'freeFeature5',
     ],
   },
   pro: {
-    nameKey: 'pricing.pro',
+    nameKey: 'pro',
     price: 29,
     priceLabel: '€29',
-    periodKey: 'pricing.perMonth',
+    periodKey: 'perMonth',
     credits: 100,
-    descriptionKey: 'pricing.proDesc',
+    descriptionKey: 'proDesc',
     features: [
-      'pricing.proFeature1',
-      'pricing.proFeature2',
-      'pricing.proFeature3',
-      'pricing.proFeature4',
-      'pricing.proFeature5',
-      'pricing.proFeature6',
-      'pricing.proFeature7',
-      'pricing.proFeature8',
+      'proFeature1',
+      'proFeature2',
+      'proFeature3',
+      'proFeature4',
+      'proFeature5',
+      'proFeature6',
+      'proFeature7',
+      'proFeature8',
     ],
     popular: true,
   },
   enterprise: {
-    nameKey: 'pricing.enterprise',
+    nameKey: 'enterprise',
     price: 99,
     priceLabel: '€99',
-    periodKey: 'pricing.perMonth',
+    periodKey: 'perMonth',
     credits: 500,
-    descriptionKey: 'pricing.enterpriseDesc',
+    descriptionKey: 'enterpriseDesc',
     features: [
-      'pricing.enterpriseFeature1',
-      'pricing.enterpriseFeature2',
-      'pricing.enterpriseFeature3',
-      'pricing.enterpriseFeature4',
-      'pricing.enterpriseFeature5',
+      'enterpriseFeature1',
+      'enterpriseFeature2',
+      'enterpriseFeature3',
+      'enterpriseFeature4',
+      'enterpriseFeature5',
     ],
   },
 } as const;
 
-// Credit top-up packs
 export const TOP_UP_PACKS = [
-  { credits: 50, price: 9, labelKey: 'pricing.topUp50', priceLabel: '€9', perCredit: '€0.18' },
-  { credits: 200, price: 29, labelKey: 'pricing.topUp200', priceLabel: '€29', perCredit: '€0.145', popular: true },
-  { credits: 500, price: 59, labelKey: 'pricing.topUp500', priceLabel: '€59', perCredit: '€0.118' },
+  { credits: 50, price: 9, labelKey: 'topUp50', priceLabel: '€9', perCredit: '€0.18' },
+  { credits: 200, price: 29, labelKey: 'topUp200', priceLabel: '€29', perCredit: '€0.145', popular: true },
+  { credits: 500, price: 59, labelKey: 'topUp500', priceLabel: '€59', perCredit: '€0.118' },
 ] as const;
 
-// What each credit buys (for display) — i18n keys
 export const CREDIT_BREAKDOWN = [
-  { actionKey: 'pricing.breakdownBasic', cost: 1, noteKey: 'pricing.breakdownBasicNote' },
-  { actionKey: 'pricing.breakdownPremium', cost: 2, noteKey: 'pricing.breakdownPremiumNote' },
-  { actionKey: 'pricing.breakdownStaging', cost: 2, noteKey: 'pricing.breakdownStagingNote' },
-  { actionKey: 'pricing.breakdownVideo', cost: 5, noteKey: 'pricing.breakdownVideoNote' },
-  { actionKey: 'pricing.breakdownListing', cost: 0, noteKey: 'pricing.breakdownListingNote' },
-  { actionKey: 'pricing.breakdownCaptions', cost: 0, noteKey: 'pricing.breakdownCaptionsNote' },
+  { actionKey: 'breakdownBasic', cost: 1, noteKey: 'breakdownBasicNote' },
+  { actionKey: 'breakdownPremium', cost: 2, noteKey: 'breakdownPremiumNote' },
+  { actionKey: 'breakdownStaging', cost: 2, noteKey: 'breakdownStagingNote' },
+  { actionKey: 'breakdownVideo', cost: 5, noteKey: 'breakdownVideoNote' },
+  { actionKey: 'breakdownListing', cost: 0, noteKey: 'breakdownListingNote' },
+  { actionKey: 'breakdownCaptions', cost: 0, noteKey: 'breakdownCaptionsNote' },
 ] as const;

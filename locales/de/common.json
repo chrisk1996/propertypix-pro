@@ -236,7 +236,7 @@
     "freePlanDesc": "Sie sind jetzt im Kostenlos-Tarif.",
     "subscriptionAccess": "Sie haben bis dahin weiterhin Zugriff.",
     "toReactivate": "Zum Reaktivieren klicken Sie unten auf Abonnement verwalten.",
-    "upgradingInfo": "💡 Upgrade? Klicken Sie auf «Tarif wechseln», um das Abrechnungsportal zu öffnen, wo Sie mit anteiliger Preisberechnung upgraden können. Sie zahlen nur den Unterschied für die verbleibende Zeit.",
+    "upgradingInfo": "Tarif-Wechsel werden über das Stripe-Portal abgerechnet. Differenzkosten werden anteilig berechnet.",
     "testModeNotice": "Testmodus: Sie sind im Stripe-Testmodus. Verwenden Sie die Testkartennummer",
     "testCardAny": "mit einem beliebigen zukünftigen Ablaufdatum und CVC.",
     "loadFailed": "Abrechnungsdaten konnten nicht geladen werden",
@@ -247,7 +247,8 @@
     "startCheckoutFailed": "Checkout konnte nicht gestartet werden",
     "topUp50": "+50 Cr / 9€",
     "topUp200": "+200 Cr / 29€",
-    "topUp500": "+500 Cr / 59€"
+    "topUp500": "+500 Cr / 59€",
+    "creditsPerMonth": "Credits/Monat"
   },
   "settings": {
     "title": "Einstellungen",
