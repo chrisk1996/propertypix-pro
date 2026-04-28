@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 export const createClient = async () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -34,4 +35,14 @@ export const createClient = async () => {
       },
     }
   );
+};
+
+// Service role client — bypasses RLS for server-side storage operations
+export const createServiceClient = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceKey) {
+    throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY for service client');
+  }
+  return createSupabaseClient(supabaseUrl, serviceKey);
 };

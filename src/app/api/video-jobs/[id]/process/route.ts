@@ -507,26 +507,32 @@ async function handleStitching(supabase: Awaited<ReturnType<typeof createClient>
     const combined = Buffer.concat(clipBuffers);
     console.log(`[Stitch] Combined ${clipBuffers.length} clips, ${(combined.length / 1024 / 1024).toFixed(1)}MB`);
 
-    // Upload to Supabase Storage
-    const fileName = `video-${job.id}-${Date.now()}.mp4`;
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('job-assets')
-      .upload(fileName, combined, {
-        contentType: 'video/mp4',
-        upsert: true,
-      });
-
-    if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
-
-    const { data: urlData } = supabase.storage
-      .from('job-assets')
-      .getPublicUrl(fileName);
-
-    const outputUrl = urlData.publicUrl;
+    // Upload to Supabase Storage using service role (bypasses RLS)
+    let outputUrl: string;
+    try {
+      const { createServiceClient } = await import('@/utils/supabase/server');
+      const serviceClient = createServiceClient();
+      const userId = job.user_id as string;
+      const filePath = `${userId}/video-output/${job.id}-${Date.now()}.mp4`;
+      const { error: uploadError } = await serviceClient.storage
+        .from('user-uploads')
+        .upload(filePath, combined, {
+          contentType: 'video/mp4',
+          upsert: true,
+        });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = serviceClient.storage.from('user-uploads').getPublicUrl(filePath);
+      outputUrl = urlData.publicUrl;
+    } catch (uploadErr) {
+      console.warn('[Stitch] Service upload failed, trying Replicate hosted:', uploadErr);
+      // Fallback: store clips individually, use last one as primary
+      outputUrl = clips[clips.length - 1];
+    }
 
     await supabase.from('video_jobs').update({
       status: 'done',
       output_video_url: outputUrl,
+      metadata: { ...metadata, allClipUrls: clips },
     }).eq('id', job.id);
 
     return NextResponse.json({
@@ -537,15 +543,17 @@ async function handleStitching(supabase: Awaited<ReturnType<typeof createClient>
     });
   } catch (err) {
     console.error('[Stitch] Stitching failed:', err);
-    // Fallback: use first clip
-    const outputUrl = clips[0];
+    // Fallback: link clips sequentially — use last clip as output
+    // (Individual clips are still accessible via Replicate URLs)
+    const outputUrl = clips[clips.length - 1];
     await supabase.from('video_jobs').update({
       status: 'done',
       output_video_url: outputUrl,
+      metadata: { ...metadata, allClipUrls: clips },
     }).eq('id', job.id);
     return NextResponse.json({
       status: 'done',
-      message: `Video complete (1 of ${clips.length} clips — stitching failed).`,
+      message: `Video complete (${clips.length} clips — stitching upload failed, showing last clip).`,
       outputUrl,
       hasVideo: true,
     });
