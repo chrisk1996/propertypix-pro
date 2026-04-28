@@ -149,9 +149,9 @@ async function handleSorting(supabase: Awaited<ReturnType<typeof createClient>>,
   // Classify one image
   const sortOrder: Record<string, number> = {
     exterior: 0, facade: 0, building: 0, house: 0, outside: 0,
-    balcony: 1, patio: 1, terrace: 1, garden: 1,
-    living: 2, lounge: 2,
-    dining: 3, kitchen: 4, office: 5, study: 5,
+    balcony: 1, patio: 1, terrace: 1, garden: 1, yard: 1,
+    living: 2, lounge: 2, living_room: 2,
+    dining: 3, dining_room: 3, kitchen: 4, office: 5, study: 5,
     hallway: 6, corridor: 6, entrance: 6,
     bedroom: 7, bathroom: 8, other: 9,
   };
@@ -170,7 +170,7 @@ async function handleSorting(supabase: Awaited<ReturnType<typeof createClient>>,
         let label = '';
         if (typeof prediction.output === 'string') label = prediction.output.trim().toLowerCase();
         else if (Array.isArray(prediction.output)) label = prediction.output.join('').trim().toLowerCase();
-        const match = label.match(/(exterior|facade|building|house|outside|balcony|patio|terrace|garden|living|lounge|dining|kitchen|office|study|hallway|corridor|entrance|bedroom|bathroom|other)/);
+        const match = label.match(/\b(living_room|dining_room|exterior|facade|building|house|outside|balcony|patio|terrace|garden|yard|living|lounge|dining|kitchen|office|study|hallway|corridor|entrance|bedroom|bathroom|other)\b/);
         const cleanLabel = match ? match[1] : 'other';
         labels.push({ index: sortIndex, label: cleanLabel, sortKey: sortOrder[cleanLabel] ?? 9 });
         console.log(`[Sort] Image ${sortIndex}: ${cleanLabel}`);
@@ -192,7 +192,7 @@ async function handleSorting(supabase: Awaited<ReturnType<typeof createClient>>,
         version: "72ccb656353c348c1385df54b237eeb7bfa874bf11486cf0b9473e691b662d31",
         input: {
           image: inputImages[sortIndex],
-          prompt: 'What type of room is shown in this image? Reply with exactly ONE word from: exterior, living, kitchen, bedroom, bathroom, dining, office, hallway, balcony, other',
+          prompt: 'Classify this real estate photo. Choose EXACTLY one: exterior, living_room, kitchen, bedroom, bathroom, dining_room, office, hallway, balcony, garden, other. Reply with ONLY the label, nothing else.',
         },
       });
 
