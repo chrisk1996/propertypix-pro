@@ -459,6 +459,7 @@ async function handleAnimating(supabase: Awaited<ReturnType<typeof createClient>
           negative_prompt: 'blurry, distorted, low quality, watermark, text, fast motion, shaky',
           duration: 5,
           aspect_ratio: '16:9',
+          resolution: '720p',
           mode: 'std',
         },
       });
@@ -715,7 +716,7 @@ function normalizeClip(ffmpegPath: string, inputPath: string, outputPath: string
           '-c:v libx264',
           '-preset fast',
           '-crf 23',
-          '-vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2',
+          '-vf scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2',
           '-r 30',
           '-pix_fmt yuv420p',
           '-an', // strip audio from individual clips
