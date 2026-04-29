@@ -53,6 +53,10 @@ const MUSIC_TRACKS: Record<string, string> = {
   classical: 'https://cdn.zestio.de/music/classical.mp3',
 };
 
+// Branding watermark config
+const WATERMARK_LOGO_URL = 'https://cdn.zestio.de/brand/logo-white.png';
+const WATERMARK_TEXT = 'Made with Zestio';
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -572,6 +576,15 @@ async function handleStitching(supabase: Awaited<ReturnType<typeof createClient>
       await stitchWithFFmpeg(concatListPath, outputPath);
     }
 
+    // Add watermark
+    const watermarkedPath = path.join(tmpDir, 'watermarked.mp4');
+    try {
+      await addWatermark(outputPath, watermarkedPath, tmpDir);
+    } catch (wmErr) {
+      console.warn('[Stitch] Watermark failed, using unwatermarked:', wmErr);
+      await fs.copyFile(outputPath, watermarkedPath);
+    }
+
     // Add music overlay
     const musicGenre = (job.music_genre as string) || 'cinematic';
     const musicUrl = MUSIC_TRACKS[musicGenre];
@@ -579,7 +592,7 @@ async function handleStitching(supabase: Awaited<ReturnType<typeof createClient>
 
     if (musicUrl) {
       try {
-        await addMusicOverlay(outputPath, musicUrl, finalOutputPath);
+        await addMusicOverlay(watermarkedPath, musicUrl, finalOutputPath);
         // Use the version with music
         const finalBuffer = await fs.readFile(finalOutputPath);
         console.log(`[Stitch] Final output with music: ${(finalBuffer.length / 1024 / 1024).toFixed(1)}MB`);
@@ -592,8 +605,8 @@ async function handleStitching(supabase: Awaited<ReturnType<typeof createClient>
       }
     }
 
-    // No music or music failed — use stitched output directly
-    const outputBuffer = await fs.readFile(outputPath);
+    // No music or music failed — use watermarked output directly
+    const outputBuffer = await fs.readFile(watermarkedPath);
     console.log(`[Stitch] Output: ${(outputBuffer.length / 1024 / 1024).toFixed(1)}MB`);
     const outputUrl = await uploadVideo(job, outputBuffer);
     await cleanup(tmpDir);
@@ -749,6 +762,61 @@ function addMusicOverlay(videoPath: string, musicUrl: string, outputPath: string
         ])
         .output(outputPath)
         .on('start', (cmd: string) => console.log(`[Stitch] Music: ${cmd}`))
+        .on('end', () => resolve())
+        .on('error', (err: Error) => reject(err))
+        .run();
+    });
+  });
+}
+
+// Add "Made with Zestio" watermark badge in top-left corner
+async function addWatermark(videoPath: string, outputPath: string, tmpDir: string): Promise<void> {
+  const ffmpegPath = getFFmpegPath();
+  if (!ffmpegPath) throw new Error('No ffmpeg');
+
+  const fs = await import('fs/promises');
+  const path = await import('path');
+
+  // Download logo to temp file
+  let logoPath: string | null = null;
+  try {
+    const response = await fetch(WATERMARK_LOGO_URL, { signal: AbortSignal.timeout(10000) });
+    if (response.ok) {
+      const buffer = Buffer.from(await response.arrayBuffer());
+      logoPath = path.join(tmpDir, 'watermark-logo.png');
+      await fs.writeFile(logoPath, buffer);
+    }
+  } catch (err) {
+    console.warn('[Watermark] Failed to download logo:', err);
+  }
+
+  if (!logoPath) {
+    console.warn('[Watermark] No logo, skipping watermark');
+    throw new Error('No watermark logo available');
+  }
+
+  return new Promise((resolve, reject) => {
+    import('fluent-ffmpeg').then(ffmpeg => {
+      ffmpeg.default()
+        .setFfmpegPath(ffmpegPath)
+        .input(videoPath)
+        .input(logoPath)
+        .complexFilter([
+          // Scale logo to ~36px height, add padding/margin, semi-transparent
+          `[1:v]scale=-1:36,format=rgba,colorchannelmixer=aa=0.6[logo]`,
+          // Overlay logo at top-left with 16px margin
+          `[0:v][logo]overlay=16:14`,
+        ])
+        .outputOptions([
+          '-c:v libx264',
+          '-preset fast',
+          '-crf 23',
+          '-movflags +faststart',
+          '-pix_fmt yuv420p',
+          '-an',
+        ])
+        .output(outputPath)
+        .on('start', (cmd: string) => console.log(`[Watermark] ${cmd}`))
         .on('end', () => resolve())
         .on('error', (err: Error) => reject(err))
         .run();
