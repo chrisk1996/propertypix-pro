@@ -42,20 +42,21 @@ const ROOM_MOTION_PROMPTS: Record<string, string> = {
   default: 'Slow cinematic camera pan, professional real estate video, smooth motion, warm lighting',
 };
 
-// Music tracks — royalty-free audio URLs per genre
+// Music tracks — Supabase Storage paths + CDN fallbacks
 const MUSIC_TRACKS: Record<string, string> = {
-  cinematic: 'https://cdn.zestio.de/music/cinematic.mp3',
-  uplifting: 'https://cdn.zestio.de/music/uplifting.mp3',
-  ambient: 'https://cdn.zestio.de/music/ambient.mp3',
-  acoustic: 'https://cdn.zestio.de/music/acoustic.mp3',
-  electronic: 'https://cdn.zestio.de/music/electronic.mp3',
-  jazz: 'https://cdn.zestio.de/music/jazz.mp3',
-  classical: 'https://cdn.zestio.de/music/classical.mp3',
+  cinematic: 'https://cdn.zestio.de/music/ambient_cinematic.mp3',
+  upbeat: 'https://cdn.zestio.de/music/upbeat_modern.mp3',
+  ambient: 'https://cdn.zestio.de/music/soft_ambient.mp3',
+  // Genre overrides from user selection
+  uplifting: 'https://cdn.zestio.de/music/upbeat_modern.mp3',
+  acoustic: 'https://cdn.zestio.de/music/soft_ambient.mp3',
+  electronic: 'https://cdn.zestio.de/music/upbeat_modern.mp3',
+  jazz: 'https://cdn.zestio.de/music/soft_ambient.mp3',
+  classical: 'https://cdn.zestio.de/music/ambient_cinematic.mp3',
 };
 
-// Branding watermark config
+// Branding
 const WATERMARK_LOGO_URL = 'https://cdn.zestio.de/brand/logo-white.png';
-const WATERMARK_TEXT = 'Made with Zestio';
 
 export async function POST(
   request: NextRequest,
@@ -663,55 +664,45 @@ async function handleStitching(supabase: Awaited<ReturnType<typeof createClient>
       return NextResponse.json({ status: 'done', message: 'Video complete (1 clip).', outputUrl, hasVideo: true });
     }
 
-    const outputPath = path.join(tmpDir, 'output.mp4');
+    const outputPath = path.join(tmpDir, 'final.mp4');
 
-    // Try crossfade stitch first, fall back to simple concat
+    // Download music and watermark
+    let musicPath: string | null = null;
+    let watermarkPath: string | null = null;
+
+    // Get music: auto-select or use user genre
+    const musicFile = selectMusicTrack(job);
+    if (musicFile) {
+      musicPath = await downloadToTemp(musicFile, tmpDir, 'music.mp3');
+    }
+
+    // Get watermark
+    watermarkPath = await downloadToTemp(WATERMARK_LOGO_URL, tmpDir, 'watermark.png');
+
+    // Run single-pass: concat + crossfade + watermark + music
     try {
-      await stitchWithCrossfade(clipPaths, outputPath, tmpDir);
+      await stitchWithCrossfade(clipPaths, path.join(tmpDir, 'stitched.mp4'), tmpDir);
+      const stitchedPath = path.join(tmpDir, 'stitched.mp4');
+
+      // Add watermark + music in one pass
+      await addWatermarkAndMusic(stitchedPath, outputPath, watermarkPath, musicPath);
     } catch (xfadeErr) {
       console.warn('[Stitch] Crossfade failed, trying simple concat:', xfadeErr);
       const concatListPath = path.join(tmpDir, 'concat.txt');
       const concatContent = clipPaths.map(p => `file '${p}'`).join('\n');
       await fs.writeFile(concatListPath, concatContent);
-      await stitchWithFFmpeg(concatListPath, outputPath);
+      const concatPath = path.join(tmpDir, 'concat.mp4');
+      await stitchWithFFmpeg(concatListPath, concatPath);
+      await addWatermarkAndMusic(concatPath, outputPath, watermarkPath, musicPath);
     }
 
-    // Add watermark
-    const watermarkedPath = path.join(tmpDir, 'watermarked.mp4');
-    try {
-      await addWatermark(outputPath, watermarkedPath, tmpDir);
-    } catch (wmErr) {
-      console.warn('[Stitch] Watermark failed, using unwatermarked:', wmErr);
-      await fs.copyFile(outputPath, watermarkedPath);
-    }
+    const finalBuffer = await fs.readFile(outputPath);
+    console.log(`[Stitch] Final output: ${(finalBuffer.length / 1024 / 1024).toFixed(1)}MB`);
 
-    // Add music overlay
-    const musicGenre = (job.music_genre as string) || 'cinematic';
-    const musicUrl = MUSIC_TRACKS[musicGenre];
-    const finalOutputPath = path.join(tmpDir, 'final.mp4');
-
-    if (musicUrl) {
-      try {
-        await addMusicOverlay(watermarkedPath, musicUrl, finalOutputPath);
-        // Use the version with music
-        const finalBuffer = await fs.readFile(finalOutputPath);
-        console.log(`[Stitch] Final output with music: ${(finalBuffer.length / 1024 / 1024).toFixed(1)}MB`);
-        const outputUrl = await uploadVideo(job, finalBuffer);
-        await cleanup(tmpDir);
-        await supabase.from('video_jobs').update({ status: 'done', output_video_url: outputUrl, metadata: { ...metadata, allClipUrls: clips } }).eq('id', job.id);
-        return NextResponse.json({ status: 'done', message: `Video complete! ${clipPaths.length} clips with music.`, outputUrl, hasVideo: true });
-      } catch (musicErr) {
-        console.warn('[Stitch] Music overlay failed, using video without music:', musicErr);
-      }
-    }
-
-    // No music or music failed — use watermarked output directly
-    const outputBuffer = await fs.readFile(watermarkedPath);
-    console.log(`[Stitch] Output: ${(outputBuffer.length / 1024 / 1024).toFixed(1)}MB`);
-    const outputUrl = await uploadVideo(job, outputBuffer);
+    const outputUrl = await uploadVideo(job, finalBuffer);
     await cleanup(tmpDir);
     await supabase.from('video_jobs').update({ status: 'done', output_video_url: outputUrl, metadata: { ...metadata, allClipUrls: clips } }).eq('id', job.id);
-    return NextResponse.json({ status: 'done', message: `Video complete! ${clipPaths.length} clips stitched.`, outputUrl, hasVideo: true });
+    return NextResponse.json({ status: 'done', message: `Video complete! ${clipPaths.length} clips.`, outputUrl, hasVideo: true });
   } catch (err) {
     console.error('[Stitch] Stitching failed:', err);
     const outputUrl = clips[clips.length - 1];
@@ -843,83 +834,101 @@ function normalizeClip(ffmpegPath: string, inputPath: string, outputPath: string
 }
 
 // Add background music to video
-function addMusicOverlay(videoPath: string, musicUrl: string, outputPath: string): Promise<void> {
+// Select music track based on listing metadata or user genre choice
+function selectMusicTrack(job: Record<string, unknown>): string | null {
+  // User override takes priority
+  const userGenre = job.music_genre as string;
+  if (userGenre && MUSIC_TRACKS[userGenre]) return MUSIC_TRACKS[userGenre];
+
+  // Auto-select based on listing price/title from metadata
+  const metadata = (job.metadata as Record<string, unknown>) || {};
+  const title = ((metadata.listingTitle as string) || '').toLowerCase();
+  const price = metadata.listingPrice as number;
+
+  if (title.includes('luxus') || title.includes('luxury') || title.includes('penthous') || (price && price > 800000)) {
+    return MUSIC_TRACKS.cinematic; // ambient_cinematic.mp3
+  }
+  if (title.includes('wohnung') || title.includes('apartment') || title.includes('studio') || (price && price < 250000)) {
+    return MUSIC_TRACKS.ambient; // soft_ambient.mp3
+  }
+
+  // Default: upbeat modern for standard residential
+  return MUSIC_TRACKS.upbeat; // upbeat_modern.mp3
+}
+
+// Download a URL to a temp file
+async function downloadToTemp(url: string, tmpDir: string, filename: string): Promise<string | null> {
+  const path = await import('path');
+  const fs = await import('fs/promises');
+  const outputPath = path.join(tmpDir, filename);
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(30000) });
+    if (!response.ok) return null;
+    const buffer = Buffer.from(await response.arrayBuffer());
+    if (buffer.length < 100) return null; // too small, probably error
+    await fs.writeFile(outputPath, buffer);
+    return outputPath;
+  } catch (err) {
+    console.warn(`[Download] Failed: ${url.substring(0, 60)}...`, err);
+    return null;
+  }
+}
+
+// Single-pass: add watermark (bottom-right) + music (30% volume)
+function addWatermarkAndMusic(videoPath: string, outputPath: string, watermarkPath: string | null, musicPath: string | null): Promise<void> {
   return new Promise((resolve, reject) => {
     const ffmpegPath = getFFmpegPath();
     if (!ffmpegPath) { reject(new Error('No ffmpeg')); return; }
 
     import('fluent-ffmpeg').then(ffmpeg => {
-      ffmpeg.default()
-        .setFfmpegPath(ffmpegPath)
-        .input(videoPath)
-        .input(musicUrl)
-        .outputOptions([
-          '-c:v copy',           // keep video as-is
-          '-c:a aac',            // encode audio to AAC
-          '-b:a 128k',           // audio bitrate
-          '-shortest',           // stop when shortest stream ends (the video)
-          '-movflags +faststart',
-        ])
-        .output(outputPath)
-        .on('start', (cmd: string) => console.log(`[Stitch] Music: ${cmd}`))
-        .on('end', () => resolve())
-        .on('error', (err: Error) => reject(err))
-        .run();
-    });
-  });
-}
+      const cmd = ffmpeg.default().setFfmpegPath(ffmpegPath);
+      cmd.input(videoPath); // input 0: video
 
-// Add "Made with Zestio" watermark badge in top-left corner
-async function addWatermark(videoPath: string, outputPath: string, tmpDir: string): Promise<void> {
-  const ffmpegPath = getFFmpegPath();
-  if (!ffmpegPath) throw new Error('No ffmpeg');
+      let audioInputIdx = -1;
+      if (musicPath) {
+        cmd.input(musicPath); // input 1: music
+        audioInputIdx = 1;
+      }
 
-  const fs = await import('fs/promises');
-  const path = await import('path');
+      let watermarkInputIdx = -1;
+      if (watermarkPath) {
+        cmd.input(watermarkPath); // input 2 (or 1): watermark
+        watermarkInputIdx = musicPath ? 2 : 1;
+      }
 
-  // Download logo to temp file
-  let logoPath: string | null = null;
-  try {
-    const response = await fetch(WATERMARK_LOGO_URL, { signal: AbortSignal.timeout(10000) });
-    if (response.ok) {
-      const buffer = Buffer.from(await response.arrayBuffer());
-      logoPath = path.join(tmpDir, 'watermark-logo.png');
-      await fs.writeFile(logoPath, buffer);
-    }
-  } catch (err) {
-    console.warn('[Watermark] Failed to download logo:', err);
-  }
+      const filters: string[] = [];
+      const outputOpts: string[] = [
+        '-c:v libx264', '-preset fast', '-crf 23',
+        '-pix_fmt yuv420p',
+        '-movflags +faststart',
+      ];
 
-  if (!logoPath) {
-    console.warn('[Watermark] No logo, skipping watermark');
-    throw new Error('No watermark logo available');
-  }
+      if (watermarkPath && watermarkInputIdx >= 0) {
+        filters.push(
+          `[${watermarkInputIdx}:v]scale=160:-1,format=rgba,colorchannelmixer=aa=0.7[wm]`,
+          `[0:v][wm]overlay=W-w-24:H-h-24[outv]`
+        );
+        outputOpts.push('-map', '[outv]');
+      }
 
-  return new Promise((resolve, reject) => {
-    import('fluent-ffmpeg').then(ffmpeg => {
-      ffmpeg.default()
-        .setFfmpegPath(ffmpegPath)
-        .input(videoPath)
-        .input(logoPath)
-        .complexFilter([
-          // Scale logo to ~36px height, add padding/margin, semi-transparent
-          `[1:v]scale=-1:36,format=rgba,colorchannelmixer=aa=0.6[logo]`,
-          // Overlay logo at top-left with 16px margin
-          `[0:v][logo]overlay=16:14`,
-        ])
-        .outputOptions([
-          '-c:v libx264',
-          '-preset fast',
-          '-crf 23',
-          '-movflags +faststart',
-          '-pix_fmt yuv420p',
-          '-an',
-        ])
-        .output(outputPath)
-        .on('start', (cmd: string) => console.log(`[Watermark] ${cmd}`))
-        .on('end', () => resolve())
-        .on('error', (err: Error) => reject(err))
-        .run();
+      if (musicPath && audioInputIdx >= 0) {
+        outputOpts.push('-map', `${audioInputIdx}:a`);
+        outputOpts.push('-c:a aac', '-b:a 128k', '-af volume=0.3', '-shortest');
+      } else {
+        // No music — strip audio
+        outputOpts.push('-an');
+      }
+
+      if (filters.length > 0) {
+        cmd.complexFilter(filters);
+      }
+      cmd.outputOptions(outputOpts);
+      cmd.output(outputPath);
+
+      cmd.on('start', (c: string) => console.log(`[Final] ${c}`));
+      cmd.on('end', () => resolve());
+      cmd.on('error', (err: Error) => reject(err));
+      cmd.run();
     });
   });
 }
@@ -959,17 +968,30 @@ async function uploadVideo(job: Record<string, unknown>, buffer: Buffer): Promis
   try {
     const { createServiceClient } = await import('@/utils/supabase/server');
     const serviceClient = createServiceClient();
-    const userId = job.user_id as string;
-    const filePath = `${userId}/video-output/${job.id}-${Date.now()}.mp4`;
+    const filePath = `${job.id}/final.mp4`;
     const { error: uploadError } = await serviceClient.storage
-      .from('user-uploads')
-      .upload(filePath, buffer, { contentType: 'video/mp4', upsert: true });
+      .from('videos')
+      .upload(filePath, buffer, { contentType: 'video/mp4', cacheControl: '31536000', upsert: true });
     if (uploadError) throw uploadError;
-    const { data: urlData } = serviceClient.storage.from('user-uploads').getPublicUrl(filePath);
+    const { data: urlData } = serviceClient.storage.from('videos').getPublicUrl(filePath);
     return urlData.publicUrl;
   } catch (err) {
-    console.warn('[Upload] Service upload failed:', err);
-    throw err;
+    console.warn('[Upload] videos bucket failed, falling back to user-uploads:', err);
+    try {
+      const { createServiceClient } = await import('@/utils/supabase/server');
+      const serviceClient = createServiceClient();
+      const userId = job.user_id as string;
+      const filePath = `${userId}/video-output/${job.id}-${Date.now()}.mp4`;
+      const { error: uploadError } = await serviceClient.storage
+        .from('user-uploads')
+        .upload(filePath, buffer, { contentType: 'video/mp4', upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = serviceClient.storage.from('user-uploads').getPublicUrl(filePath);
+      return urlData.publicUrl;
+    } catch (fallbackErr) {
+      console.error('[Upload] All uploads failed:', fallbackErr);
+      throw fallbackErr;
+    }
   }
 }
 
