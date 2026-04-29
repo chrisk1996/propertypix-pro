@@ -114,7 +114,7 @@ export async function GET(
     const errorMessage = error instanceof Error ? error.message : 'Failed to fetch video job';
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
-]
+}
 
 // PUT - Debug: jump to any stage (dev only)
 export async function PUT(
