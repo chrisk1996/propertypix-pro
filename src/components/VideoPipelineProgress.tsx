@@ -18,6 +18,7 @@ function getStageDescription(stageId: PipelineStage, job: Record<string, unknown
     const defaults: Record<string, string> = {
       scrape: 'Extracting listing photos',
       sort: 'Auto-sorting images',
+      twilight: 'Enhancing exterior shots',
       enhance: 'AI virtual renovation',
       generate: 'Creating video clips',
       complete: 'Final video assembly',
@@ -37,6 +38,16 @@ function getStageDescription(stageId: PipelineStage, job: Record<string, unknown
   if (stageId === 'sort') {
     if (status === 'sorting') return 'Analyzing room types...';
     return 'Auto-sorting images';
+  }
+
+  if (stageId === 'twilight') {
+    const twilightIdx = (metadata.twilightIndex as number) || 0;
+    const sortLabels = (metadata.sortLabels as Array<{ label: string }>) || [];
+    const exteriorLabels = ['exterior', 'facade', 'building', 'house', 'outside'];
+    const exteriorCount = sortLabels.filter(l => exteriorLabels.includes(l.label)).length;
+    if (status === 'twilighting' && exteriorCount > 0) return `Photo ${twilightIdx + 1} of ${exteriorCount}`;
+    if (isComplete) return exteriorCount > 0 ? `${exteriorCount} photos enhanced` : 'No exterior photos';
+    return 'Enhancing exterior shots';
   }
 
   if (stageId === 'enhance') {
@@ -64,7 +75,7 @@ export function VideoPipelineProgress({
   className,
 }: VideoPipelineProgressProps) {
   // Determine which stages are complete
-  const stageOrder: PipelineStage[] = ['scrape', 'sort', 'enhance', 'generate', 'complete'];
+  const stageOrder: PipelineStage[] = ['scrape', 'sort', 'twilight', 'enhance', 'generate', 'complete'];
   const currentIndex = stageOrder.indexOf(currentStage);
   
   return (

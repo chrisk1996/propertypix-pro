@@ -17,7 +17,7 @@ export type VideoJobStatus =
   | 'needs_images';
 
 // Pipeline stage for progress indicator
-export type PipelineStage = 'scrape' | 'sort' | 'enhance' | 'generate' | 'complete';
+export type PipelineStage = 'scrape' | 'sort' | 'twilight' | 'enhance' | 'generate' | 'complete';
 
 // Stage status for progress tracking
 export type StageStatus = 'pending' | 'active' | 'complete' | 'error';
@@ -193,6 +193,12 @@ export const PIPELINE_STAGES: Array<{
     description: 'Auto-sorting images',
   },
   {
+    id: 'twilight',
+    label: 'Twilight',
+    icon: 'dark_mode',
+    description: 'Enhancing exterior shots',
+  },
+  {
     id: 'enhance',
     label: 'Enhance',
     icon: 'auto_fix_high',
@@ -225,7 +231,7 @@ export function statusToStage(status: VideoJobStatus): {
     case 'sorting':
       return { stage: 'sort', stageStatus: 'active' };
     case 'twilighting':
-      return { stage: 'enhance', stageStatus: 'active' };
+      return { stage: 'twilight', stageStatus: 'active' };
     case 'renovating':
       return { stage: 'enhance', stageStatus: 'active' };
     case 'animating':
