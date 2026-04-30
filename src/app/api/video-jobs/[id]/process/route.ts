@@ -1282,34 +1282,61 @@ async function getApifyRunStatus(runId: string): Promise<string> {
 
 async function pollApifyRun(runId: string, imageField: string): Promise<string[]> {
   const token = process.env.APIFY_API_TOKEN!;
-  const status = await getApifyRunStatus(runId);
-  if (status !== 'SUCCEEDED') return [];
 
-  // Get the dataset
-  const res = await fetch(`https://api.apify.com/v2/actor-runs/${runId}/dataset/items?token=${token}&clean=true&limit=1`, {
-    signal: AbortSignal.timeout(10000),
+  // Poll until run finishes (max 90s)
+  for (let i = 0; i < 18; i++) {
+    const status = await getApifyRunStatus(runId);
+    if (status === 'SUCCEEDED') break;
+    if (status === 'FAILED' || status === 'ABORTED' || status === 'TIMED-OUT') return [];
+    await new Promise(r => setTimeout(r, 5000));
+  }
+
+  // Get the dataset (fetch more items — some actors split data across items)
+  const res = await fetch(`https://api.apify.com/v2/actor-runs/${runId}/dataset/items?token=${token}&clean=true&limit=10`, {
+    signal: AbortSignal.timeout(15000),
   });
   if (!res.ok) return [];
   const items = await res.json();
   if (!Array.isArray(items) || items.length === 0) return [];
 
-  const item = items[0];
   const images: string[] = [];
+  const seen = new Set<string>();
 
-  // Try multiple possible image field names
-  const fields = [imageField, 'images', 'photos', 'imageUrls', 'gallery', 'media', 'imageList'];
-  for (const field of fields) {
-    const val = item[field];
-    if (Array.isArray(val)) {
-      for (const v of val) {
-        if (typeof v === 'string' && v.startsWith('http')) images.push(v);
-        else if (typeof v === 'object' && v.url) images.push(v.url);
-        else if (typeof v === 'object' && v.src) images.push(v.src);
+  // Known image field names across different scrapers
+  const fields = [imageField, 'images', 'photos', 'imageUrls', 'gallery', 'media', 'imageList',
+    'pictureList', 'pictureUrls', 'galleryImages', 'realEstateImages', 'attachments'];
+
+  for (const item of items) {
+    // 1) Try known top-level fields
+    for (const field of fields) {
+      const val = item[field];
+      if (Array.isArray(val)) {
+        for (const v of val) {
+          if (typeof v === 'string' && v.startsWith('http')) { if (!seen.has(v)) { seen.add(v); images.push(v); } }
+          else if (typeof v === 'object' && v !== null) {
+            const url = v.url || v.src || v.href || v.imageUrl;
+            if (typeof url === 'string' && url.startsWith('http') && !seen.has(url)) { seen.add(url); images.push(url); }
+          }
+        }
       }
     }
+
+    // 2) Recursively find image URLs anywhere in the item
+    const imagePattern = /^https?:\/\/.+\.(?:jpg|jpeg|png|webp|avif)(?:\?.*)?$/i;
+    function findImagesDeep(obj: unknown, depth = 0) {
+      if (depth > 5 || images.length >= 30) return;
+      if (typeof obj === 'string') {
+        if (imagePattern.test(obj) && !seen.has(obj)) { seen.add(obj); images.push(obj); }
+      } else if (Array.isArray(obj)) {
+        for (const v of obj) findImagesDeep(v, depth + 1);
+      } else if (typeof obj === 'object' && obj !== null) {
+        for (const v of Object.values(obj)) findImagesDeep(v, depth + 1);
+      }
+    }
+    findImagesDeep(item);
   }
 
-  return [...new Set(images)].slice(0, 30);
+  return images.slice(0, 30);
 }
 
 async function scrapeListingImages(url: string): Promise<string[]> {
