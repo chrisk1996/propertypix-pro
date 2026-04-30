@@ -162,7 +162,7 @@ async function handleScraping(supabase: Awaited<ReturnType<typeof createClient>>
 
   // Manual mode — use uploaded images
   const inputImages = job.input_images as string[] | null;
-  if (Array.isArray(inputImages) && inputImages.length >= 5) {
+  if (Array.isArray(inputImages) && inputImages.length >= 1) {
     images = inputImages;
   } else {
     // Try to scrape from URL
@@ -1201,24 +1201,64 @@ async function refundCredit(supabase: Awaited<ReturnType<typeof createClient>>, 
 async function scrapeListingImages(url: string): Promise<string[]> {
   try {
     const response = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+      },
       signal: AbortSignal.timeout(15000),
+      redirect: 'follow',
     });
     if (!response.ok) return [];
     const html = await response.text();
     const images: string[] = [];
+    const seen = new Set<string>();
 
-    const ogMatch = html.match(/property="og:image"\s+content="([^"]+)"/);
-    if (ogMatch) images.push(ogMatch[1]);
+    const addImage = (url: string) => {
+      // Filter out tiny/irrelevant images
+      if (seen.has(url)) return;
+      if (url.match(/\.(?:svg|gif|ico|webp)$/i)) return;
+      if (url.match(/(?:logo|icon|avatar|badge|button|arrow|spinner|loading)/i)) return;
+      if (url.length < 20) return;
+      seen.add(url);
+      images.push(url);
+    };
 
-    const imgMatches = html.match(/https?:\/\/[^\s"'<>]+(?:immobilienscout24|zillow|redfin)[^\s"'<>]*\.(?:jpg|jpeg|png|webp)/gi);
-    if (imgMatches) {
-      imgMatches.forEach(m => {
-        if (!images.includes(m) && images.length < 20) images.push(m);
-      });
+    // 1. og:image meta tag
+    const ogMatches = html.matchAll(/property="og:image"[^>]*content="([^"]+)"/gi);
+    for (const m of ogMatches) addImage(m[1]);
+
+    // 2. <img src> with large image patterns (property listing sites)
+    const imgSrcMatches = html.matchAll(/src="(https?:\/\/[^"\s<>]+\.(?:jpg|jpeg|png|webp)[^"\s<>]*)"/gi);
+    for (const m of imgSrcMatches) addImage(m[1]);
+
+    // 3. data-src / data-lazy-src (lazy loaded images)
+    const lazyMatches = html.matchAll(/data-(?:src|lazy-src|original)="(https?:\/\/[^"\s<>]+\.(?:jpg|jpeg|png|webp)[^"\s<>]*)"/gi);
+    for (const m of lazyMatches) addImage(m[1]);
+
+    // 4. JSON-LD structured data (common in listing pages)
+    const jsonLdMatches = html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi);
+    for (const m of jsonLdMatches) {
+      try {
+        const json = JSON.parse(m[1]);
+        const extractUrls = (obj: unknown) => {
+          if (typeof obj === 'string' && obj.match(/^https?:\/\/.+\.(?:jpg|jpeg|png|webp)/i)) {
+            addImage(obj);
+          } else if (Array.isArray(obj)) {
+            obj.forEach(extractUrls);
+          } else if (obj && typeof obj === 'object') {
+            Object.values(obj as Record<string, unknown>).forEach(extractUrls);
+          }
+        };
+        extractUrls(json);
+      } catch {}
     }
 
-    return images;
+    // 5. Generic URL patterns from known property portals
+    const portalPatterns = html.matchAll(/(https?:\/\/[^"\s'<>]+(?:immobilienscout24|immowelt|zillow|rightmove|idealista|remax|engelvoelkers|wonnen|kleinanzeigen|immobiliare)\S+\.(?:jpg|jpeg|png|webp))/gi);
+    for (const m of portalPatterns) addImage(m[1]);
+
+    return images.slice(0, 30);
   } catch {
     return [];
   }
