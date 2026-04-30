@@ -242,10 +242,6 @@ async function handleScraping(supabase: Awaited<ReturnType<typeof createClient>>
     imageCount: images.length,
   });
 }
-    message: `Found ${images.length} images. Auto-sorting for optimal order...`,
-    imageCount: images.length,
-  });
-}
 
 // ── Stage 2: Sort — LLaVA classification + walkthrough ordering + dedup ─
 async function handleSorting(supabase: Awaited<ReturnType<typeof createClient>>, job: Record<string, unknown>) {
