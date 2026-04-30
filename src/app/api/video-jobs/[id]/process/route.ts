@@ -1029,6 +1029,11 @@ function addWatermarkAndMusic(videoPath: string, outputPath: string, watermarkPa
           `[0:v][wm]overlay=W-w-24:H-h-24[outv]`
         );
         outputOpts.push('-map', '[outv]');
+      } else {
+        // No PNG watermark — drawtext fallback
+        outputOpts.push(
+          "-vf", "drawtext=text='Made by Zestio':fontsize=22:fontcolor=white@0.7:x=W-tw-24:y=H-th-24:shadowcolor=black:shadowx=1:shadowy=1"
+        );
       }
 
       if (musicPath && audioInputIdx >= 0) {
