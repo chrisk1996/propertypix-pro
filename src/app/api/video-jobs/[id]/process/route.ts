@@ -159,12 +159,12 @@ export async function POST(
 // ── Stage 1: Scrape ──────────────────────────────────────────────────────
 // ── Apify actor registry ─────────────────────────────────────────────────
 // Format: username~actor-name (Apify API uses tilde, not slash)
-const APIFY_ACTORS: Record<string, { actorId: string; imageField: string; inputKey: string }> = {
-  'immobilienscout24.de': { actorId: 'rigelbytes~immobilienscout24-scraper', imageField: 'images', inputKey: 'startUrls' },
-  'immowelt.de': { actorId: 'rigelbytes~immowelt-scraper', imageField: 'images', inputKey: 'startUrls' },
-  'zillow.com': { actorId: 'maxcopell~zillow-detail-scraper', imageField: 'photos', inputKey: 'propertyUrls' },
-  'rightmove.co.uk': { actorId: 'dhrumil~rightmove-scraper', imageField: 'images', inputKey: 'startUrls' },
-  'idealista.com': { actorId: 'tri_angle~idealista-scraper', imageField: 'images', inputKey: 'startUrls' },
+const APIFY_ACTORS: Record<string, { actorId: string; imageField: string; inputKey: string; inputFormat: 'urlObjects' | 'plainString' }> = {
+  'immobilienscout24.de': { actorId: 'rigelbytes~immobilienscout24-scraper', imageField: 'images', inputKey: 'startUrls', inputFormat: 'urlObjects' },
+  'immowelt.de': { actorId: 'rigelbytes~immowelt-scraper', imageField: 'images', inputKey: 'startUrls', inputFormat: 'urlObjects' },
+  'zillow.com': { actorId: 'maxcopell~zillow-detail-scraper', imageField: 'photos', inputKey: 'link', inputFormat: 'plainString' },
+  'rightmove.co.uk': { actorId: 'dhrumil~rightmove-scraper', imageField: 'images', inputKey: 'startUrls', inputFormat: 'urlObjects' },
+  'idealista.com': { actorId: 'tri_angle~idealista-scraper', imageField: 'images', inputKey: 'startUrls', inputFormat: 'urlObjects' },
 };
 
 function getApifyActor(url: string) {
@@ -210,7 +210,7 @@ async function handleScraping(supabase: Awaited<ReturnType<typeof createClient>>
       const actor = getApifyActor(url);
       if (actor && process.env.APIFY_API_TOKEN) {
         try {
-          const runId = await startApifyRun(actor.actorId, url, actor.inputKey);
+          const runId = await startApifyRun(actor.actorId, url, actor.inputKey, actor.inputFormat);
           await supabase.from('video_jobs').update({
             metadata: { ...metadata, apifyRunId: runId },
           }).eq('id', job.id);
@@ -1251,15 +1251,15 @@ async function refundCredit(supabase: Awaited<ReturnType<typeof createClient>>, 
 }
 
 // ── Apify helpers ────────────────────────────────────────────────────────
-async function startApifyRun(actorId: string, url: string, inputKey: string): Promise<string> {
+async function startApifyRun(actorId: string, url: string, inputKey: string, inputFormat: 'urlObjects' | 'plainString' = 'urlObjects'): Promise<string> {
   const token = process.env.APIFY_API_TOKEN!;
+  const input: Record<string, unknown> = inputFormat === 'plainString'
+    ? { [inputKey]: url }
+    : { [inputKey]: [{ url }] };
   const res = await fetch(`https://api.apify.com/v2/acts/${actorId}/runs?token=${token}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      [inputKey]: [{ url }],
-      maxItems: 1,
-    }),
+    body: JSON.stringify(input),
     signal: AbortSignal.timeout(30000),
   });
   if (!res.ok) {
